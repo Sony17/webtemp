@@ -17,6 +17,18 @@ function isSafePath(p: string) {
 }
 
 export async function POST(req: Request) {
+  // On Vercel, the filesystem is read-only; we need Blob storage configured.
+  // If running on Vercel without a Blob token, fail fast with an actionable message.
+  if (process.env.VERCEL && !process.env.BLOB_READ_WRITE_TOKEN) {
+    return NextResponse.json(
+      {
+        error:
+          "Vercel Blob is not connected to this project. In the Vercel dashboard go to Storage → Blob → Connect, then redeploy.",
+      },
+      { status: 503 }
+    );
+  }
+
   let form: FormData;
   try {
     form = await req.formData();

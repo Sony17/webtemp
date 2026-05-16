@@ -1,13 +1,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { head, put } from "@vercel/blob";
 import { deployments as seedDeployments, type Deployment as SeedDeployment } from "@/data/deployments";
 import { deleteTenantFiles } from "@/lib/tenantStorage";
 
-// File-backed runtime store for tenant sites.
-// - Local dev / any single-server host: full read/write works.
-// - Vercel serverless: file writes won't persist; only seeded tenants stay
-//   live. Swap the read/write below for Vercel KV / Postgres / Supabase
-//   for production write-through.
+// Runtime store for tenant sites.
+// - Local dev (no BLOB_READ_WRITE_TOKEN): JSON file at data/deployments.json.
+// - Production (BLOB_READ_WRITE_TOKEN set): stored as a single JSON blob at
+//   key `system/deployments.json` in Vercel Blob. Survives across requests
+//   and redeploys, where the local filesystem on Vercel is read-only.
 
 export type Deployment = SeedDeployment & {
   id: string;
@@ -15,6 +16,8 @@ export type Deployment = SeedDeployment & {
 };
 
 const DATA_FILE = path.join(process.cwd(), "data", "deployments.json");
+const BLOB_KEY = "system/deployments.json";
+const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
 
 const RESERVED = new Set([
   "www", "admin", "api", "app", "preview", "console", "login", "s",
@@ -39,6 +42,20 @@ function seedAsDeployments(): Deployment[] {
 }
 
 async function readFileStore(): Promise<Deployment[]> {
+  if (useBlob) {
+    try {
+      const meta = await head(BLOB_KEY);
+      if (!meta?.url) return [];
+      const res = await fetch(meta.url, { cache: "no-store" });
+      if (!res.ok) return [];
+      const parsed = await res.json();
+      return Array.isArray(parsed) ? (parsed as Deployment[]) : [];
+    } catch {
+      // Either the blob doesn't exist yet, or transient error — treat as empty.
+      return [];
+    }
+  }
+
   try {
     const buf = await fs.readFile(DATA_FILE, "utf-8");
     const parsed = JSON.parse(buf);
@@ -49,6 +66,16 @@ async function readFileStore(): Promise<Deployment[]> {
 }
 
 async function writeFileStore(list: Deployment[]) {
+  if (useBlob) {
+    await put(BLOB_KEY, JSON.stringify(list, null, 2), {
+      access: "public",
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      contentType: "application/json",
+      cacheControlMaxAge: 0,
+    });
+    return;
+  }
   await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
   await fs.writeFile(DATA_FILE, JSON.stringify(list, null, 2));
 }
