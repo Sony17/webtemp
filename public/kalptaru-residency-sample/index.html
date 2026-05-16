@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KalpTaru Residency — A Luxury Stay in Greater Noida</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0d0d;
+    --bg-2:#141414;
+    --bg-3:#1c1c1c;
+    --text:#e8e6e1;
+    --muted:#9a948a;
+    --gold:#c9a96e;
+    --gold-2:#dcc28b;
+    --gold-soft:rgba(201,169,110,0.18);
+    --line:rgba(201,169,110,0.25);
+    --serif:'Cormorant Garamond', serif;
+    --sans:'Inter', sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    font-weight:300;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%;display:block}
+
+  /* Typography */
+  h1,h2,h3,h4{font-family:var(--serif);font-weight:500;letter-spacing:.5px;color:#fff}
+  h1{font-size:clamp(2.6rem,6vw,5rem);line-height:1.05}
+  h2{font-size:clamp(2rem,4vw,3.2rem);line-height:1.1;margin-bottom:1rem}
+  h3{font-size:1.6rem;margin-bottom:.6rem}
+  .eyebrow{
+    display:inline-block;
+    font-family:var(--sans);
+    font-size:.75rem;
+    letter-spacing:.4em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:1rem;
+  }
+  .gold{color:var(--gold)}
+  .center{text-align:center}
+
+  /* Layout */
+  .container{max-width:1200px;margin:0 auto;padding:0 28px}
+  section{padding:110px 0}
+
+  /* NAV */
+  nav.top{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    padding:18px 0;
+    background:rgba(13,13,13,0);
+    backdrop-filter:blur(0px);
+    transition:.35s ease;
+    border-bottom:1px solid transparent;
+  }
+  nav.top.scrolled{
+    background:rgba(13,13,13,.85);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;gap:2rem}
+  .brand{display:flex;align-items:center;gap:.7rem}
+  .brand-mark{
+    width:38px;height:38px;border:1px solid var(--gold);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--gold);font-family:var(--serif);font-size:1.2rem;
+  }
+  .brand-name{font-family:var(--serif);font-size:1.3rem;letter-spacing:2px;color:#fff}
+  .brand-name small{display:block;font-family:var(--sans);font-size:.6rem;letter-spacing:.3em;color:var(--gold);margin-top:-2px}
+  .nav-links{display:flex;gap:2.2rem;list-style:none}
+  .nav-links a{
+    font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--text);transition:color .25s;
+  }
+  .nav-links a:hover{color:var(--gold)}
+  .btn{
+    display:inline-block;padding:14px 28px;
+    font-family:var(--sans);font-size:.75rem;letter-spacing:.25em;
+    text-transform:uppercase;
+    border:1px solid var(--gold);color:var(--gold);
+    background:transparent;cursor:pointer;
+    transition:all .3s ease;
+  }
+  .btn:hover{background:var(--gold);color:#1a1a1a}
+  .btn.solid{background:var(--gold);color:#1a1a1a}
+  .btn.solid:hover{background:var(--gold-2);border-color:var(--gold-2)}
+  .menu-toggle{display:none;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer}
+
+  /* HERO */
+  .hero{
+    position:relative;height:100vh;min-height:680px;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    padding:0 28px;
+  }
+  .hero::before{
+    content:"";position:absolute;inset:0;
+    background:
+      url('https://lh3.googleusercontent.com/p/AF1QipOiw1WiL1e3FQFiScVno_eQ0rXfQAp4rf30O_Rg=w1920-h1080-k-no') center/cover no-repeat;
+    z-index:0;
+    filter:brightness(.85) saturate(1.15) contrast(1.05);
+    transform:scale(1.05);
+    animation:slowzoom 22s ease-in-out infinite alternate;
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;z-index:1;
+    background:
+      radial-gradient(ellipse at center, rgba(13,13,13,.15) 0%, rgba(13,13,13,.55) 70%, rgba(13,13,13,.85) 100%),
+      linear-gradient(180deg, rgba(13,13,13,.35) 0%, rgba(13,13,13,.25) 40%, rgba(13,13,13,.95) 100%);
+  }
+  @keyframes slowzoom{from{transform:scale(1.05)}to{transform:scale(1.15)}}
+  .hero-inner h1, .hero-inner p.lead, .hero-inner .eyebrow{
+    text-shadow:0 2px 20px rgba(0,0,0,.7), 0 1px 3px rgba(0,0,0,.5);
+  }
+  .hero-inner{position:relative;z-index:2;text-align:center;max-width:900px}
+  .hero h1{
+    color:#fff;margin-bottom:1.2rem;
+    font-weight:400;letter-spacing:1px;
+  }
+  .hero h1 em{color:var(--gold);font-style:italic;font-weight:500}
+  .hero p.lead{
+    color:var(--text);font-size:1.05rem;max-width:580px;margin:0 auto 2.5rem;
+    font-weight:300;
+  }
+  .hero-cta{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+  .hero-divider{
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    margin:0 auto 1.5rem;color:var(--gold);
+  }
+  .hero-divider span{height:1px;width:50px;background:var(--gold)}
+  .hero-divider svg{width:14px;height:14px;fill:var(--gold)}
+  .scroll-cue{
+    position:absolute;bottom:30px;left:50%;transform:translateX(-50%);
+    color:var(--gold);font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;
+    z-index:2;animation:bounce 2.4s infinite;
+  }
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+
+  /* SECTIONS */
+  .section-head{text-align:center;margin-bottom:70px}
+  .section-head h2 em{color:var(--gold);font-style:italic}
+  .section-head p{color:var(--muted);max-width:640px;margin:0 auto;font-size:1rem}
+
+  /* ABOUT */
+  .about-grid{
+    display:grid;grid-template-columns:1.1fr 1fr;gap:80px;align-items:center;
+  }
+  .about-img{position:relative}
+  .about-img img{height:560px;object-fit:cover;width:100%;filter:saturate(.95)}
+  .about-img::after{
+    content:"";position:absolute;inset:18px;border:1px solid var(--gold);
+    pointer-events:none;
+  }
+  .about-text .stats{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;
+    margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--line);
+  }
+  .about-text .stat{text-align:center}
+  .about-text .stat .num{font-family:var(--serif);color:var(--gold);font-size:2.4rem;line-height:1}
+  .about-text .stat .lbl{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:.4rem;display:block}
+  .about-text p{color:var(--muted);margin-bottom:1rem}
+
+  /* ROOMS */
+  .rooms-section{background:var(--bg-2)}
+  .rooms-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:32px;
+  }
+  .room-card{
+    background:var(--bg-3);
+    border:1px solid rgba(201,169,110,.1);
+    transition:transform .4s ease, border-color .3s ease;
+    overflow:hidden;
+  }
+  .room-card:hover{transform:translateY(-6px);border-color:var(--gold)}
+  .room-img{height:260px;overflow:hidden;position:relative}
+  .room-img img{height:100%;width:100%;object-fit:cover;transition:transform .8s ease}
+  .room-card:hover .room-img img{transform:scale(1.08)}
+  .room-tag{
+    position:absolute;top:18px;left:18px;
+    background:rgba(13,13,13,.8);color:var(--gold);
+    padding:6px 12px;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;
+    border:1px solid var(--gold);
+  }
+  .room-body{padding:28px}
+  .room-body h3{margin-bottom:.4rem}
+  .room-meta{
+    display:flex;gap:1.2rem;color:var(--muted);font-size:.8rem;margin-bottom:1rem;
+    padding-bottom:1rem;border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  .room-meta span{display:flex;align-items:center;gap:.4rem}
+  .room-meta svg{width:14px;height:14px;stroke:var(--gold);fill:none;stroke-width:1.6;flex-shrink:0}
+  .room-desc{color:var(--muted);font-size:.92rem;margin-bottom:1.5rem;min-height:60px}
+  .room-foot{display:flex;align-items:center;justify-content:space-between}
+  .price{font-family:var(--serif);color:var(--gold);font-size:1.6rem}
+  .price small{color:var(--muted);font-family:var(--sans);font-size:.7rem;letter-spacing:.15em;display:block;text-transform:uppercase}
+
+  /* AMENITIES */
+  .amen-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:2px;
+    background:var(--line);border:1px solid var(--line);
+  }
+  .amen-card{
+    background:var(--bg);padding:42px 26px;text-align:center;
+    transition:background .3s ease;
+  }
+  .amen-card:hover{background:var(--bg-2)}
+  .amen-icon{
+    width:56px;height:56px;margin:0 auto 1rem;
+    border:1px solid var(--gold);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--gold);
+  }
+  .amen-icon svg{width:24px;height:24px;fill:none;stroke:var(--gold);stroke-width:1.5}
+  .amen-card h4{font-family:var(--serif);color:#fff;font-size:1.15rem;margin-bottom:.4rem}
+  .amen-card p{font-size:.82rem;color:var(--muted);line-height:1.5}
+
+  /* GALLERY */
+  .gallery-section{background:var(--bg-2)}
+  .gallery-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    gap:14px;
+  }
+  .gallery-grid .g-item{
+    overflow:hidden;position:relative;cursor:pointer;
+    aspect-ratio:1/1;
+  }
+  .gallery-grid .g-item img{
+    width:100%;height:100%;object-fit:cover;
+    transition:transform .8s ease, filter .4s ease;
+    filter:saturate(.85) brightness(.9);
+  }
+  .gallery-grid .g-item:hover img{transform:scale(1.08);filter:saturate(1) brightness(1)}
+  .gallery-grid .g-item::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,transparent 60%,rgba(13,13,13,.6));
+    opacity:0;transition:opacity .3s;
+  }
+  .gallery-grid .g-item:hover::after{opacity:1}
+
+  /* CONTACT + BOOKING */
+  .contact-grid{
+    display:grid;grid-template-columns:1fr 1.2fr;gap:60px;align-items:start;
+  }
+  .info-block{margin-bottom:2rem}
+  .info-block h4{
+    font-family:var(--sans);font-size:.7rem;letter-spacing:.3em;
+    text-transform:uppercase;color:var(--gold);margin-bottom:.6rem;font-weight:500;
+  }
+  .info-block p{color:var(--text);font-size:1rem;line-height:1.6}
+  .info-block a{color:var(--text);transition:color .2s}
+  .info-block a:hover{color:var(--gold)}
+  .map-wrap{margin-top:2rem;border:1px solid var(--line)}
+  .map-wrap iframe{width:100%;height:260px;border:0;filter:invert(.92) hue-rotate(180deg) saturate(.6)}
+
+  .booking-form{
+    background:var(--bg-3);
+    padding:48px 40px;
+    border:1px solid var(--line);
+    position:relative;
+  }
+  .booking-form::before{
+    content:"";position:absolute;top:-1px;left:-1px;right:-1px;height:3px;
+    background:linear-gradient(90deg,var(--gold),var(--gold-2),var(--gold));
+  }
+  .booking-form h3{font-family:var(--serif);text-align:center;margin-bottom:.4rem}
+  .booking-form p.sub{text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:2rem}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+  .form-row.single{grid-template-columns:1fr}
+  .form-group label{
+    display:block;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:.4rem;
+  }
+  .form-group input,.form-group select,.form-group textarea{
+    width:100%;background:transparent;border:none;
+    border-bottom:1px solid rgba(255,255,255,.18);
+    padding:10px 2px;color:#fff;font-family:var(--sans);font-size:.95rem;
+    outline:none;transition:border-color .3s;
+  }
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold)}
+  .form-group select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23c9a96e' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center;cursor:pointer}
+  .form-group select option{background:var(--bg-3);color:#fff}
+  .form-group textarea{resize:vertical;min-height:80px}
+  .booking-form button{width:100%;margin-top:.5rem;padding:16px}
+
+  /* AVAILABLE-ON RIBBON */
+  .ribbon{
+    background:linear-gradient(90deg, #0d0d0d 0%, #161616 50%, #0d0d0d 100%);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    padding:28px 0;overflow:hidden;position:relative;
+  }
+  .ribbon::before, .ribbon::after{
+    content:"";position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none;
+  }
+  .ribbon::before{left:0;background:linear-gradient(90deg,#0d0d0d,transparent)}
+  .ribbon::after{right:0;background:linear-gradient(270deg,#0d0d0d,transparent)}
+  .ribbon-label{
+    text-align:center;font-size:.7rem;letter-spacing:.4em;
+    text-transform:uppercase;color:var(--gold);margin-bottom:18px;
+  }
+  .ribbon-track{
+    display:flex;gap:60px;
+    width:max-content;
+    animation:slide 35s linear infinite;
+  }
+  .ribbon-track:hover{animation-play-state:paused}
+  .ribbon-item{
+    display:flex;align-items:center;gap:8px;
+    color:var(--text);
+    font-family:var(--serif);font-size:1.4rem;font-weight:500;
+    letter-spacing:.5px;white-space:nowrap;
+    opacity:.65;transition:opacity .3s, color .3s;
+  }
+  .ribbon-item:hover{opacity:1;color:var(--gold)}
+  .ribbon-item .dot{
+    width:6px;height:6px;border-radius:50%;background:var(--gold);
+    margin-right:18px;
+  }
+  @keyframes slide{
+    from{transform:translateX(0)}
+    to{transform:translateX(-50%)}
+  }
+
+  /* FOOTER */
+  footer{background:#080808;padding:60px 0 30px;border-top:1px solid var(--line)}
+  .footer-grid{
+    display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:50px;margin-bottom:40px;
+  }
+  .footer-grid h5{
+    font-family:var(--sans);font-size:.7rem;letter-spacing:.3em;
+    text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem;font-weight:500;
+  }
+  .footer-grid p,.footer-grid a{color:var(--muted);font-size:.88rem;line-height:1.9;display:block}
+  .footer-grid a:hover{color:var(--gold)}
+  .socials{display:flex;gap:14px;margin-top:1rem}
+  .socials a{
+    width:36px;height:36px;border:1px solid var(--line);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;color:var(--gold);
+    transition:all .3s;
+  }
+  .socials a:hover{background:var(--gold);color:#000;border-color:var(--gold)}
+  .socials svg{width:14px;height:14px;fill:currentColor}
+  .copyright{
+    text-align:center;padding-top:30px;border-top:1px solid rgba(255,255,255,.05);
+    color:var(--muted);font-size:.8rem;letter-spacing:.1em;
+  }
+  .copyright .gold{color:var(--gold)}
+
+  /* RESPONSIVE */
+  @media (max-width: 980px){
+    section{padding:80px 0}
+    .nav-links{
+      position:fixed;top:0;right:-100%;
+      width:80%;max-width:340px;height:100vh;
+      background:var(--bg-2);flex-direction:column;
+      padding:90px 40px;gap:1.5rem;
+      transition:right .35s ease;
+      border-left:1px solid var(--line);
+    }
+    .nav-links.open{right:0}
+    .nav-links a{font-size:.95rem}
+    .menu-toggle{display:block;z-index:60}
+    .about-grid{grid-template-columns:1fr;gap:50px}
+    .about-img img{height:420px}
+    .rooms-grid{grid-template-columns:1fr;gap:24px}
+    .amen-grid{grid-template-columns:repeat(2,1fr)}
+    .gallery-grid{grid-template-columns:repeat(2,1fr)}
+    .contact-grid{grid-template-columns:1fr;gap:40px}
+    .footer-grid{grid-template-columns:1fr 1fr;gap:30px}
+    .form-row{grid-template-columns:1fr}
+    .booking-form{padding:36px 24px}
+    nav.top .btn{display:none}
+  }
+  @media (max-width: 540px){
+    .footer-grid{grid-template-columns:1fr}
+    .amen-grid{grid-template-columns:1fr}
+    .gallery-grid{grid-template-columns:1fr}
+    .about-text .stats{grid-template-columns:1fr;gap:1.2rem}
+  }
+
+  /* Toast */
+  .toast{
+    position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);
+    background:var(--gold);color:#1a1a1a;padding:14px 28px;
+    font-size:.85rem;letter-spacing:.1em;
+    transition:transform .4s ease;z-index:100;box-shadow:0 8px 30px rgba(0,0,0,.4);
+  }
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* Reveal animations */
+  .reveal{opacity:0;transform:translateY(30px);transition:all .9s ease}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+
+  /* TESTIMONIALS */
+  .testimonials-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:30px;
+  }
+  .test-card{
+    background:var(--bg-3);
+    border:1px solid rgba(201,169,110,.12);
+    padding:40px 32px;
+    position:relative;
+    transition:transform .4s ease, border-color .3s ease;
+  }
+  .test-card:hover{transform:translateY(-6px);border-color:var(--gold)}
+  .test-card .quote-mark{
+    position:absolute;top:18px;right:24px;
+    font-family:var(--serif);font-size:5rem;color:var(--gold);
+    opacity:.18;line-height:1;
+  }
+  .test-stars{display:flex;gap:3px;margin-bottom:1.2rem}
+  .test-stars svg{width:14px;height:14px;fill:var(--gold)}
+  .test-card p.body{
+    font-family:var(--serif);color:var(--text);font-size:1.1rem;
+    line-height:1.7;margin-bottom:1.8rem;font-style:italic;
+  }
+  .test-author{display:flex;align-items:center;gap:14px;padding-top:1.2rem;border-top:1px solid rgba(255,255,255,.06)}
+  .test-avatar{
+    width:44px;height:44px;border-radius:50%;
+    background:linear-gradient(135deg,var(--gold),#8a6e3c);
+    display:flex;align-items:center;justify-content:center;
+    color:#1a1a1a;font-family:var(--serif);font-weight:600;font-size:1.1rem;
+  }
+  .test-author .name{color:#fff;font-size:.95rem;font-weight:500}
+  .test-author .meta{color:var(--muted);font-size:.75rem;letter-spacing:.05em}
+
+  /* PAYMENT */
+  .payment-strip{
+    margin-top:1.8rem;padding-top:1.5rem;
+    border-top:1px solid rgba(255,255,255,.06);
+    text-align:center;
+  }
+  .payment-strip .lbl{
+    font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:.9rem;display:block;
+  }
+  .payment-icons{
+    display:flex;justify-content:center;align-items:center;
+    flex-wrap:wrap;gap:18px;
+  }
+  .pay-method{
+    display:flex;align-items:center;gap:6px;
+    padding:7px 12px;border:1px solid rgba(255,255,255,.1);
+    border-radius:4px;background:rgba(255,255,255,.02);
+    font-size:.7rem;letter-spacing:.1em;color:var(--muted);
+    transition:all .25s;
+  }
+  .pay-method:hover{border-color:var(--gold);color:var(--gold)}
+  .pay-method svg{width:14px;height:14px;fill:currentColor}
+  .pay-secure{
+    margin-top:1rem;font-size:.7rem;color:var(--muted);
+    display:flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .pay-secure svg{width:12px;height:12px;fill:var(--gold)}
+
+  /* WHATSAPP WIDGET */
+  .whatsapp-widget{position:fixed;bottom:28px;right:28px;z-index:95}
+  .whatsapp-fab{
+    width:60px;height:60px;border-radius:50%;
+    background:#25D366;border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 24px rgba(37,211,102,.4), 0 0 0 0 rgba(37,211,102,.5);
+    transition:transform .3s ease;
+    animation:wapulse 2.4s infinite;
+    margin-left:auto;
+  }
+  .whatsapp-fab:hover{transform:scale(1.08)}
+  .whatsapp-fab svg{width:30px;height:30px;fill:#fff}
+  @keyframes wapulse{
+    0%{box-shadow:0 8px 24px rgba(37,211,102,.4), 0 0 0 0 rgba(37,211,102,.6)}
+    70%{box-shadow:0 8px 24px rgba(37,211,102,.4), 0 0 0 18px rgba(37,211,102,0)}
+    100%{box-shadow:0 8px 24px rgba(37,211,102,.4), 0 0 0 0 rgba(37,211,102,0)}
+  }
+
+  /* Popup */
+  .wa-popup{
+    position:absolute;bottom:78px;right:0;
+    width:340px;
+    background:transparent;border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+    opacity:0;transform:translateY(20px) scale(.95);
+    transform-origin:bottom right;
+    pointer-events:none;
+    transition:opacity .25s ease, transform .3s ease;
+  }
+  .wa-popup.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+  .wa-header{
+    background:#0a665c;
+    padding:16px 18px;
+    display:flex;align-items:center;gap:12px;
+    color:#fff;
+  }
+  .wa-avatar{
+    width:42px;height:42px;border-radius:50%;
+    background:#5a7572;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .wa-avatar svg{width:22px;height:22px;fill:#fff}
+  .wa-info{flex:1;min-width:0}
+  .wa-info .name{display:block;font-family:var(--sans);font-weight:600;font-size:.95rem;color:#fff;letter-spacing:0}
+  .wa-info .status{font-size:.72rem;color:rgba(255,255,255,.9);display:flex;align-items:center;gap:6px;margin-top:3px}
+  .wa-info .status::before{content:"";width:6px;height:6px;border-radius:50%;background:#34d399}
+  .wa-close{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:4px 6px;line-height:1;opacity:.85}
+  .wa-close:hover{opacity:1}
+
+  .wa-body{
+    background:#e5d6c6;
+    background-image:
+      radial-gradient(rgba(255,255,255,.18) 1px, transparent 1px);
+    background-size:14px 14px;
+    padding:20px 16px;min-height:230px;
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .wa-msg-in{
+    background:#fff;color:#222;
+    align-self:flex-start;
+    padding:10px 14px;border-radius:2px 12px 12px 12px;
+    font-size:.88rem;max-width:85%;
+    box-shadow:0 1px 2px rgba(0,0,0,.08);
+    font-family:var(--sans);
+  }
+  .wa-quick{display:flex;flex-direction:column;gap:8px;align-items:flex-end;margin-top:6px}
+  .wa-chip{
+    background:#dcf8c6;color:#1a1a1a;
+    padding:10px 16px;border-radius:18px 18px 4px 18px;
+    font-size:.86rem;cursor:pointer;border:none;
+    font-family:var(--sans);
+    box-shadow:0 1px 2px rgba(0,0,0,.07);
+    transition:background .2s, transform .15s;
+  }
+  .wa-chip:hover{background:#c5edae;transform:translateX(-2px)}
+
+  .wa-input-row{
+    background:#f7f7f7;padding:10px 12px;
+    display:flex;gap:8px;align-items:center;
+  }
+  .wa-input{
+    flex:1;border:1px solid #e0e0e0;background:#fff;border-radius:22px;
+    padding:10px 16px;font-size:.85rem;outline:none;
+    font-family:var(--sans);color:#222;
+  }
+  .wa-input:focus{border-color:#25D366}
+  .wa-send{
+    width:38px;height:38px;border-radius:50%;
+    background:#25D366;border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;transition:background .2s;
+  }
+  .wa-send:hover{background:#1ebe5c}
+  .wa-send svg{width:16px;height:16px;fill:#fff;margin-left:2px}
+
+  .wa-foot{
+    background:#fff;text-align:center;padding:11px;
+    font-size:.72rem;color:#888;border-top:1px solid #f0f0f0;
+    font-family:var(--sans);
+  }
+
+  @media (max-width:980px){
+    .testimonials-grid{grid-template-columns:1fr;gap:20px}
+    .whatsapp-widget{bottom:18px;right:18px}
+    .whatsapp-fab{width:54px;height:54px}
+    .whatsapp-fab svg{width:26px;height:26px}
+    .wa-popup{width:300px;bottom:72px}
+  }
+  @media (max-width:380px){
+    .wa-popup{width:calc(100vw - 36px);right:0}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top" id="topNav">
+  <div class="container nav-inner">
+    <a href="#home" class="brand">
+      <div class="brand-mark">K</div>
+      <div class="brand-name">KalpTaru<small>Residency</small></div>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#rooms">Rooms</a></li>
+      <li><a href="#amenities">Amenities</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#reviews">Reviews</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <a href="#booking" class="btn solid">Book Now</a>
+    <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="home">
+  <div class="hero-inner">
+    <div class="hero-divider">
+      <span></span>
+      <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+      <span></span>
+    </div>
+    <p class="eyebrow">Greater Noida &middot; Since 2018</p>
+    <h1>An Elegant Retreat<br>in the Heart of <em>Greater Noida</em></h1>
+    <p class="lead">Where heritage warmth meets contemporary comfort &mdash; discover a serene residency wrapped in lush gardens, spacious suites, and timeless hospitality.</p>
+    <div class="hero-cta">
+      <a href="#booking" class="btn solid">Reserve Your Stay</a>
+      <a href="#rooms" class="btn">Explore Rooms</a>
+    </div>
+  </div>
+  <div class="scroll-cue">Scroll</div>
+</header>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-img reveal">
+        <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=80" alt="KalpTaru Residency interior">
+      </div>
+      <div class="about-text reveal">
+        <p class="eyebrow">About the Residency</p>
+        <h2>A Sanctuary of <em>Calm</em> &amp; Culture</h2>
+        <p>Tucked beside the bustling Pari Chowk and India Expo Centre, KalpTaru Residency is a boutique retreat designed for travellers who appreciate quiet elegance. Nine thoughtfully appointed suites, each with a private balcony, open onto a verdant garden anchored by a traditional temple &mdash; a small piece of heritage in the middle of the city.</p>
+        <p>Whether you're here for business at the Expo Mart, a wedding at the banquet, or a peaceful weekend escape, every detail &mdash; from the in-room kitchenette to the 24-hour front desk &mdash; is shaped to make you feel at home.</p>
+        <div class="stats">
+          <div class="stat"><span class="num">9</span><span class="lbl">Suites</span></div>
+          <div class="stat"><span class="num">24/7</span><span class="lbl">Front Desk</span></div>
+          <div class="stat"><span class="num">5&#9733;</span><span class="lbl">Hospitality</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROOMS -->
+<section id="rooms" class="rooms-section">
+  <div class="container">
+    <div class="section-head reveal">
+      <p class="eyebrow">Accommodations</p>
+      <h2>Rooms &amp; <em>Suites</em></h2>
+      <p>Each of our nine suites is air-conditioned, thoughtfully styled, and opens to a private balcony overlooking the garden.</p>
+    </div>
+    <div class="rooms-grid">
+      <article class="room-card reveal">
+        <div class="room-img">
+          <span class="room-tag">Most Popular</span>
+          <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=900&q=80" alt="Deluxe Garden Suite">
+        </div>
+        <div class="room-body">
+          <h3>Deluxe Garden Suite</h3>
+          <div class="room-meta">
+            <span><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 21c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg> 2 Guests</span>
+            <span><svg viewBox="0 0 24 24"><path d="M3 21V10l9-7 9 7v11M9 21v-7h6v7"/></svg> Balcony</span>
+            <span><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/></svg> Garden</span>
+          </div>
+          <p class="room-desc">A spacious king-bed suite opening to a private balcony over the temple garden &mdash; calm, green, and quietly luxurious.</p>
+          <div class="room-foot">
+            <div class="price">&#8377;3,200 <small>per night</small></div>
+            <a href="#booking" class="btn">Book</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="room-card reveal">
+        <div class="room-img">
+          <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80" alt="Executive Studio">
+        </div>
+        <div class="room-body">
+          <h3>Executive Studio</h3>
+          <div class="room-meta">
+            <span><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 21c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg> 2 Guests</span>
+            <span><svg viewBox="0 0 24 24"><path d="M4 19h16M6 19V8h12v11M9 19V13h6v6"/></svg> Kitchenette</span>
+            <span><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 17h18M9 21h6"/></svg> Workspace</span>
+          </div>
+          <p class="room-desc">Designed for the working traveller &mdash; a smart workspace, fast Wi-Fi, and a fully equipped kitchenette for longer stays.</p>
+          <div class="room-foot">
+            <div class="price">&#8377;2,800 <small>per night</small></div>
+            <a href="#booking" class="btn">Book</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="room-card reveal">
+        <div class="room-img">
+          <span class="room-tag">Family</span>
+          <img src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=900&q=80" alt="Family Suite">
+        </div>
+        <div class="room-body">
+          <h3>Family Heritage Suite</h3>
+          <div class="room-meta">
+            <span><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 21c0-3.3 2.7-6 6-6s6 2.7 6 6M14 21c0-2.8 2.2-5 5-5"/></svg> 4 Guests</span>
+            <span><svg viewBox="0 0 24 24"><path d="M3 11h18v9H3zM6 11V8a2 2 0 012-2h2a2 2 0 012 2v3M12 11V8a2 2 0 012-2h2a2 2 0 012 2v3"/></svg> 2 Bedrooms</span>
+            <span><svg viewBox="0 0 24 24"><path d="M3 18h18M5 18v-6a2 2 0 012-2h10a2 2 0 012 2v6M7 10V7a3 3 0 013-3h4a3 3 0 013 3v3"/></svg> Lounge</span>
+          </div>
+          <p class="room-desc">Our largest suite &mdash; two bedrooms, a private lounge and dining area, perfect for families or small groups travelling together.</p>
+          <div class="room-foot">
+            <div class="price">&#8377;4,500 <small>per night</small></div>
+            <a href="#booking" class="btn">Book</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- AMENITIES -->
+<section id="amenities">
+  <div class="container">
+    <div class="section-head reveal">
+      <p class="eyebrow">Hospitality</p>
+      <h2>Curated <em>Amenities</em></h2>
+      <p>Everything you need for a restful, productive stay &mdash; and a few thoughtful touches you didn't know to ask for.</p>
+    </div>
+    <div class="amen-grid">
+      <div class="amen-card reveal">
+        <div class="amen-icon"><svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg></div>
+        <h4>Complimentary Wi-Fi</h4>
+        <p>Fast, reliable connectivity in every suite and common space.</p>
+      </div>
+      <div class="amen-card reveal">
+        <div class="amen-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 17h18M9 21h6"/></svg></div>
+        <h4>Smart TV &amp; Entertainment</h4>
+        <p>Flat-screen televisions with major streaming platforms in every room.</p>
+      </div>
+      <div class="amen-card reveal">
+        <div class="amen-icon"><svg viewBox="0 0 24 24"><path d="M3 21V8l9-5 9 5v13M9 21v-6h6v6"/></svg></div>
+        <h4>Private Balcony</h4>
+        <p>Each suite opens to a balcony overlooking the temple garden.</p>
+      </div>
+      <div class="amen-card reveal">
+        <div class="amen-icon"><svg viewBox="0 0 24 24"><path d="M5 11h14l-1 8H6zM7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <h4>Banquet &amp; Weddings</h4>
+        <p>Elegant banquet hall with full event coordination and catering.</p>
+      </div>
+      <div class="amen-card reveal">
+        <div class="amen-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <h4>24-Hour Reception</h4>
+        <p>Round-the-clock front desk, room service, and concierge support.</p>
+      </div>
+      <div class="amen-card reveal">
+        <div class="amen-icon"><svg viewBox="0 0 24 24"><path d="M5 17h14l-1-7H6zM8 10V7a4 4 0 0 1 8 0v3M3 21h18"/></svg></div>
+        <h4>Free Parking</h4>
+        <p>Secure on-site self-parking, complimentary for all guests.</p>
+      </div>
+      <div class="amen-card reveal">
+        <div class="amen-icon"><svg viewBox="0 0 24 24"><path d="M3 11h18v9H3zM6 11V7a6 6 0 0 1 12 0v4"/></svg></div>
+        <h4>Luggage Storage</h4>
+        <p>Safe storage before check-in or after check-out, no extra fee.</p>
+      </div>
+      <div class="amen-card reveal">
+        <div class="amen-icon"><svg viewBox="0 0 24 24"><path d="M4 19h16M6 19V8h12v11M9 19V13h6v6"/></svg></div>
+        <h4>In-Room Kitchenette</h4>
+        <p>Fully equipped kitchenette &mdash; ideal for long stays and family travel.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery" class="gallery-section">
+  <div class="container">
+    <div class="section-head reveal">
+      <p class="eyebrow">Gallery</p>
+      <h2>A Glimpse of <em>KalpTaru</em></h2>
+      <p>Spaces, suites and moments that capture the spirit of our residency.</p>
+    </div>
+    <div class="gallery-grid">
+      <div class="g-item reveal"><img src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80" alt="Hotel exterior" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80'"></div>
+      <div class="g-item reveal"><img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80" alt="Garden suite" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=800&q=80'"></div>
+      <div class="g-item reveal"><img src="https://images.unsplash.com/photo-1455587734955-081b22074882?auto=format&fit=crop&w=800&q=80" alt="Lobby" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80'"></div>
+      <div class="g-item reveal"><img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80" alt="Dining" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1592861956120-e524fc739696?auto=format&fit=crop&w=800&q=80'"></div>
+      <div class="g-item reveal"><img src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80" alt="Banquet hall" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=800&q=80'"></div>
+      <div class="g-item reveal"><img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=800&q=80" alt="Bathroom" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?auto=format&fit=crop&w=800&q=80'"></div>
+      <div class="g-item reveal"><img src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=800&q=80" alt="Suite" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80'"></div>
+      <div class="g-item reveal"><img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80" alt="Reception" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1551776235-dde6d4829808?auto=format&fit=crop&w=800&q=80'"></div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="reviews">
+  <div class="container">
+    <div class="section-head reveal">
+      <p class="eyebrow">Guest Voices</p>
+      <h2>What Our <em>Guests Say</em></h2>
+      <p>A few words from travellers who've stayed with us.</p>
+    </div>
+    <div class="testimonials-grid">
+      <article class="test-card reveal">
+        <div class="quote-mark">&ldquo;</div>
+        <div class="test-stars">
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+        </div>
+        <p class="body">Beautifully maintained property with a peaceful garden and a temple &mdash; felt more like a friend's home than a hotel. The staff went out of their way to make us comfortable.</p>
+        <div class="test-author">
+          <div class="test-avatar">A</div>
+          <div>
+            <div class="name">Anjali Mehta</div>
+            <div class="meta">Stayed in Deluxe Garden Suite &middot; March 2026</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="test-card reveal">
+        <div class="quote-mark">&ldquo;</div>
+        <div class="test-stars">
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+        </div>
+        <p class="body">Stayed here during a conference at India Expo Mart. Spotless rooms, fast Wi-Fi, and the in-room kitchenette was a lifesaver. Will definitely book again on my next visit.</p>
+        <div class="test-author">
+          <div class="test-avatar">R</div>
+          <div>
+            <div class="name">Rohit Sharma</div>
+            <div class="meta">Stayed in Executive Studio &middot; February 2026</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="test-card reveal">
+        <div class="quote-mark">&ldquo;</div>
+        <div class="test-stars">
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"/></svg>
+        </div>
+        <p class="body">Hosted our daughter's engagement at the banquet hall &mdash; the team was warm, professional, and detail-oriented. Our guests are still talking about it. Highly recommend.</p>
+        <div class="test-author">
+          <div class="test-avatar">S</div>
+          <div>
+            <div class="name">Sunita &amp; Vikram Rao</div>
+            <div class="meta">Banquet event &middot; January 2026</div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT + BOOKING -->
+<section id="contact">
+  <div class="container">
+    <div class="section-head reveal">
+      <p class="eyebrow">Plan Your Stay</p>
+      <h2>Reservations &amp; <em>Contact</em></h2>
+      <p>Reach out directly or check availability below &mdash; our team will confirm your booking within hours.</p>
+    </div>
+    <div class="contact-grid">
+      <div class="reveal">
+        <div class="info-block">
+          <h4>Address</h4>
+          <p>B-101, Near C Block Market,<br>Alpha 1, Block C, Greater Noida,<br>Uttar Pradesh 201310, India</p>
+        </div>
+        <div class="info-block">
+          <h4>Phone</h4>
+          <p><a href="tel:+919999273264">+91 99992 73264</a></p>
+        </div>
+        <div class="info-block">
+          <h4>WhatsApp</h4>
+          <p><a href="https://wa.me/919999273264?text=Hello%20KalpTaru%20Residency%2C%20I%27d%20like%20to%20enquire%20about%20a%20stay." target="_blank" rel="noopener">Chat with us instantly &rarr;</a></p>
+        </div>
+        <div class="info-block">
+          <h4>Email</h4>
+          <p><a href="mailto:reservations@kalptaruresidency.in">reservations@kalptaruresidency.in</a></p>
+        </div>
+        <div class="info-block">
+          <h4>Check-in &amp; Check-out</h4>
+          <p>Check-in: 12:00 PM &nbsp;&middot;&nbsp; Check-out: 11:00 AM</p>
+        </div>
+        <div id="booking" class="map-wrap">
+          <iframe src="https://maps.google.com/maps?q=KalpTaru%20Residency%20Greater%20Noida&t=&z=15&ie=UTF8&iwloc=&output=embed" loading="lazy"></iframe>
+        </div>
+      </div>
+
+      <form class="booking-form reveal" id="bookingForm" onsubmit="return submitBooking(event)">
+        <h3>Reserve Your Stay</h3>
+        <p class="sub">Fill in your details &mdash; we'll confirm your booking shortly.</p>
+
+        <div class="form-row">
+          <div class="form-group"><label>Full Name</label><input required type="text" name="name" placeholder="Your name" /></div>
+          <div class="form-group"><label>Phone</label><input required type="tel" name="phone" placeholder="+91" /></div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group"><label>Email</label><input required type="email" name="email" placeholder="you@example.com" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Check-in</label><input required type="date" name="checkin" /></div>
+          <div class="form-group"><label>Check-out</label><input required type="date" name="checkout" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Room Type</label>
+            <select name="room">
+              <option>Deluxe Garden Suite</option>
+              <option>Executive Studio</option>
+              <option>Family Heritage Suite</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Guests</label>
+            <select name="guests">
+              <option>1 Guest</option>
+              <option>2 Guests</option>
+              <option>3 Guests</option>
+              <option>4 Guests</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group"><label>Special Requests</label><textarea name="notes" placeholder="Any special arrangements?"></textarea></div>
+        </div>
+        <button type="submit" class="btn solid">Request Reservation</button>
+
+        <div class="payment-strip">
+          <span class="lbl">Secure Payment Options</span>
+          <div class="payment-icons">
+            <span class="pay-method">UPI</span>
+            <span class="pay-method">VISA</span>
+            <span class="pay-method">Mastercard</span>
+            <span class="pay-method">RuPay</span>
+            <span class="pay-method">Net Banking</span>
+            <span class="pay-method">Cash</span>
+          </div>
+          <div class="pay-secure">
+            <svg viewBox="0 0 24 24"><path d="M12 1l9 4v6c0 5-4 9-9 11-5-2-9-6-9-11V5l9-4zm-1 14l6-6-1.4-1.4L11 12.2 8.4 9.6 7 11l4 4z"/></svg>
+            256-bit SSL secured &middot; Powered by Razorpay
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- AVAILABLE ON RIBBON -->
+<section class="ribbon" aria-label="Available on booking platforms">
+  <div class="ribbon-label">Also Available On</div>
+  <div class="ribbon-track">
+    <a class="ribbon-item" href="#"><span class="dot"></span>Booking.com</a>
+    <a class="ribbon-item" href="#">MakeMyTrip</a>
+    <a class="ribbon-item" href="#">Goibibo</a>
+    <a class="ribbon-item" href="#">Tripadvisor</a>
+    <a class="ribbon-item" href="#">Agoda</a>
+    <a class="ribbon-item" href="#">Trip.com</a>
+    <a class="ribbon-item" href="#">Hotels.com</a>
+    <a class="ribbon-item" href="#">Expedia</a>
+    <a class="ribbon-item" href="#">Google Hotels</a>
+    <a class="ribbon-item" href="#">Yatra</a>
+    <a class="ribbon-item" href="#">EaseMyTrip</a>
+    <a class="ribbon-item" href="#">OYO</a>
+    <a class="ribbon-item" href="#" aria-hidden="true"><span class="dot"></span>Booking.com</a>
+    <a class="ribbon-item" href="#" aria-hidden="true">MakeMyTrip</a>
+    <a class="ribbon-item" href="#" aria-hidden="true">Goibibo</a>
+    <a class="ribbon-item" href="#" aria-hidden="true">Tripadvisor</a>
+    <a class="ribbon-item" href="#" aria-hidden="true">Agoda</a>
+    <a class="ribbon-item" href="#" aria-hidden="true">Trip.com</a>
+    <a class="ribbon-item" href="#" aria-hidden="true">Hotels.com</a>
+    <a class="ribbon-item" href="#" aria-hidden="true">Expedia</a>
+    <a class="ribbon-item" href="#" aria-hidden="true">Google Hotels</a>
+    <a class="ribbon-item" href="#" aria-hidden="true">Yatra</a>
+    <a class="ribbon-item" href="#" aria-hidden="true">EaseMyTrip</a>
+    <a class="ribbon-item" href="#" aria-hidden="true">OYO</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a href="#home" class="brand" style="margin-bottom:1rem">
+          <div class="brand-mark">K</div>
+          <div class="brand-name">KalpTaru<small>Residency</small></div>
+        </a>
+        <p style="margin-top:1rem">A boutique residency in Greater Noida &mdash; combining heritage warmth, contemporary comfort, and the quiet luxury of personalised hospitality.</p>
+        <div class="socials">
+          <a href="#" aria-label="Facebook"><svg viewBox="0 0 24 24"><path d="M22 12a10 10 0 10-11.6 9.9v-7H8v-3h2.4V9.4c0-2.4 1.4-3.7 3.6-3.7 1 0 2.1.2 2.1.2v2.3h-1.2c-1.2 0-1.5.7-1.5 1.5V12h2.6l-.4 3h-2.2v7A10 10 0 0022 12z"/></svg></a>
+          <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm5 5a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6zm5.5-3a1 1 0 110 2 1 1 0 010-2z"/></svg></a>
+          <a href="#" aria-label="Twitter"><svg viewBox="0 0 24 24"><path d="M22 5.8a8.5 8.5 0 01-2.4.7 4.2 4.2 0 001.8-2.3 8.4 8.4 0 01-2.6 1A4.2 4.2 0 0011.5 9a12 12 0 01-8.7-4.4 4.2 4.2 0 001.3 5.6 4.2 4.2 0 01-1.9-.5v.1a4.2 4.2 0 003.4 4.1 4.2 4.2 0 01-1.9.1A4.2 4.2 0 007.6 17a8.5 8.5 0 01-5.3 1.8h-1A12 12 0 008 21c8.4 0 13-7 13-13v-.6c.9-.6 1.7-1.4 2.3-2.3z"/></svg></a>
+        </div>
+      </div>
+      <div>
+        <h5>Explore</h5>
+        <a href="#about">About</a>
+        <a href="#rooms">Rooms</a>
+        <a href="#amenities">Amenities</a>
+        <a href="#gallery">Gallery</a>
+      </div>
+      <div>
+        <h5>Reservations</h5>
+        <a href="#booking">Book a Stay</a>
+        <a href="#contact">Contact Us</a>
+        <a href="tel:+919999273264">+91 99992 73264</a>
+      </div>
+      <div>
+        <h5>Visit</h5>
+        <p>B-101, Alpha 1, Block C<br>Greater Noida, UP 201310</p>
+      </div>
+    </div>
+    <div class="copyright">&copy; <span id="yr"></span> <span class="gold">KalpTaru Residency</span> &middot; Crafted with quiet luxury</div>
+  </div>
+</footer>
+
+<!-- WhatsApp Chat Widget -->
+<div class="whatsapp-widget">
+  <div class="wa-popup" id="waPopup" role="dialog" aria-label="WhatsApp chat">
+    <div class="wa-header">
+      <div class="wa-avatar">
+        <svg viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.2-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.8.9-1 1.1-.2.2-.4.2-.7 0-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.4.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.7.4-.3.3-1 .9-1 2.3 0 1.4 1 2.7 1.2 2.9.1.2 2 3.1 4.9 4.4.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.4zM12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.4c1.4.8 3 1.2 4.8 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>
+      </div>
+      <div class="wa-info">
+        <strong class="name">KalpTaru Residency</strong>
+        <span class="status">Typically replies within an hour</span>
+      </div>
+      <button class="wa-close" id="waClose" aria-label="Close chat">&times;</button>
+    </div>
+    <div class="wa-body">
+      <div class="wa-msg-in">Hi! How can we help you today?</div>
+      <div class="wa-quick">
+        <button class="wa-chip" data-msg="Hello, I'd like to check room availability for my dates.">Check availability</button>
+        <button class="wa-chip" data-msg="Hi, could you share your room types and pricing please?">Room pricing</button>
+        <button class="wa-chip" data-msg="Hello, I'm enquiring about banquet hall booking for an event.">Banquet enquiry</button>
+        <button class="wa-chip" data-msg="Hi, I'd like to speak with someone at the front desk.">Talk to reception</button>
+      </div>
+    </div>
+    <div class="wa-input-row">
+      <input class="wa-input" id="waInput" type="text" placeholder="Type a message&hellip;" />
+      <button class="wa-send" id="waSend" aria-label="Send">
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+      </button>
+    </div>
+    <div class="wa-foot">Opens WhatsApp &middot; +91 99992 73264</div>
+  </div>
+  <button class="whatsapp-fab" id="waBtn" aria-label="Open WhatsApp chat">
+    <svg viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.2-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.8.9-1 1.1-.2.2-.4.2-.7 0-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.4.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.7.4-.3.3-1 .9-1 2.3 0 1.4 1 2.7 1.2 2.9.1.2 2 3.1 4.9 4.4.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.4zM12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.4c1.4.8 3 1.2 4.8 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3C3.9 14.9 3.5 13.5 3.5 12 3.5 7.3 7.3 3.5 12 3.5s8.5 3.8 8.5 8.5-3.8 8.5-8.5 8.5z"/></svg>
+  </button>
+</div>
+
+<div class="toast" id="toast">Reservation request sent &mdash; we'll be in touch shortly.</div>
+
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  const nav = document.getElementById('topNav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+  });
+
+  const toggle = document.getElementById('menuToggle');
+  const navLinks = document.getElementById('navLinks');
+  toggle.addEventListener('click', () => navLinks.classList.toggle('open'));
+  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  function submitBooking(e){
+    e.preventDefault();
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3500);
+    e.target.reset();
+    return false;
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  document.querySelectorAll('input[type=date]').forEach(d => d.min = today);
+
+  const PHONE = '919999273264';
+  const waBtn = document.getElementById('waBtn');
+  const waPopup = document.getElementById('waPopup');
+  const waClose = document.getElementById('waClose');
+  const waInput = document.getElementById('waInput');
+  const waSend = document.getElementById('waSend');
+  const openWA = (text) => window.open('https://wa.me/' + PHONE + '?text=' + encodeURIComponent(text), '_blank');
+
+  waBtn.addEventListener('click', () => waPopup.classList.toggle('open'));
+  waClose.addEventListener('click', () => waPopup.classList.remove('open'));
+  document.querySelectorAll('.wa-chip').forEach(c => {
+    c.addEventListener('click', () => openWA(c.dataset.msg || c.textContent));
+  });
+  waSend.addEventListener('click', () => {
+    const t = waInput.value.trim() || "Hello KalpTaru Residency, I'd like to enquire about a stay.";
+    openWA(t);
+    waInput.value = '';
+  });
+  waInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') waSend.click(); });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.whatsapp-widget')) waPopup.classList.remove('open');
+  });
+</script>
+</body>
+</html>

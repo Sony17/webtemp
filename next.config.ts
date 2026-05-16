@@ -9,6 +9,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: "/kalptaru-residency-sample",
+        destination: "/kalptaru-residency-sample/index.html",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
