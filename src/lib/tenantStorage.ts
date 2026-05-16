@@ -9,14 +9,39 @@ import { put, list, del, head } from "@vercel/blob";
 const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
 const LOCAL_ROOT = path.join(process.cwd(), "data", "tenants");
 
+// Committed-tenant roots: drop an `index.html` (plus assets) into
+// `tenants/<sub>/` or `public/<sub>/` and the site goes live at
+// `<sub>.openidea.co.in`. Read-only — the admin upload flow still writes to
+// blob (prod) or `data/tenants/<sub>/` (dev).
+const COMMITTED_ROOTS = [
+  path.join(process.cwd(), "tenants"),
+  path.join(process.cwd(), "public"),
+];
+
 function tenantKey(subdomain: string, filePath: string) {
   const clean = filePath.replace(/^\/+/, "");
   return `tenants/${subdomain}/${clean}`;
 }
 
+function cleanRelPath(filePath: string) {
+  return filePath.replace(/^\/+/, "").replace(/\.\./g, "");
+}
+
 function localFilePath(subdomain: string, filePath: string) {
-  const clean = filePath.replace(/^\/+/, "").replace(/\.\./g, "");
-  return path.join(LOCAL_ROOT, subdomain, clean);
+  return path.join(LOCAL_ROOT, subdomain, cleanRelPath(filePath));
+}
+
+async function readCommittedFile(subdomain: string, filePath: string) {
+  const rel = cleanRelPath(filePath);
+  for (const root of COMMITTED_ROOTS) {
+    try {
+      const buf = await fs.readFile(path.join(root, subdomain, rel));
+      return new Uint8Array(buf);
+    } catch {
+      // try next root
+    }
+  }
+  return null;
 }
 
 export async function putTenantFile(
@@ -60,22 +85,28 @@ export async function getTenantFile(
     const key = tenantKey(subdomain, filePath);
     try {
       const meta = await head(key);
-      if (!meta?.url) return null;
-      const res = await fetch(meta.url);
-      if (!res.ok) return null;
-      const ab = await res.arrayBuffer();
-      return { body: new Uint8Array(ab), contentType: meta.contentType ?? contentType };
+      if (meta?.url) {
+        const res = await fetch(meta.url);
+        if (res.ok) {
+          const ab = await res.arrayBuffer();
+          return { body: new Uint8Array(ab), contentType: meta.contentType ?? contentType };
+        }
+      }
     } catch {
-      return null;
+      // fall through to committed roots
+    }
+  } else {
+    try {
+      const buf = await fs.readFile(localFilePath(subdomain, filePath));
+      return { body: new Uint8Array(buf), contentType };
+    } catch {
+      // fall through to committed roots
     }
   }
 
-  try {
-    const buf = await fs.readFile(localFilePath(subdomain, filePath));
-    return { body: new Uint8Array(buf), contentType };
-  } catch {
-    return null;
-  }
+  const committed = await readCommittedFile(subdomain, filePath);
+  if (committed) return { body: committed, contentType };
+  return null;
 }
 
 export async function deleteTenantFiles(subdomain: string): Promise<void> {

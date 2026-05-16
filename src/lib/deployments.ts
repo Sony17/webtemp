@@ -41,6 +41,52 @@ function seedAsDeployments(): Deployment[] {
   }));
 }
 
+// Committed tenants: any folder under `tenants/<sub>/` or `public/<sub>/`
+// containing an `index.html` is published at `<sub>.openidea.co.in` without
+// touching the admin store. Mirrors the Sony17/openidea-multitenant pattern.
+const COMMITTED_ROOTS: Array<{ root: string; label: string }> = [
+  { root: path.join(process.cwd(), "tenants"), label: "tenants" },
+  { root: path.join(process.cwd(), "public"), label: "public" },
+];
+
+async function discoverCommittedTenants(): Promise<Deployment[]> {
+  const out: Deployment[] = [];
+  const seen = new Set<string>();
+
+  for (const { root, label } of COMMITTED_ROOTS) {
+    let entries: import("node:fs").Dirent[];
+    try {
+      entries = await fs.readdir(root, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+
+    for (const ent of entries) {
+      if (!ent.isDirectory()) continue;
+      const sub = slugifySubdomain(ent.name);
+      if (!sub || sub.length < 3 || RESERVED.has(sub) || seen.has(sub)) continue;
+
+      try {
+        await fs.access(path.join(root, ent.name, "index.html"));
+      } catch {
+        continue;
+      }
+
+      seen.add(sub);
+      out.push({
+        id: `committed-${label}-${sub}`,
+        subdomain: sub,
+        type: "uploaded",
+        templateSlug: "committed",
+        brandName: sub,
+        entryFile: "index.html",
+        deployedAt: 0,
+      });
+    }
+  }
+  return out;
+}
+
 async function readFileStore(): Promise<Deployment[]> {
   if (useBlob) {
     try {
@@ -84,11 +130,17 @@ export async function listDeployments(): Promise<Deployment[]> {
   // File store wins on subdomain collisions (admin overrides seed).
   const fileList = await readFileStore();
   const subs = new Set(fileList.map((d) => d.subdomain));
-  const merged = [
-    ...fileList,
-    ...seedAsDeployments().filter((s) => !subs.has(s.subdomain)),
-  ];
-  return merged.sort((a, b) => b.deployedAt - a.deployedAt);
+
+  const seeds = seedAsDeployments().filter((s) => !subs.has(s.subdomain));
+  seeds.forEach((s) => subs.add(s.subdomain));
+
+  const committed = (await discoverCommittedTenants()).filter(
+    (c) => !subs.has(c.subdomain)
+  );
+
+  return [...fileList, ...seeds, ...committed].sort(
+    (a, b) => b.deployedAt - a.deployedAt
+  );
 }
 
 export async function getDeployment(subdomain: string): Promise<Deployment | null> {
@@ -152,6 +204,11 @@ export async function createDeployment(input: {
 export async function deleteDeployment(id: string): Promise<boolean> {
   if (id.startsWith("seed-")) {
     throw new Error("Seed tenants are read-only. Edit src/data/deployments.ts to remove.");
+  }
+  if (id.startsWith("committed-")) {
+    throw new Error(
+      "Committed tenants are read-only. Delete the folder under tenants/ or public/ and redeploy."
+    );
   }
   const fileList = await readFileStore();
   const target = fileList.find((d) => d.id === id);

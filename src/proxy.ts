@@ -36,7 +36,7 @@ function extractSubdomain(host: string | null): string | null {
   return null;
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const sub = extractSubdomain(req.headers.get("host"));
   if (!sub) return NextResponse.next();
 
@@ -47,6 +47,10 @@ export function middleware(req: NextRequest) {
   return NextResponse.rewrite(url);
 }
 
+// Matcher intentionally includes dotted paths so tenant asset requests
+// (/index.html, /style.css, /app.js, /logo.png) reach proxy and get rewritten
+// to /s/<sub>/<path>. On the apex host, proxy returns next() and Next still
+// serves files from public/ normally — just with one extra function call.
 export const config = {
-  matcher: ["/((?!_next|api|favicon.ico|.*\\..*).*)"],
+  matcher: ["/((?!_next|api|favicon.ico).*)"],
 };
