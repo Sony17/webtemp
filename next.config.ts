@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
         source: "/kalptaru-residency-sample",
         destination: "/kalptaru-residency-sample/index.html",
       },
+      {
+        source: "/demo-wallpaper",
+        destination: "/demo-wallpaper/index.html",
+      },
     ];
   },
 };
