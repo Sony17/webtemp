@@ -6,6 +6,9 @@
 
 export type Deployment = {
   subdomain: string;
+  // "template" → render the chosen template with the brand fields.
+  // "uploaded" → serve files from tenant storage (Blob/local).
+  type?: "template" | "uploaded";
   templateSlug: string;
   brandName: string;
   tagline?: string;
@@ -15,6 +18,10 @@ export type Deployment = {
   address?: string;
   city?: string;
   hours?: string;
+  // Uploaded-site fields:
+  entryFile?: string;     // default "index.html"
+  fileCount?: number;
+  totalBytes?: number;
 };
 
 export const deployments: Deployment[] = [

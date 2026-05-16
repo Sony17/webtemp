@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { deployments as seedDeployments, type Deployment as SeedDeployment } from "@/data/deployments";
+import { deleteTenantFiles } from "@/lib/tenantStorage";
 
 // File-backed runtime store for tenant sites.
 // - Local dev / any single-server host: full read/write works.
@@ -71,7 +72,8 @@ export async function getDeployment(subdomain: string): Promise<Deployment | nul
 
 export async function createDeployment(input: {
   subdomain: string;
-  templateSlug: string;
+  type?: "template" | "uploaded";
+  templateSlug?: string;
   brandName?: string;
   tagline?: string;
   primaryColor?: string;
@@ -80,6 +82,9 @@ export async function createDeployment(input: {
   address?: string;
   city?: string;
   hours?: string;
+  entryFile?: string;
+  fileCount?: number;
+  totalBytes?: number;
 }): Promise<Deployment> {
   const sub = slugifySubdomain(input.subdomain);
   if (sub.length < 3) throw new Error("Subdomain must be at least 3 characters.");
@@ -89,10 +94,15 @@ export async function createDeployment(input: {
   if (all.some((d) => d.subdomain === sub))
     throw new Error(`${sub}.openidea.co.in is already deployed.`);
 
+  const type = input.type ?? "template";
+  if (type === "template" && !input.templateSlug)
+    throw new Error("templateSlug is required for template deployments.");
+
   const d: Deployment = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     subdomain: sub,
-    templateSlug: input.templateSlug,
+    type,
+    templateSlug: input.templateSlug ?? "uploaded",
     brandName: input.brandName?.trim() || sub,
     tagline: input.tagline?.trim() || undefined,
     primaryColor: input.primaryColor || undefined,
@@ -101,6 +111,9 @@ export async function createDeployment(input: {
     address: input.address?.trim() || undefined,
     city: input.city?.trim() || undefined,
     hours: input.hours?.trim() || undefined,
+    entryFile: input.entryFile || undefined,
+    fileCount: input.fileCount,
+    totalBytes: input.totalBytes,
     deployedAt: Date.now(),
   };
 
@@ -114,8 +127,18 @@ export async function deleteDeployment(id: string): Promise<boolean> {
     throw new Error("Seed tenants are read-only. Edit src/data/deployments.ts to remove.");
   }
   const fileList = await readFileStore();
-  const next = fileList.filter((d) => d.id !== id);
-  if (next.length === fileList.length) return false;
-  await writeFileStore(next);
+  const target = fileList.find((d) => d.id === id);
+  if (!target) return false;
+
+  await writeFileStore(fileList.filter((d) => d.id !== id));
+
+  // Clean up any uploaded site files for this tenant.
+  if (target.type === "uploaded") {
+    try {
+      await deleteTenantFiles(target.subdomain);
+    } catch {
+      // Storage may already be gone; not fatal for the record removal.
+    }
+  }
   return true;
 }

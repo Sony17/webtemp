@@ -42,3 +42,4 @@ next-env.d.ts
 
 # tenant deployments (file-backed runtime store; replace with Vercel KV/DB in prod)
 /data/deployments.json
+/data/tenants/

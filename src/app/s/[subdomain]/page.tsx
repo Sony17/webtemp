@@ -30,6 +30,27 @@ export default async function TenantPage({
   const deployment = await getDeployment(subdomain);
   if (!deployment) notFound();
 
+  // Uploaded multi-tenant sites: render the user's index.html in a full-screen
+  // iframe so the parent URL stays clean. Internal navigation inside the
+  // iframe (relative links, JS routers) keeps working through the catch-all
+  // route at /s/[subdomain]/[...path].
+  if (deployment.type === "uploaded") {
+    const entry = deployment.entryFile || "index.html";
+    return (
+      <iframe
+        title={deployment.brandName}
+        src={`/${entry}`}
+        style={{
+          position: "fixed",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          border: 0,
+        }}
+      />
+    );
+  }
+
   const template = templates.find((t) => t.slug === deployment.templateSlug);
   if (!template) notFound();
 
