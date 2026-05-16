@@ -11,10 +11,13 @@ type Deployment = {
   id: string;
   subdomain: string;
   templateSlug: string;
+  brandName?: string;
+  tagline?: string;
+  primaryColor?: string;
+  phone?: string;
+  city?: string;
   deployedAt: number;
 };
-
-const STORAGE_KEY = "oi_deployments";
 
 function slugify(input: string) {
   return input
@@ -26,6 +29,7 @@ function slugify(input: string) {
 }
 
 function formatTime(ts: number) {
+  if (!ts) return "Seed";
   const d = new Date(ts);
   return d.toLocaleString("en-IN", {
     day: "2-digit",
@@ -42,10 +46,22 @@ export default function AdminDashboard() {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [subdomain, setSubdomain] = useState("");
   const [templateSlug, setTemplateSlug] = useState(templates[0].slug);
+  const [brandName, setBrandName] = useState("");
   const [justDeployed, setJustDeployed] = useState<Deployment | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Auth gate + load state
+  async function refresh() {
+    try {
+      const res = await fetch("/api/deployments", { cache: "no-store" });
+      const json = await res.json();
+      setDeployments(json.items ?? []);
+    } catch {
+      // ignore — keep previous list
+    }
+  }
+
+  // Auth gate + initial load
   useEffect(() => {
     let authed = false;
     try {
@@ -57,32 +73,15 @@ export default function AdminDashboard() {
       router.replace("/admin/login");
       return;
     }
-
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setDeployments(JSON.parse(raw) as Deployment[]);
-    } catch {
-      // ignore
-    }
-    setReady(true);
+    refresh().then(() => setReady(true));
   }, [router]);
-
-  // Persist deployments
-  useEffect(() => {
-    if (!ready) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(deployments));
-    } catch {
-      // ignore
-    }
-  }, [deployments, ready]);
 
   const selectedTemplate = useMemo(
     () => templates.find((t) => t.slug === templateSlug) ?? templates[0],
     [templateSlug]
   );
 
-  function handleDeploy(e: React.FormEvent) {
+  async function handleDeploy(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
@@ -91,25 +90,52 @@ export default function AdminDashboard() {
       setError("Subdomain must be at least 3 characters (a-z, 0-9, hyphen).");
       return;
     }
-    if (deployments.some((d) => d.subdomain === slug)) {
-      setError(`${slug}.openidea.co.in is already deployed.`);
-      return;
-    }
 
-    const next: Deployment = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      subdomain: slug,
-      templateSlug,
-      deployedAt: Date.now(),
-    };
-    setDeployments((prev) => [next, ...prev]);
-    setSubdomain("");
-    setJustDeployed(next);
-    setTimeout(() => setJustDeployed(null), 4000);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/deployments", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subdomain: slug,
+          templateSlug,
+          brandName: brandName || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error ?? "Failed to deploy");
+        return;
+      }
+      const next = json.deployment as Deployment;
+      setSubdomain("");
+      setBrandName("");
+      setJustDeployed(next);
+      setTimeout(() => setJustDeployed(null), 4000);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  function handleDelete(id: string) {
-    setDeployments((prev) => prev.filter((d) => d.id !== id));
+  async function handleDelete(id: string) {
+    if (id.startsWith("seed-")) {
+      setError("Seed tenants are read-only. Edit src/data/deployments.ts to remove.");
+      return;
+    }
+    try {
+      const res = await fetch(`/api/deployments/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setError(json.error ?? "Failed to delete");
+        return;
+      }
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error");
+    }
   }
 
   function handleLogout() {
@@ -229,6 +255,20 @@ export default function AdminDashboard() {
                   ))}
                 </select>
               </div>
+
+              <div className="sm:col-span-2">
+                <label htmlFor="brand" className="block text-sm font-medium text-zinc-700">
+                  Brand name <span className="text-zinc-400">(optional — defaults to subdomain)</span>
+                </label>
+                <input
+                  id="brand"
+                  type="text"
+                  value={brandName}
+                  onChange={(e) => setBrandName(e.target.value)}
+                  placeholder="Sony's Mobile Care"
+                  className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                />
+              </div>
             </div>
 
             {error && (
@@ -250,9 +290,10 @@ export default function AdminDashboard() {
             <div className="mt-6 flex justify-end">
               <button
                 type="submit"
-                className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                disabled={submitting}
+                className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Deploy
+                {submitting ? "Deploying…" : "Deploy"}
               </button>
             </div>
           </form>

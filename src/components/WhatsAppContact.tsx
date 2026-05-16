@@ -26,7 +26,11 @@ function waLink(message: string) {
 
 export default function WhatsAppContact() {
   const pathname = usePathname() ?? "";
-  const hidden = pathname.startsWith("/preview") || pathname.startsWith("/admin");
+  // Hide on tenant sites (/s/*), preview pages, and admin pages.
+  const hidden =
+    pathname.startsWith("/s/") ||
+    pathname.startsWith("/preview") ||
+    pathname.startsWith("/admin");
 
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
