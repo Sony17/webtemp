@@ -19,6 +19,14 @@ const nextConfig: NextConfig = {
         source: "/demo-wallpaper",
         destination: "/demo-wallpaper/index.html",
       },
+      {
+        source: "/sample-caterer",
+        destination: "/sample-caterer/index.html",
+      },
+      {
+        source: "/electrical-sample",
+        destination: "/electrical-sample/index.html",
+      },
     ];
   },
 };
