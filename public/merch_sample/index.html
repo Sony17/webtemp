@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raj Collection | Premium Fashion Store in Palwal | Trendy Clothing Boutique</title>
+  <meta name="description" content="Raj Collection — Palwal's premier fashion boutique. Discover trendy men's & women's clothing, ethnic wear, party wear & seasonal collections. Visit our stylish showroom at New Colony, Palwal.">
+  <meta name="keywords" content="Fashion Store in Palwal, Boutique Clothing Store, Trendy Fashion Collection, Men's Women's Fashion, Stylish Clothing Store, Fashion Boutique Haryana, Raj Collection Palwal">
+  <meta property="og:title" content="Raj Collection | Premium Fashion Store in Palwal">
+  <meta property="og:description" content="Palwal's premier fashion boutique. Trendy men's & women's clothing, ethnic wear, party wear & seasonal collections.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#C9A96E">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E👗%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ClothingStore",
+    "name": "Raj Collection",
+    "image": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80",
+    "telephone": "+91-98131-35040",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "124/R, New Colony",
+      "addressLocality": "Palwal",
+      "addressRegion": "Haryana",
+      "postalCode": "121102",
+      "addressCountry": "IN"
+    },
+    "description": "Premium fashion boutique offering trendy men's & women's clothing, ethnic wear, party wear and seasonal collections in Palwal, Haryana.",
+    "priceRange": "$$",
+    "openingHoursSpecification": [
+      {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"], "opens": "10:00", "closes": "21:00"}
+    ]
+  }
+  </script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: {50:'#FFF9E6',100:'#FFF0BF',200:'#FFE08A',300:'#FFD054',400:'#E8B84B',500:'#C9A96E',600:'#B8860B',700:'#8B6914',800:'#6B4E3D',900:'#3D2B1F'},
+            cream: {50:'#FFFDF7',100:'#FFF9F0',200:'#FAF8F5',300:'#F5EDE3',400:'#E8E4DF',500:'#D4CFC8'}
+          },
+          fontFamily: {
+            display: ['Playfair Display','serif'],
+            heading: ['Poppins','sans-serif'],
+            body: ['Inter','sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html{scroll-behavior:smooth}
+    body{font-family:'Inter',sans-serif;overflow-x:hidden}
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-track{background:#FAF8F5}
+    ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#C9A96E,#B8860B);border-radius:10px}
+    #progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,#C9A96E,#E8B84B,#C9A96E);z-index:9999;transition:width .15s;box-shadow:0 0 10px rgba(201,169,110,.5)}
+    .reveal{opacity:0;transform:translateY(40px);transition:opacity .9s cubic-bezier(.25,.46,.45,.94),transform .9s cubic-bezier(.25,.46,.45,.94)}
+    .reveal.revealed{opacity:1;transform:translateY(0)}
+    .reveal-delay-1{transition-delay:.1s}
+    .reveal-delay-2{transition-delay:.2s}
+    .reveal-delay-3{transition-delay:.3s}
+    .reveal-delay-4{transition-delay:.4s}
+    .reveal-delay-5{transition-delay:.5s}
+    @keyframes float{0%,100%{transform:translateY(0) rotate(0deg)}25%{transform:translateY(-8px) rotate(1deg)}75%{transform:translateY(4px) rotate(-1deg)}}
+    @keyframes floatSlow{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+    @keyframes glow{0%,100%{opacity:.4}50%{opacity:.8}}
+    @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+    @keyframes spin-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    .animate-float{animation:float 4s ease-in-out infinite}
+    .animate-float-slow{animation:floatSlow 5s ease-in-out infinite}
+    .animate-glow{animation:glow 3s ease-in-out infinite}
+    .animate-spin-slow{animation:spin-slow 20s linear infinite}
+    @keyframes pulse-green{0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.6)}50%{box-shadow:0 0 0 14px rgba(37,211,102,0)}}
+    .whatsapp-pulse{animation:pulse-green 2s infinite}
+    .nav-scrolled{background:rgba(255,255,255,.92)!important;backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important;border-bottom:1px solid rgba(201,169,110,.15);box-shadow:0 4px 30px rgba(0,0,0,.06)}
+    .nav-link-anim{position:relative}
+    .nav-link-anim::after{content:'';position:absolute;bottom:-4px;left:50%;width:0;height:2px;background:linear-gradient(90deg,#C9A96E,#E8B84B);transition:all .3s ease;transform:translateX(-50%);border-radius:2px}
+    .nav-link-anim:hover::after,.nav-link-anim.active::after{width:100%}
+    .collection-card:hover img{transform:scale(1.12)}
+    .collection-card:hover .card-overlay{opacity:1}
+    .collection-card:hover .card-content{transform:translateY(0)}
+    .gallery-item:hover img{transform:scale(1.1)}
+    .gallery-item:hover .gallery-overlay{opacity:1}
+    .glass{background:rgba(255,255,255,.08);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.15)}
+    .glass-dark{background:rgba(0,0,0,.2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1)}
+    .glass-light{background:rgba(255,255,255,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.6)}
+    .glow-gold{box-shadow:0 0 30px rgba(201,169,110,.2)}
+    .glow-gold-hover:hover{box-shadow:0 0 40px rgba(201,169,110,.3)}
+    .btn-premium{position:relative;overflow:hidden;transition:all .3s ease}
+    .btn-premium::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transition:left .5s}
+    .btn-premium:hover::before{left:100%}
+    .btn-premium:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(201,169,110,.3)}
+    .text-gradient{background:linear-gradient(135deg,#C9A96E,#FFD054,#C9A96E);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 3s linear infinite}
+    .feature-card{transition:all .4s cubic-bezier(.25,.46,.45,.94)}
+    .feature-card:hover{transform:translateY(-8px);box-shadow:0 20px 60px rgba(0,0,0,.08);border-color:rgba(201,169,110,.3)}
+    .section-blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.3;pointer-events:none}
+  </style>
+</head>
+<body class="bg-cream-200 text-gray-800 font-body">
+  <div id="progress-bar" style="width:0%"></div>
+
+  <!-- PREMIUM NAVBAR -->
+  <nav id="navbar" class="fixed top-0 left-0 w-full z-50 transition-all duration-500" style="backdrop-filter:blur(0px)">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20 lg:h-24">
+        <a href="#home" class="font-display text-2xl md:text-3xl font-bold text-white transition-all duration-300" id="nav-logo">
+          Raj <span class="text-gold-400">Collection</span>
+        </a>
+        <div class="hidden lg:flex items-center space-x-10">
+          <a href="#home" class="nav-link nav-link-anim text-white/90 hover:text-gold-400 font-heading text-[13px] font-medium tracking-widest uppercase transition-all duration-300">Home</a>
+          <a href="#collections" class="nav-link nav-link-anim text-white/90 hover:text-gold-400 font-heading text-[13px] font-medium tracking-widest uppercase transition-all duration-300">Collections</a>
+          <a href="#about" class="nav-link nav-link-anim text-white/90 hover:text-gold-400 font-heading text-[13px] font-medium tracking-widest uppercase transition-all duration-300">About</a>
+          <a href="#gallery" class="nav-link nav-link-anim text-white/90 hover:text-gold-400 font-heading text-[13px] font-medium tracking-widest uppercase transition-all duration-300">Gallery</a>
+          <a href="#contact" class="nav-link nav-link-anim text-white/90 hover:text-gold-400 font-heading text-[13px] font-medium tracking-widest uppercase transition-all duration-300">Contact</a>
+        </div>
+        <a href="https://maps.google.com/?cid=7197420837289318051" target="_blank" class="hidden lg:inline-flex bg-gold-500/90 hover:bg-gold-500 text-white px-6 py-2.5 rounded-full font-heading text-xs font-semibold tracking-wider uppercase btn-premium items-center gap-2">
+          <i class="fa-solid fa-location-dot text-[10px]"></i> Visit Store
+        </a>
+        <button id="mobile-toggle" class="lg:hidden text-white text-2xl w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-all">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="lg:hidden fixed inset-0 bg-black/98 z-[60] flex flex-col items-center justify-center gap-8 opacity-0 pointer-events-none transition-all duration-500 scale-95">
+      <button id="mobile-close" class="absolute top-6 right-6 text-white/80 hover:text-white text-2xl w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10"><i class="fa-solid fa-xmark"></i></button>
+      <div class="text-center mb-4">
+        <p class="font-display text-3xl text-white font-bold">Raj <span class="text-gold-400">Collection</span></p>
+        <p class="text-white/40 text-xs font-heading tracking-widest uppercase mt-2">Premium Fashion</p>
+      </div>
+      <a href="#home" class="mobile-link text-white/80 text-lg font-heading tracking-wider hover:text-gold-400 transition-all">Home</a>
+      <a href="#collections" class="mobile-link text-white/80 text-lg font-heading tracking-wider hover:text-gold-400 transition-all">Collections</a>
+      <a href="#about" class="mobile-link text-white/80 text-lg font-heading tracking-wider hover:text-gold-400 transition-all">About</a>
+      <a href="#gallery" class="mobile-link text-white/80 text-lg font-heading tracking-wider hover:text-gold-400 transition-all">Gallery</a>
+      <a href="#contact" class="mobile-link text-white/80 text-lg font-heading tracking-wider hover:text-gold-400 transition-all">Contact</a>
+      <a href="https://maps.google.com/?cid=7197420837289318051" target="_blank" class="mt-4 bg-gold-500 text-white px-8 py-3.5 rounded-full font-heading text-sm font-semibold tracking-wider btn-premium">Visit Store</a>
+    </div>
+  </nav>
+
+  <!-- HERO SECTION -->
+  <section id="home" class="relative min-h-screen flex items-center overflow-hidden">
+    <div class="absolute inset-0">
+      <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80" alt="Raj Collection - Premium Fashion Store in Palwal" class="w-full h-full object-cover scale-105">
+      <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30"></div>
+    </div>
+    <!-- Decorative Glowing Orbs -->
+    <div class="absolute top-1/4 right-1/4 w-96 h-96 bg-gold-500/10 rounded-full blur-[120px] animate-glow"></div>
+    <div class="absolute bottom-1/4 left-1/6 w-64 h-64 bg-gold-400/8 rounded-full blur-[100px] animate-glow" style="animation-delay:1.5s"></div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-32 lg:py-0">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div class="space-y-8">
+          <div class="reveal">
+            <span class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/15 px-5 py-2 rounded-full text-gold-300 text-xs font-heading font-medium tracking-widest uppercase">
+              <span class="w-2 h-2 bg-gold-400 rounded-full animate-pulse"></span> Premium Fashion Boutique
+            </span>
+          </div>
+          <h1 class="font-display text-5xl sm:text-6xl md:text-7xl font-bold text-white leading-[1.1] reveal reveal-delay-1">
+            Style That<br><span class="text-gradient">Defines You</span>
+          </h1>
+          <p class="text-white/70 text-lg md:text-xl max-w-lg font-light leading-relaxed reveal reveal-delay-2">Discover trendy fashion collections crafted for elegance, comfort, and confidence at Palwal's finest boutique.</p>
+          <div class="flex flex-wrap items-center gap-4 reveal reveal-delay-3">
+            <a href="#collections" class="bg-gradient-to-r from-gold-500 to-gold-600 text-white px-8 py-4 rounded-full font-heading font-semibold text-sm tracking-wider uppercase btn-premium inline-flex items-center gap-2">
+              Explore Collection <i class="fa-solid fa-arrow-right text-xs"></i>
+            </a>
+            <a href="#contact" class="border border-white/30 text-white px-8 py-4 rounded-full font-heading font-medium text-sm tracking-wider uppercase hover:bg-white hover:text-gray-900 transition-all duration-300">
+              Contact Us
+            </a>
+          </div>
+          <div class="flex items-center gap-6 pt-4 reveal reveal-delay-4">
+            <div class="text-center">
+              <p class="text-white font-display text-2xl font-bold">10+</p>
+              <p class="text-white/50 text-xs font-heading">Years Trust</p>
+            </div>
+            <div class="w-px h-10 bg-white/20"></div>
+            <div class="text-center">
+              <p class="text-white font-display text-2xl font-bold">5K+</p>
+              <p class="text-white/50 text-xs font-heading">Customers</p>
+            </div>
+            <div class="w-px h-10 bg-white/20"></div>
+            <div class="text-center">
+              <p class="text-white font-display text-2xl font-bold">1K+</p>
+              <p class="text-white/50 text-xs font-heading">Collections</p>
+            </div>
+          </div>
+        </div>
+        <!-- Right side floating elements -->
+        <div class="hidden lg:flex items-center justify-center relative">
+          <div class="absolute w-80 h-80 border border-gold-500/20 rounded-full animate-spin-slow"></div>
+          <div class="absolute w-60 h-60 border border-white/10 rounded-full animate-spin-slow" style="animation-direction:reverse;animation-duration:15s"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Floating Badges -->
+    <div class="absolute top-32 right-8 lg:right-20 animate-float hidden md:block">
+      <div class="glass px-5 py-2.5 rounded-full text-white text-xs font-heading font-medium tracking-wide flex items-center gap-2">
+        <span class="w-2 h-2 bg-green-400 rounded-full"></span> New Arrivals
+      </div>
+    </div>
+    <div class="absolute bottom-40 left-8 lg:left-20 animate-float-slow hidden md:block" style="animation-delay:2s">
+      <div class="glass px-5 py-2.5 rounded-full text-white text-xs font-heading font-medium tracking-wide flex items-center gap-2">
+        <i class="fa-solid fa-fire text-orange-400"></i> Trending Collection
+      </div>
+    </div>
+    <div class="absolute bottom-32 right-12 lg:right-32 animate-float hidden md:block" style="animation-delay:1s">
+      <div class="glass px-5 py-2.5 rounded-full text-white text-xs font-heading font-medium tracking-wide">
+        <i class="fa-solid fa-star text-gold-400"></i> 4.9 Rated
+      </div>
+    </div>
+    <!-- Scroll Indicator -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+      <span class="text-white/40 text-[10px] font-heading tracking-widest uppercase">Scroll</span>
+      <div class="w-5 h-8 border border-white/30 rounded-full flex items-start justify-center p-1">
+        <div class="w-1 h-2 bg-gold-400 rounded-full animate-bounce"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURED COLLECTIONS -->
+  <section id="collections" class="py-24 md:py-32 bg-cream-100 relative overflow-hidden">
+    <div class="section-blob w-96 h-96 bg-gold-200/40 top-0 right-0"></div>
+    <div class="section-blob w-72 h-72 bg-gold-100/30 bottom-0 left-0"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="text-center mb-20 reveal">
+        <span class="inline-block bg-gold-50 text-gold-600 px-4 py-1.5 rounded-full text-xs font-heading font-semibold tracking-widest uppercase mb-4">Curated Fashion</span>
+        <h2 class="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-5">Our Collections</h2>
+        <p class="text-gray-500 max-w-lg mx-auto font-light">Handpicked fashion for every occasion, crafted with elegance and modern sensibility.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <!-- Card 1 -->
+        <div class="collection-card group relative rounded-3xl overflow-hidden aspect-[3/4] shadow-lg hover:shadow-2xl transition-all duration-500 reveal reveal-delay-1">
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80" alt="Men's Fashion Collection at Raj Collection Palwal" class="w-full h-full object-cover transition-transform duration-700">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
+          <div class="absolute top-4 left-4">
+            <span class="bg-white/20 backdrop-blur-md text-white text-[10px] font-heading font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full border border-white/20">Trending</span>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 p-7 card-content translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+            <h3 class="font-display text-2xl font-bold text-white mb-1">Men's Fashion</h3>
+            <p class="text-white/60 text-sm font-heading">Stylish & Contemporary</p>
+            <div class="mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <span class="text-gold-400 text-xs font-heading font-medium tracking-wider uppercase inline-flex items-center gap-1">View Collection <i class="fa-solid fa-arrow-right text-[10px]"></i></span>
+            </div>
+          </div>
+        </div>
+        <!-- Card 2 -->
+        <div class="collection-card group relative rounded-3xl overflow-hidden aspect-[3/4] shadow-lg hover:shadow-2xl transition-all duration-500 reveal reveal-delay-2">
+          <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80" alt="Women's Fashion Collection at Raj Collection Palwal" class="w-full h-full object-cover transition-transform duration-700">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
+          <div class="absolute top-4 left-4">
+            <span class="bg-white/20 backdrop-blur-md text-white text-[10px] font-heading font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full border border-white/20">Best Seller</span>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 p-7 card-content translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+            <h3 class="font-display text-2xl font-bold text-white mb-1">Women's Fashion</h3>
+            <p class="text-white/60 text-sm font-heading">Elegant & Trendy</p>
+            <div class="mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <span class="text-gold-400 text-xs font-heading font-medium tracking-wider uppercase inline-flex items-center gap-1">View Collection <i class="fa-solid fa-arrow-right text-[10px]"></i></span>
+            </div>
+          </div>
+        </div>
+        <!-- Card 3 -->
+        <div class="collection-card group relative rounded-3xl overflow-hidden aspect-[3/4] shadow-lg hover:shadow-2xl transition-all duration-500 reveal reveal-delay-3">
+          <img src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80" alt="Ethnic Wear Collection at Raj Collection Palwal" class="w-full h-full object-cover transition-transform duration-700">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
+          <div class="absolute top-4 left-4">
+            <span class="bg-white/20 backdrop-blur-md text-white text-[10px] font-heading font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full border border-white/20">New Arrival</span>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 p-7 card-content translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+            <h3 class="font-display text-2xl font-bold text-white mb-1">Ethnic Wear</h3>
+            <p class="text-white/60 text-sm font-heading">Traditional & Graceful</p>
+            <div class="mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <span class="text-gold-400 text-xs font-heading font-medium tracking-wider uppercase inline-flex items-center gap-1">View Collection <i class="fa-solid fa-arrow-right text-[10px]"></i></span>
+            </div>
+          </div>
+        </div>
+        <!-- Card 4 -->
+        <div class="collection-card group relative rounded-3xl overflow-hidden aspect-[3/4] shadow-lg hover:shadow-2xl transition-all duration-500 reveal reveal-delay-1">
+          <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&q=80" alt="Casual Collection at Raj Collection Palwal" class="w-full h-full object-cover transition-transform duration-700">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-7 card-content translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+            <h3 class="font-display text-2xl font-bold text-white mb-1">Casual Collection</h3>
+            <p class="text-white/60 text-sm font-heading">Comfort & Style</p>
+            <div class="mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <span class="text-gold-400 text-xs font-heading font-medium tracking-wider uppercase inline-flex items-center gap-1">View Collection <i class="fa-solid fa-arrow-right text-[10px]"></i></span>
+            </div>
+          </div>
+        </div>
+        <!-- Card 5 -->
+        <div class="collection-card group relative rounded-3xl overflow-hidden aspect-[3/4] shadow-lg hover:shadow-2xl transition-all duration-500 reveal reveal-delay-2">
+          <img src="https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=600&q=80" alt="Party Wear Collection at Raj Collection Palwal" class="w-full h-full object-cover transition-transform duration-700">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
+          <div class="absolute top-4 left-4">
+            <span class="bg-gold-500/80 backdrop-blur-md text-white text-[10px] font-heading font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full">Popular</span>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 p-7 card-content translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+            <h3 class="font-display text-2xl font-bold text-white mb-1">Party Wear</h3>
+            <p class="text-white/60 text-sm font-heading">Glamorous & Bold</p>
+            <div class="mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <span class="text-gold-400 text-xs font-heading font-medium tracking-wider uppercase inline-flex items-center gap-1">View Collection <i class="fa-solid fa-arrow-right text-[10px]"></i></span>
+            </div>
+          </div>
+        </div>
+        <!-- Card 6 -->
+        <div class="collection-card group relative rounded-3xl overflow-hidden aspect-[3/4] shadow-lg hover:shadow-2xl transition-all duration-500 reveal reveal-delay-3">
+          <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80" alt="Seasonal Trends at Raj Collection Palwal" class="w-full h-full object-cover transition-transform duration-700">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-7 card-content translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+            <h3 class="font-display text-2xl font-bold text-white mb-1">Seasonal Trends</h3>
+            <p class="text-white/60 text-sm font-heading">Fresh & Modern</p>
+            <div class="mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <span class="text-gold-400 text-xs font-heading font-medium tracking-wider uppercase inline-flex items-center gap-1">View Collection <i class="fa-solid fa-arrow-right text-[10px]"></i></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT SECTION -->
+  <section id="about" class="py-24 md:py-32 bg-white relative overflow-hidden">
+    <div class="section-blob w-80 h-80 bg-gold-100/50 -top-20 -right-20"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+        <div class="relative reveal">
+          <div class="relative">
+            <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&q=80" alt="Raj Collection Boutique Interior - Fashion Store Palwal" class="w-full rounded-3xl shadow-2xl object-cover aspect-[4/5]">
+            <div class="absolute -bottom-6 -right-6 bg-gold-500 text-white p-6 rounded-2xl shadow-xl hidden md:block">
+              <p class="font-display text-3xl font-bold">10+</p>
+              <p class="text-white/80 text-xs font-heading tracking-wider uppercase">Years</p>
+            </div>
+          </div>
+          <div class="absolute -top-4 -left-4 w-24 h-24 border-2 border-gold-300/50 rounded-3xl -z-10"></div>
+          <div class="absolute -bottom-4 -right-10 w-32 h-32 border-2 border-gold-200/30 rounded-full -z-10"></div>
+        </div>
+        <div class="reveal reveal-delay-2">
+          <span class="inline-block bg-gold-50 text-gold-600 px-4 py-1.5 rounded-full text-xs font-heading font-semibold tracking-widest uppercase mb-5">About Us</span>
+          <h2 class="font-display text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">Where Fashion Meets <span class="text-gold-500">Elegance</span></h2>
+          <p class="text-gray-500 text-lg leading-relaxed mb-5">Raj Collection brings modern fashion and timeless elegance together. Located in the heart of Palwal, we offer stylish clothing collections designed to elevate your personality and confidence.</p>
+          <p class="text-gray-500 leading-relaxed mb-10">From ethnic wear to western fashion, our curated collections cater to every taste and occasion. With years of expertise and a passion for fashion, we bring you the latest trends at affordable prices.</p>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-cream-100 rounded-2xl p-5 text-center glow-gold-hover transition-all duration-300">
+              <p class="font-display text-2xl font-bold text-gold-600">5K+</p>
+              <p class="text-gray-400 text-[11px] font-heading mt-1 tracking-wide">Happy Customers</p>
+            </div>
+            <div class="bg-cream-100 rounded-2xl p-5 text-center glow-gold-hover transition-all duration-300">
+              <p class="font-display text-2xl font-bold text-gold-600">1K+</p>
+              <p class="text-gray-400 text-[11px] font-heading mt-1 tracking-wide">Collections</p>
+            </div>
+            <div class="bg-cream-100 rounded-2xl p-5 text-center glow-gold-hover transition-all duration-300">
+              <p class="font-display text-2xl font-bold text-gold-600">10+</p>
+              <p class="text-gray-400 text-[11px] font-heading mt-1 tracking-wide">Years Expert</p>
+            </div>
+            <div class="bg-cream-100 rounded-2xl p-5 text-center glow-gold-hover transition-all duration-300">
+              <p class="font-display text-2xl font-bold text-gold-600">50+</p>
+              <p class="text-gray-400 text-[11px] font-heading mt-1 tracking-wide">Categories</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY CHOOSE US -->
+  <section class="py-24 md:py-32 bg-cream-200 relative overflow-hidden">
+    <div class="section-blob w-96 h-96 bg-gold-100/30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="text-center mb-20 reveal">
+        <span class="inline-block bg-gold-50 text-gold-600 px-4 py-1.5 rounded-full text-xs font-heading font-semibold tracking-widest uppercase mb-4">Our Promise</span>
+        <h2 class="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-5">Why Choose Us</h2>
+        <p class="text-gray-500 max-w-lg mx-auto font-light">Experience the finest fashion shopping with unmatched quality and service.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div class="feature-card bg-white/80 backdrop-blur-sm rounded-3xl p-8 lg:p-10 border border-cream-300/50 reveal reveal-delay-1">
+          <div class="w-16 h-16 bg-gradient-to-br from-gold-50 to-gold-100 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+            <i class="fa-solid fa-wand-magic-sparkles text-gold-500 text-xl"></i>
+          </div>
+          <h3 class="font-heading text-lg font-semibold text-gray-900 mb-3">Latest Fashion Trends</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Stay ahead with our constantly updated collection of trendy and fashionable clothing for every season.</p>
+        </div>
+        <div class="feature-card bg-white/80 backdrop-blur-sm rounded-3xl p-8 lg:p-10 border border-cream-300/50 reveal reveal-delay-2">
+          <div class="w-16 h-16 bg-gradient-to-br from-gold-50 to-gold-100 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+            <i class="fa-solid fa-gem text-gold-500 text-xl"></i>
+          </div>
+          <h3 class="font-heading text-lg font-semibold text-gray-900 mb-3">Premium Quality</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Affordable luxury with high-quality fabrics and excellent craftsmanship in every piece.</p>
+        </div>
+        <div class="feature-card bg-white/80 backdrop-blur-sm rounded-3xl p-8 lg:p-10 border border-cream-300/50 reveal reveal-delay-3">
+          <div class="w-16 h-16 bg-gradient-to-br from-gold-50 to-gold-100 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+            <i class="fa-solid fa-shirt text-gold-500 text-xl"></i>
+          </div>
+          <h3 class="font-heading text-lg font-semibold text-gray-900 mb-3">Stylish Collections</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Curated collections for men, women, and every occasion from casual to formal elegance.</p>
+        </div>
+        <div class="feature-card bg-white/80 backdrop-blur-sm rounded-3xl p-8 lg:p-10 border border-cream-300/50 reveal reveal-delay-1">
+          <div class="w-16 h-16 bg-gradient-to-br from-gold-50 to-gold-100 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+            <i class="fa-solid fa-heart text-gold-500 text-xl"></i>
+          </div>
+          <h3 class="font-heading text-lg font-semibold text-gray-900 mb-3">Customer First</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Friendly service and personalized styling advice to help you find the perfect outfit.</p>
+        </div>
+        <div class="feature-card bg-white/80 backdrop-blur-sm rounded-3xl p-8 lg:p-10 border border-cream-300/50 reveal reveal-delay-2">
+          <div class="w-16 h-16 bg-gradient-to-br from-gold-50 to-gold-100 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+            <i class="fa-solid fa-palette text-gold-500 text-xl"></i>
+          </div>
+          <h3 class="font-heading text-lg font-semibold text-gray-900 mb-3">Trendy Designs</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Modern designs inspired by global fashion trends and local cultural preferences.</p>
+        </div>
+        <div class="feature-card bg-white/80 backdrop-blur-sm rounded-3xl p-8 lg:p-10 border border-cream-300/50 reveal reveal-delay-3">
+          <div class="w-16 h-16 bg-gradient-to-br from-gold-50 to-gold-100 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+            <i class="fa-solid fa-store text-gold-500 text-xl"></i>
+          </div>
+          <h3 class="font-heading text-lg font-semibold text-gray-900 mb-3">Comfortable Shopping</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">A spacious, well-organized showroom designed for a relaxing boutique experience.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FASHION GALLERY -->
+  <section id="gallery" class="py-24 md:py-32 bg-white relative overflow-hidden">
+    <div class="section-blob w-72 h-72 bg-gold-100/30 bottom-0 right-0"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="text-center mb-20 reveal">
+        <span class="inline-block bg-gold-50 text-gold-600 px-4 py-1.5 rounded-full text-xs font-heading font-semibold tracking-widest uppercase mb-4">Showcase</span>
+        <h2 class="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-5">Fashion Gallery</h2>
+        <p class="text-gray-500 max-w-lg mx-auto font-light">A glimpse into our world of style, elegance, and fashion-forward thinking.</p>
+      </div>
+      <div class="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+        <div class="gallery-item relative rounded-2xl overflow-hidden break-inside-avoid reveal">
+          <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80" alt="Fashion Gallery - Stylish Outfit" class="w-full object-cover transition-transform duration-700">
+          <div class="gallery-overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-500 flex items-end p-5">
+            <span class="text-white text-sm font-heading font-medium">Fashion Forward</span>
+          </div>
+        </div>
+        <div class="gallery-item relative rounded-2xl overflow-hidden break-inside-avoid reveal reveal-delay-1">
+          <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80" alt="Fashion Gallery - Trendy Wear" class="w-full object-cover transition-transform duration-700">
+          <div class="gallery-overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-500 flex items-end p-5">
+            <span class="text-white text-sm font-heading font-medium">Street Style</span>
+          </div>
+        </div>
+        <div class="gallery-item relative rounded-2xl overflow-hidden break-inside-avoid reveal reveal-delay-2">
+          <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=600&q=80" alt="Fashion Gallery - Elegant Dress" class="w-full object-cover transition-transform duration-700">
+          <div class="gallery-overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-500 flex items-end p-5">
+            <span class="text-white text-sm font-heading font-medium">Elegance</span>
+          </div>
+        </div>
+        <div class="gallery-item relative rounded-2xl overflow-hidden break-inside-avoid reveal">
+          <img src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&q=80" alt="Fashion Gallery - Modern Style" class="w-full object-cover transition-transform duration-700">
+          <div class="gallery-overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-500 flex items-end p-5">
+            <span class="text-white text-sm font-heading font-medium">Modern Chic</span>
+          </div>
+        </div>
+        <div class="gallery-item relative rounded-2xl overflow-hidden break-inside-avoid reveal reveal-delay-1">
+          <img src="https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=600&q=80" alt="Fashion Gallery - Boutique Look" class="w-full object-cover transition-transform duration-700">
+          <div class="gallery-overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-500 flex items-end p-5">
+            <span class="text-white text-sm font-heading font-medium">Boutique Edit</span>
+          </div>
+        </div>
+        <div class="gallery-item relative rounded-2xl overflow-hidden break-inside-avoid reveal reveal-delay-2">
+          <img src="https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=600&q=80" alt="Fashion Gallery - Premium Clothing" class="w-full object-cover transition-transform duration-700">
+          <div class="gallery-overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-500 flex items-end p-5">
+            <span class="text-white text-sm font-heading font-medium">Premium Wear</span>
+          </div>
+        </div>
+        <div class="gallery-item relative rounded-2xl overflow-hidden break-inside-avoid reveal reveal-delay-3">
+          <img src="https://images.unsplash.com/photo-1475180098004-ca77a66827be?w=600&q=80" alt="Fashion Gallery - Lifestyle Fashion" class="w-full object-cover transition-transform duration-700">
+          <div class="gallery-overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-500 flex items-end p-5">
+            <span class="text-white text-sm font-heading font-medium">Lifestyle</span>
+          </div>
+        </div>
+        <div class="gallery-item relative rounded-2xl overflow-hidden break-inside-avoid reveal reveal-delay-4">
+          <img src="https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80" alt="Fashion Gallery - Store Aesthetics" class="w-full object-cover transition-transform duration-700">
+          <div class="gallery-overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-500 flex items-end p-5">
+            <span class="text-white text-sm font-heading font-medium">Store Vibes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="py-24 md:py-32 bg-cream-100 relative overflow-hidden">
+    <div class="section-blob w-80 h-80 bg-gold-200/20 top-0 left-0"></div>
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="text-center mb-16 reveal">
+        <span class="inline-block bg-gold-50 text-gold-600 px-4 py-1.5 rounded-full text-xs font-heading font-semibold tracking-widest uppercase mb-4">Testimonials</span>
+        <h2 class="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-5">What Our Customers Say</h2>
+        <p class="text-gray-500 max-w-lg mx-auto font-light">Real experiences from our valued customers.</p>
+      </div>
+      <div class="relative overflow-hidden rounded-3xl reveal">
+        <div id="testimonial-track" class="flex transition-transform duration-700 ease-out">
+          <div class="min-w-full px-4 md:px-8">
+            <div class="bg-white/80 backdrop-blur-sm border border-cream-300/50 rounded-3xl p-8 md:p-14 text-center">
+              <i class="fa-solid fa-quote-left text-gold-300 text-4xl mb-8"></i>
+              <p class="text-gray-700 text-xl md:text-2xl italic leading-relaxed mb-8 font-display">"Amazing collection and great quality. Found exactly what I was looking for! The variety is incredible and the service is outstanding."</p>
+              <div class="flex justify-center mb-4 gap-1">
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+              </div>
+              <div class="w-14 h-14 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-heading font-bold text-lg">P</div>
+              <p class="font-heading font-semibold text-gray-900">Priya Sharma</p>
+              <p class="text-gray-400 text-xs font-heading tracking-wider uppercase mt-1">Verified Customer</p>
+            </div>
+          </div>
+          <div class="min-w-full px-4 md:px-8">
+            <div class="bg-white/80 backdrop-blur-sm border border-cream-300/50 rounded-3xl p-8 md:p-14 text-center">
+              <i class="fa-solid fa-quote-left text-gold-300 text-4xl mb-8"></i>
+              <p class="text-gray-700 text-xl md:text-2xl italic leading-relaxed mb-8 font-display">"Best fashion store in Palwal. The variety and quality are unmatched. I always recommend Raj Collection to my friends and family."</p>
+              <div class="flex justify-center mb-4 gap-1">
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+              </div>
+              <div class="w-14 h-14 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-heading font-bold text-lg">R</div>
+              <p class="font-heading font-semibold text-gray-900">Rahul Mehta</p>
+              <p class="text-gray-400 text-xs font-heading tracking-wider uppercase mt-1">Verified Customer</p>
+            </div>
+          </div>
+          <div class="min-w-full px-4 md:px-8">
+            <div class="bg-white/80 backdrop-blur-sm border border-cream-300/50 rounded-3xl p-8 md:p-14 text-center">
+              <i class="fa-solid fa-quote-left text-gold-300 text-4xl mb-8"></i>
+              <p class="text-gray-700 text-xl md:text-2xl italic leading-relaxed mb-8 font-display">"Very stylish and trendy outfits. The staff is very helpful and friendly. Always a pleasure shopping here at Raj Collection."</p>
+              <div class="flex justify-center mb-4 gap-1">
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+              </div>
+              <div class="w-14 h-14 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-heading font-bold text-lg">A</div>
+              <p class="font-heading font-semibold text-gray-900">Anita Kapoor</p>
+              <p class="text-gray-400 text-xs font-heading tracking-wider uppercase mt-1">Verified Customer</p>
+            </div>
+          </div>
+          <div class="min-w-full px-4 md:px-8">
+            <div class="bg-white/80 backdrop-blur-sm border border-cream-300/50 rounded-3xl p-8 md:p-14 text-center">
+              <i class="fa-solid fa-quote-left text-gold-300 text-4xl mb-8"></i>
+              <p class="text-gray-700 text-xl md:text-2xl italic leading-relaxed mb-8 font-display">"Excellent customer service and modern designs. Highly recommended! The shopping experience is truly premium and comfortable."</p>
+              <div class="flex justify-center mb-4 gap-1">
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+                <i class="fa-solid fa-star text-gold-400"></i>
+              </div>
+              <div class="w-14 h-14 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-heading font-bold text-lg">V</div>
+              <p class="font-heading font-semibold text-gray-900">Vikram Taneja</p>
+              <p class="text-gray-400 text-xs font-heading tracking-wider uppercase mt-1">Verified Customer</p>
+            </div>
+          </div>
+        </div>
+        <!-- Navigation Dots -->
+        <div class="flex justify-center mt-10 space-x-3" id="testimonial-dots">
+          <button class="w-3 h-3 rounded-full bg-gold-500 transition-all duration-300 hover:scale-125" data-index="0"></button>
+          <button class="w-3 h-3 rounded-full bg-cream-400 transition-all duration-300 hover:scale-125" data-index="1"></button>
+          <button class="w-3 h-3 rounded-full bg-cream-400 transition-all duration-300 hover:scale-125" data-index="2"></button>
+          <button class="w-3 h-3 rounded-full bg-cream-400 transition-all duration-300 hover:scale-125" data-index="3"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BANNER -->
+  <section class="relative py-28 md:py-36 overflow-hidden">
+    <div class="absolute inset-0">
+      <img src="https://images.unsplash.com/photo-1445205170230-053b83016050?w=1920&q=80" alt="Raj Collection - Upgrade Your Style" class="w-full h-full object-cover">
+      <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/70 to-black/60"></div>
+    </div>
+    <div class="absolute top-1/2 left-1/4 w-64 h-64 bg-gold-500/10 rounded-full blur-[80px]"></div>
+    <div class="absolute bottom-0 right-1/4 w-48 h-48 bg-gold-400/10 rounded-full blur-[60px]"></div>
+    <div class="relative z-10 max-w-4xl mx-auto px-4 text-center reveal">
+      <span class="inline-flex items-center gap-2 glass px-5 py-2 rounded-full text-gold-300 text-xs font-heading font-medium tracking-widest uppercase mb-8">
+        <i class="fa-solid fa-sparkles"></i> Exclusive Offer
+      </span>
+      <h2 class="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">Upgrade Your Style with<br><span class="text-gradient">Raj Collection</span></h2>
+      <p class="text-white/60 text-lg md:text-xl mb-12 max-w-2xl mx-auto font-light">Visit our showroom and discover the latest fashion trends curated just for you. Experience premium fashion shopping.</p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="tel:+919813135040" class="bg-gradient-to-r from-gold-500 to-gold-600 text-white px-9 py-4 rounded-full font-heading font-semibold text-sm tracking-wider uppercase btn-premium inline-flex items-center gap-2">
+          <i class="fa-solid fa-phone text-xs"></i> Call Now
+        </a>
+        <a href="https://maps.google.com/?cid=7197420837289318051" target="_blank" class="border border-white/30 text-white px-9 py-4 rounded-full font-heading font-medium text-sm tracking-wider uppercase hover:bg-white hover:text-gray-900 transition-all duration-300 inline-flex items-center gap-2">
+          <i class="fa-solid fa-location-dot text-xs"></i> Visit Store
+        </a>
+        <a href="https://wa.me/919813135040" target="_blank" class="border border-green-400/50 text-green-400 px-9 py-4 rounded-full font-heading font-medium text-sm tracking-wider uppercase hover:bg-green-500 hover:text-white hover:border-green-500 transition-all duration-300 inline-flex items-center gap-2">
+          <i class="fa-brands fa-whatsapp"></i> WhatsApp
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT SECTION -->
+  <section id="contact" class="py-24 md:py-32 bg-cream-200 relative overflow-hidden">
+    <div class="section-blob w-96 h-96 bg-gold-100/30 -top-20 right-0"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="text-center mb-20 reveal">
+        <span class="inline-block bg-gold-50 text-gold-600 px-4 py-1.5 rounded-full text-xs font-heading font-semibold tracking-widest uppercase mb-4">Reach Out</span>
+        <h2 class="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-5">Get In Touch</h2>
+        <p class="text-gray-500 max-w-lg mx-auto font-light">We'd love to hear from you. Visit us or drop a message.</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+        <!-- Contact Info -->
+        <div class="reveal">
+          <div class="bg-white/80 backdrop-blur-sm rounded-3xl p-8 md:p-10 border border-cream-300/50 shadow-sm h-full">
+            <h3 class="font-display text-2xl font-bold text-gray-900 mb-8">Contact Information</h3>
+            <div class="space-y-6 mb-10">
+              <div class="flex items-start gap-4 group">
+                <div class="w-13 h-13 bg-gradient-to-br from-gold-50 to-gold-100 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:shadow-md transition-all p-3.5">
+                  <i class="fa-solid fa-location-dot text-gold-500"></i>
+                </div>
+                <div>
+                  <p class="font-heading font-semibold text-gray-900 mb-1 text-sm">Our Store</p>
+                  <p class="text-gray-500 text-sm">124/R, New Colony, Palwal,<br>Haryana 121102, India</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-4 group">
+                <div class="w-13 h-13 bg-gradient-to-br from-gold-50 to-gold-100 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:shadow-md transition-all p-3.5">
+                  <i class="fa-solid fa-phone text-gold-500"></i>
+                </div>
+                <div>
+                  <p class="font-heading font-semibold text-gray-900 mb-1 text-sm">Phone</p>
+                  <p class="text-gray-500 text-sm">+91 98131 35040</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-4 group">
+                <div class="w-13 h-13 bg-gradient-to-br from-gold-50 to-gold-100 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:shadow-md transition-all p-3.5">
+                  <i class="fa-solid fa-clock text-gold-500"></i>
+                </div>
+                <div>
+                  <p class="font-heading font-semibold text-gray-900 mb-1 text-sm">Working Hours</p>
+                  <p class="text-gray-500 text-sm">Mon - Sun: 10:00 AM - 9:00 PM</p>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <a href="tel:+919813135040" class="bg-gradient-to-r from-gold-500 to-gold-600 text-white px-6 py-3 rounded-full font-heading text-xs font-semibold tracking-wider uppercase btn-premium inline-flex items-center gap-2">
+                <i class="fa-solid fa-phone text-[10px]"></i> Call Now
+              </a>
+              <a href="https://maps.google.com/?cid=7197420837289318051" target="_blank" class="bg-gray-900 text-white px-6 py-3 rounded-full font-heading text-xs font-semibold tracking-wider uppercase hover:bg-gray-800 transition-all inline-flex items-center gap-2">
+                <i class="fa-solid fa-map-location-dot text-[10px]"></i> Directions
+              </a>
+              <a href="https://wa.me/919813135040" target="_blank" class="bg-green-500 text-white px-6 py-3 rounded-full font-heading text-xs font-semibold tracking-wider uppercase hover:bg-green-600 transition-all inline-flex items-center gap-2">
+                <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+              </a>
+            </div>
+          </div>
+        </div>
+        <!-- Contact Form -->
+        <div class="reveal reveal-delay-2">
+          <div class="bg-white/80 backdrop-blur-sm rounded-3xl p-8 md:p-10 border border-cream-300/50 shadow-sm">
+            <h3 class="font-display text-2xl font-bold text-gray-900 mb-8">Send a Message</h3>
+            <form class="space-y-5" onsubmit="event.preventDefault();this.reset();alert('Thank you! We will contact you soon.');">
+              <div class="relative">
+                <input type="text" placeholder="Your Name" required class="w-full px-6 py-4 rounded-2xl border border-cream-300 bg-cream-50/50 focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:border-gold-400 transition-all font-body text-sm placeholder:text-gray-400">
+              </div>
+              <div class="relative">
+                <input type="tel" placeholder="Phone Number" required class="w-full px-6 py-4 rounded-2xl border border-cream-300 bg-cream-50/50 focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:border-gold-400 transition-all font-body text-sm placeholder:text-gray-400">
+              </div>
+              <div class="relative">
+                <textarea rows="4" placeholder="Your Message" required class="w-full px-6 py-4 rounded-2xl border border-cream-300 bg-cream-50/50 focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:border-gold-400 transition-all font-body text-sm resize-none placeholder:text-gray-400"></textarea>
+              </div>
+              <button type="submit" class="w-full bg-gradient-to-r from-gold-500 to-gold-600 text-white py-4 rounded-2xl font-heading font-semibold text-sm tracking-wider uppercase btn-premium hover:shadow-xl">
+                Send Message <i class="fa-solid fa-paper-plane ml-2 text-xs"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PREMIUM FOOTER -->
+  <footer class="bg-[#0a0a0a] pt-20 pb-8 relative overflow-hidden">
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-gold-500/30 to-transparent"></div>
+    <div class="absolute top-20 right-10 w-48 h-48 bg-gold-500/5 rounded-full blur-[80px]"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div class="lg:col-span-1">
+          <h3 class="font-display text-3xl font-bold text-white mb-4">Raj <span class="text-gold-400">Collection</span></h3>
+          <p class="text-gray-400 text-sm leading-relaxed mb-6">Premium fashion boutique offering trendy men's & women's clothing, ethnic wear, and seasonal collections in Palwal.</p>
+          <div class="flex items-center gap-3">
+            <a href="#" class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:bg-gold-500 hover:border-gold-500 hover:text-white transition-all duration-300"><i class="fa-brands fa-facebook-f text-xs"></i></a>
+            <a href="#" class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:bg-gold-500 hover:border-gold-500 hover:text-white transition-all duration-300"><i class="fa-brands fa-instagram text-xs"></i></a>
+            <a href="#" class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:bg-gold-500 hover:border-gold-500 hover:text-white transition-all duration-300"><i class="fa-brands fa-twitter text-xs"></i></a>
+            <a href="#" class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:bg-gold-500 hover:border-gold-500 hover:text-white transition-all duration-300"><i class="fa-brands fa-youtube text-xs"></i></a>
+          </div>
+        </div>
+        <div>
+          <h4 class="font-heading font-semibold text-white text-sm tracking-wider uppercase mb-6">Quick Links</h4>
+          <ul class="space-y-3">
+            <li><a href="#home" class="text-gray-400 hover:text-gold-400 transition-colors text-sm inline-flex items-center gap-2"><i class="fa-solid fa-chevron-right text-[8px] text-gold-500/50"></i>Home</a></li>
+            <li><a href="#collections" class="text-gray-400 hover:text-gold-400 transition-colors text-sm inline-flex items-center gap-2"><i class="fa-solid fa-chevron-right text-[8px] text-gold-500/50"></i>Collections</a></li>
+            <li><a href="#about" class="text-gray-400 hover:text-gold-400 transition-colors text-sm inline-flex items-center gap-2"><i class="fa-solid fa-chevron-right text-[8px] text-gold-500/50"></i>About Us</a></li>
+            <li><a href="#gallery" class="text-gray-400 hover:text-gold-400 transition-colors text-sm inline-flex items-center gap-2"><i class="fa-solid fa-chevron-right text-[8px] text-gold-500/50"></i>Gallery</a></li>
+            <li><a href="#contact" class="text-gray-400 hover:text-gold-400 transition-colors text-sm inline-flex items-center gap-2"><i class="fa-solid fa-chevron-right text-[8px] text-gold-500/50"></i>Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-heading font-semibold text-white text-sm tracking-wider uppercase mb-6">Collections</h4>
+          <ul class="space-y-3">
+            <li><a href="#collections" class="text-gray-400 hover:text-gold-400 transition-colors text-sm inline-flex items-center gap-2"><i class="fa-solid fa-chevron-right text-[8px] text-gold-500/50"></i>Men's Fashion</a></li>
+            <li><a href="#collections" class="text-gray-400 hover:text-gold-400 transition-colors text-sm inline-flex items-center gap-2"><i class="fa-solid fa-chevron-right text-[8px] text-gold-500/50"></i>Women's Fashion</a></li>
+            <li><a href="#collections" class="text-gray-400 hover:text-gold-400 transition-colors text-sm inline-flex items-center gap-2"><i class="fa-solid fa-chevron-right text-[8px] text-gold-500/50"></i>Ethnic Wear</a></li>
+            <li><a href="#collections" class="text-gray-400 hover:text-gold-400 transition-colors text-sm inline-flex items-center gap-2"><i class="fa-solid fa-chevron-right text-[8px] text-gold-500/50"></i>Party Wear</a></li>
+            <li><a href="#collections" class="text-gray-400 hover:text-gold-400 transition-colors text-sm inline-flex items-center gap-2"><i class="fa-solid fa-chevron-right text-[8px] text-gold-500/50"></i>Seasonal Trends</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-heading font-semibold text-white text-sm tracking-wider uppercase mb-6">Contact Info</h4>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <i class="fa-solid fa-location-dot text-gold-500 mt-1 text-xs"></i>
+              <span class="text-gray-400 text-sm">124/R, New Colony, Palwal, Haryana 121102</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <i class="fa-solid fa-phone text-gold-500 text-xs"></i>
+              <a href="tel:+919813135040" class="text-gray-400 hover:text-gold-400 transition-colors text-sm">+91 98131 35040</a>
+            </li>
+            <li class="flex items-center gap-3">
+              <i class="fa-solid fa-clock text-gold-500 text-xs"></i>
+              <span class="text-gray-400 text-sm">Mon - Sun: 10 AM - 9 PM</span>
+            </li>
+          </ul>
+          <!-- Newsletter -->
+          <div class="mt-8">
+            <p class="text-gray-400 text-xs font-heading tracking-wider uppercase mb-3">Stay Updated</p>
+            <div class="flex gap-2">
+              <input type="email" placeholder="Your email" class="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-white text-xs focus:outline-none focus:border-gold-500/50 placeholder:text-gray-500">
+              <button class="bg-gold-500 text-white px-4 py-2.5 rounded-full text-xs font-heading font-semibold hover:bg-gold-600 transition-all">Join</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Footer Quote -->
+      <div class="text-center mb-12">
+        <p class="font-display text-lg italic text-gray-500">"Fashion is the armor to survive the reality of everyday life."</p>
+      </div>
+      <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-gray-500 text-xs tracking-wide">&copy; 2024 Raj Collection. All rights reserved.</p>
+        <p class="text-gray-600 text-xs">Premium Fashion Store in Palwal, Haryana</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- FLOATING WHATSAPP BUTTON -->
+  <a href="https://wa.me/919813135040" target="_blank" class="fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-500 rounded-full flex items-center justify-center text-white text-2xl shadow-xl hover:bg-green-600 hover:scale-110 transition-all duration-300 whatsapp-pulse" aria-label="Chat on WhatsApp">
+    <i class="fa-brands fa-whatsapp"></i>
+  </a>
+
+  <!-- BACK TO TOP BUTTON -->
+  <button id="back-to-top" class="fixed bottom-24 right-6 z-50 w-12 h-12 bg-gradient-to-br from-gold-500 to-gold-600 rounded-full flex items-center justify-center text-white shadow-xl hover:shadow-2xl hover:scale-110 transition-all duration-300 opacity-0 pointer-events-none" aria-label="Back to top">
+    <i class="fa-solid fa-arrow-up text-sm"></i>
+  </button>
+
+  <!-- JAVASCRIPT -->
+  <script>
+    (function() {
+      const navbar = document.getElementById('navbar');
+      const navLogo = document.getElementById('nav-logo');
+      const navLinks = document.querySelectorAll('.nav-link');
+      const mobileToggle = document.getElementById('mobile-toggle');
+      const mobileMenu = document.getElementById('mobile-menu');
+      const mobileClose = document.getElementById('mobile-close');
+      const mobileLinks = document.querySelectorAll('.mobile-link');
+      const backToTop = document.getElementById('back-to-top');
+      const progressBar = document.getElementById('progress-bar');
+      const track = document.getElementById('testimonial-track');
+      const dots = document.querySelectorAll('#testimonial-dots button');
+
+      // Navbar scroll effect
+      function handleScroll() {
+        const y = window.scrollY;
+        if (y > 60) {
+          navbar.classList.add('nav-scrolled');
+          navLogo.classList.remove('text-white');
+          navLogo.classList.add('text-gray-900');
+          navLinks.forEach(l => { l.classList.remove('text-white/90'); l.classList.add('text-gray-700'); });
+          mobileToggle.classList.remove('text-white');
+          mobileToggle.classList.add('text-gray-900');
+        } else {
+          navbar.classList.remove('nav-scrolled');
+          navLogo.classList.add('text-white');
+          navLogo.classList.remove('text-gray-900');
+          navLinks.forEach(l => { l.classList.add('text-white/90'); l.classList.remove('text-gray-700'); });
+          mobileToggle.classList.add('text-white');
+          mobileToggle.classList.remove('text-gray-900');
+        }
+        // Progress bar
+        const docH = document.documentElement.scrollHeight - window.innerHeight;
+        progressBar.style.width = ((y / docH) * 100) + '%';
+        // Back to top
+        if (y > 600) {
+          backToTop.classList.remove('opacity-0','pointer-events-none');
+          backToTop.classList.add('opacity-100');
+        } else {
+          backToTop.classList.add('opacity-0','pointer-events-none');
+          backToTop.classList.remove('opacity-100');
+        }
+      }
+      window.addEventListener('scroll', handleScroll, {passive: true});
+      handleScroll();
+
+      // Back to top
+      backToTop.addEventListener('click', () => window.scrollTo({top:0,behavior:'smooth'}));
+
+      // Mobile menu
+      mobileToggle.addEventListener('click', () => {
+        mobileMenu.classList.remove('opacity-0','pointer-events-none','scale-95');
+        mobileMenu.classList.add('opacity-100','scale-100');
+      });
+      function closeMenu() {
+        mobileMenu.classList.add('opacity-0','pointer-events-none','scale-95');
+        mobileMenu.classList.remove('opacity-100','scale-100');
+      }
+      mobileClose.addEventListener('click', closeMenu);
+      mobileLinks.forEach(l => l.addEventListener('click', closeMenu));
+
+      // Testimonial carousel
+      let currentSlide = 0;
+      const totalSlides = 4;
+      function goToSlide(i) {
+        currentSlide = i;
+        track.style.transform = 'translateX(-' + (i * 100) + '%)';
+        dots.forEach((d, idx) => {
+          d.classList.toggle('bg-gold-500', idx === i);
+          d.classList.toggle('bg-cream-400', idx !== i);
+          d.classList.toggle('w-6', idx === i);
+        });
+      }
+      dots.forEach(d => d.addEventListener('click', () => goToSlide(+d.dataset.index)));
+      setInterval(() => goToSlide((currentSlide + 1) % totalSlides), 4500);
+
+      // Scroll reveal
+      const revealEls = document.querySelectorAll('.reveal');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) { e.target.classList.add('revealed'); observer.unobserve(e.target); }
+        });
+      }, {threshold: 0.08, rootMargin: '0px 0px -60px 0px'});
+      revealEls.forEach(el => observer.observe(el));
+
+      // Active nav highlight
+      const sections = document.querySelectorAll('section[id]');
+      function highlightNav() {
+        const y = window.scrollY + 150;
+        sections.forEach(s => {
+          const link = document.querySelector('.nav-link[href="#'+s.id+'"]');
+          if (!link) return;
+          if (y >= s.offsetTop && y < s.offsetTop + s.offsetHeight) {
+            link.classList.add('active','text-gold-500');
+          } else {
+            link.classList.remove('active','text-gold-500');
+          }
+        });
+      }
+      window.addEventListener('scroll', highlightNav, {passive: true});
+    })();
+  </script>
+</body>
+</html>

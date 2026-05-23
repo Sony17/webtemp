@@ -27,6 +27,10 @@ const nextConfig: NextConfig = {
         source: "/electrical-sample",
         destination: "/electrical-sample/index.html",
       },
+      {
+        source: "/merch_sample",
+        destination: "/merch_sample/index.html",
+      },
     ];
   },
 };
