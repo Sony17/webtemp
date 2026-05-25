@@ -1,0 +1,2695 @@
+<!DOCTYPE html>
+<html lang="en" id="htmlRoot">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Areeba Boutique — Designer Atelier · Mathura</title>
+<meta name="description" content="A designer atelier in Sanjay Nagar, Mathura. Bridal lehengas, designer sarees, festive suits, and bespoke tailoring by appointment." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:wght@300..700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Serif+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ivory: #F8F5F2;
+    --ivory-deep: #F0EAE0;
+    --beige: #DCC5B2;
+    --beige-soft: #ECE3D5;
+    --gold: #B08D57;
+    --gold-deep: #8E6F40;
+    --mocha: #4A3F35;
+    --mocha-soft: #6B5C4F;
+    --black: #1F1F1F;
+    --black-soft: #2D2A26;
+    --line: #E5DDD2;
+    --line-warm: #DCC5B2;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; overflow-x: hidden; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--ivory);
+    color: var(--mocha);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    font-weight: 400;
+  }
+  /* Hindi typography */
+  html[lang="hi"] body { font-family: 'Noto Sans Devanagari', 'Inter', sans-serif; }
+  html[lang="hi"] h1,
+  html[lang="hi"] h2,
+  html[lang="hi"] h3,
+  html[lang="hi"] .serif-text,
+  html[lang="hi"] .prod-name,
+  html[lang="hi"] .ci-name,
+  html[lang="hi"] .test-body,
+  html[lang="hi"] .drawer-title,
+  html[lang="hi"] .vi-value,
+  html[lang="hi"] .ml-t,
+  html[lang="hi"] .hero-image-label .t,
+  html[lang="hi"] .story-quote p,
+  html[lang="hi"] .coll-card .coll-title,
+  html[lang="hi"] .df-total .amt {
+    font-family: 'Noto Serif Devanagari', 'Cormorant Garamond', serif;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  html[lang="hi"] h1 .italic,
+  html[lang="hi"] h2 .it,
+  html[lang="hi"] .it { font-style: normal; font-weight: 400; }
+
+  .serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+  .devanagari { font-family: 'Noto Serif Devanagari', serif; }
+
+  h1, h2, h3 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    color: var(--black);
+  }
+  h1 { font-size: clamp(3rem, 8vw, 7.5rem); }
+  h2 { font-size: clamp(2.4rem, 5.5vw, 4.6rem); letter-spacing: -0.02em; }
+  h3 { font-size: clamp(1.4rem, 2.2vw, 2rem); }
+
+  p { color: var(--mocha); line-height: 1.7; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+
+  .container { max-width: 1320px; margin: 0 auto; padding: 0 36px; }
+  @media (max-width: 640px) { .container { padding: 0 22px; } }
+
+  /* ===== Top Bar ===== */
+  .top-bar {
+    background: var(--black);
+    color: var(--ivory);
+    overflow: hidden;
+    padding: 11px 0;
+    font-size: 11.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  html[lang="hi"] .top-bar { letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .marquee-top {
+    display: flex; gap: 60px;
+    animation: marquee 36s linear infinite;
+    white-space: nowrap; width: max-content;
+  }
+  .marquee-top span {
+    display: inline-flex; align-items: center; gap: 16px;
+    color: rgba(248, 245, 242, 0.85);
+  }
+  .marquee-top span::after {
+    content: "✦";
+    color: var(--gold);
+    margin-left: 60px;
+    font-size: 9px;
+    opacity: 0.8;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ===== Header ===== */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(248, 245, 242, 0.85);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border-bottom: 1px solid transparent;
+    transition: all 0.3s var(--ease-smooth);
+  }
+  header.scrolled {
+    background: rgba(248, 245, 242, 0.96);
+    border-bottom-color: var(--line);
+  }
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 36px;
+    max-width: 1320px;
+    margin: 0 auto;
+    transition: padding 0.3s var(--ease-smooth);
+    gap: 24px;
+  }
+  header.scrolled .nav { padding: 16px 36px; }
+  @media (max-width: 640px) { .nav { padding: 16px 22px; gap: 12px; } }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .logo-mark {
+    font-family: 'Noto Serif Devanagari', serif;
+    font-weight: 700;
+    font-size: 32px;
+    color: var(--gold);
+    line-height: 0.8;
+  }
+  .logo-text { line-height: 1; }
+  .logo-text .name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    color: var(--black);
+    text-transform: uppercase;
+  }
+  html[lang="hi"] .logo-text .name {
+    font-family: 'Noto Serif Devanagari', serif;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 21px;
+  }
+  .logo-text .tag {
+    font-size: 9.5px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-top: 5px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+  html[lang="hi"] .logo-text .tag {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    font-size: 10.5px;
+  }
+  @media (max-width: 640px) {
+    .logo-mark { font-size: 26px; }
+    .logo-text .name { font-size: 17px; }
+    .logo-text .tag { font-size: 8.5px; }
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    font-size: 13px;
+    color: var(--mocha);
+    letter-spacing: 0.04em;
+  }
+  html[lang="hi"] .nav-links {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0;
+  }
+  .nav-links a {
+    transition: color 0.25s var(--ease-out);
+    position: relative;
+    padding: 4px 0;
+  }
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    bottom: -2px; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold);
+    transition: width 0.35s var(--ease-out);
+  }
+  .nav-links a:hover { color: var(--black); }
+  .nav-links a:hover::after { width: 100%; }
+  @media (max-width: 980px) { .nav-links { display: none; } }
+
+  /* Language Toggle */
+  .lang-toggle {
+    display: inline-flex;
+    background: transparent;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    border-radius: 999px;
+    padding: 2px;
+    flex-shrink: 0;
+  }
+  .lang-toggle button {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--mocha-soft);
+    cursor: pointer;
+    border-radius: 999px;
+    transition: all 0.25s var(--ease-out);
+    font-family: 'Inter', sans-serif;
+    min-width: 34px;
+  }
+  .lang-toggle button.active {
+    background: var(--black);
+    color: var(--ivory);
+  }
+  .lang-toggle button.hi-btn {
+    font-family: 'Noto Serif Devanagari', serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0;
+  }
+
+  .header-actions { display: flex; align-items: center; gap: 4px; }
+  .icon-btn {
+    position: relative;
+    width: 42px; height: 42px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--black);
+    cursor: pointer;
+    transition: all 0.25s var(--ease-out);
+    font-family: inherit;
+  }
+  .icon-btn:hover { background: var(--beige-soft); color: var(--gold); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .icon-btn .count {
+    position: absolute;
+    top: 2px; right: 2px;
+    min-width: 18px; height: 18px;
+    background: var(--gold);
+    color: var(--ivory);
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    display: grid; place-items: center;
+    padding: 0 5px;
+    border: 2px solid var(--ivory);
+    transform: scale(0);
+    transition: transform 0.3s var(--ease-spring);
+    font-family: 'Inter', sans-serif;
+  }
+  .icon-btn .count.show { transform: scale(1); }
+  .icon-btn.pulse { animation: btn-pulse 0.6s var(--ease-spring); }
+  @keyframes btn-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+  .wa-btn {
+    margin-left: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: var(--black);
+    color: var(--ivory);
+    padding: 12px 20px;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transition: all 0.3s var(--ease-out);
+    position: relative;
+    overflow: hidden;
+  }
+  html[lang="hi"] .wa-btn {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 13px;
+  }
+  .wa-btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--gold);
+    transform: translateY(100%);
+    transition: transform 0.4s var(--ease-out);
+  }
+  .wa-btn > * { position: relative; z-index: 1; }
+  .wa-btn:hover::before { transform: translateY(0); }
+  .wa-btn:hover { color: var(--ivory); }
+  .wa-btn svg { width: 14px; height: 14px; }
+  @media (max-width: 640px) {
+    .wa-btn { padding: 10px 14px; font-size: 11px; gap: 6px; }
+    .wa-btn .wa-text { display: none; }
+    .icon-btn { width: 38px; height: 38px; }
+    .lang-toggle button { padding: 5px 9px; font-size: 10px; min-width: 28px; }
+  }
+
+  /* ===== Hero ===== */
+  .hero {
+    position: relative;
+    min-height: 92vh;
+    overflow: hidden;
+    background: var(--ivory);
+    display: flex;
+    align-items: center;
+  }
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .hero-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    filter: saturate(0.85) brightness(1.02);
+    transform: scale(1.04);
+    animation: kenburns 26s ease-in-out infinite alternate;
+  }
+  @keyframes kenburns {
+    from { transform: scale(1.04) translate(0, 0); }
+    to { transform: scale(1.12) translate(-10px, -8px); }
+  }
+  .hero-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, rgba(248, 245, 242, 0.96) 0%, rgba(248, 245, 242, 0.78) 35%, rgba(248, 245, 242, 0.18) 70%, rgba(31, 31, 31, 0.18) 100%),
+      linear-gradient(180deg, rgba(248, 245, 242, 0.1) 0%, rgba(248, 245, 242, 0.3) 100%);
+  }
+  @media (max-width: 980px) {
+    .hero-bg::after {
+      background:
+        linear-gradient(180deg, rgba(248, 245, 242, 0.88) 0%, rgba(248, 245, 242, 0.65) 50%, rgba(248, 245, 242, 0.85) 100%);
+    }
+  }
+  .hero-grain {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/%3E%3C/svg%3E");
+    opacity: 0.05;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    width: 100%;
+    align-items: center;
+    gap: 60px;
+    padding: 100px 36px 80px;
+    max-width: 1320px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+  @media (max-width: 980px) {
+    .hero { min-height: auto; }
+    .hero-grid { grid-template-columns: 1fr; padding: 80px 22px 60px; gap: 50px; }
+  }
+
+  .hero-content { opacity: 0; animation: fade-in 1s var(--ease-out) 0.2s forwards; position: relative; }
+  @keyframes fade-in { to { opacity: 1; } }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 36px;
+    font-weight: 500;
+  }
+  html[lang="hi"] .eyebrow {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    font-size: 12.5px;
+  }
+  .eyebrow::before { content: ""; width: 32px; height: 1px; background: var(--gold); }
+
+  .hero h1 {
+    font-size: clamp(3.2rem, 9vw, 8.5rem);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+    color: var(--black);
+    margin-bottom: 32px;
+  }
+  html[lang="hi"] .hero h1 {
+    font-size: clamp(2.6rem, 7vw, 6.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+  .hero h1 .row { display: block; overflow: hidden; }
+  .hero h1 .row span {
+    display: inline-block;
+    transform: translateY(110%);
+    animation: rise 1.2s var(--ease-out) forwards;
+  }
+  .hero h1 .row:nth-child(1) span { animation-delay: 0.3s; }
+  .hero h1 .row:nth-child(2) span { animation-delay: 0.45s; }
+  .hero h1 .row:nth-child(3) span { animation-delay: 0.6s; }
+  @keyframes rise { to { transform: translateY(0); } }
+  .hero h1 .italic { font-style: italic; color: var(--gold); font-weight: 300; }
+  html[lang="hi"] .hero h1 .italic { font-style: normal; color: var(--gold); font-weight: 600; }
+
+  .hero-sub {
+    font-size: 17px;
+    line-height: 1.65;
+    max-width: 460px;
+    margin-bottom: 44px;
+    color: var(--mocha);
+    opacity: 0;
+    animation: fade-up 0.9s var(--ease-out) 0.95s forwards;
+  }
+  html[lang="hi"] .hero-sub { font-family: 'Noto Sans Devanagari', sans-serif; font-size: 16px; line-height: 1.75; }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-ctas {
+    display: flex; gap: 14px; flex-wrap: wrap;
+    opacity: 0;
+    animation: fade-up 0.9s var(--ease-out) 1.1s forwards;
+  }
+  .btn-primary {
+    background: var(--black);
+    color: var(--ivory);
+    padding: 17px 32px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.35s var(--ease-out);
+    border: 1px solid var(--black);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+  html[lang="hi"] .btn-primary { font-family: 'Noto Sans Devanagari', sans-serif; text-transform: none; letter-spacing: 0.04em; font-size: 13.5px; }
+  .btn-primary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--gold);
+    transform: translateX(-101%);
+    transition: transform 0.4s var(--ease-out);
+  }
+  .btn-primary > * { position: relative; z-index: 1; }
+  .btn-primary:hover { border-color: var(--gold); color: var(--ivory); }
+  .btn-primary:hover::before { transform: translateX(0); }
+  .btn-primary svg { width: 14px; height: 14px; transition: transform 0.3s; }
+  .btn-primary:hover svg { transform: translateX(4px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--black);
+    padding: 17px 28px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border: 1px solid var(--black);
+    transition: all 0.3s var(--ease-out);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+  html[lang="hi"] .btn-ghost { font-family: 'Noto Sans Devanagari', sans-serif; text-transform: none; letter-spacing: 0.04em; font-size: 13.5px; }
+  .btn-ghost:hover { background: var(--black); color: var(--ivory); }
+
+  .hero-image-wrap {
+    position: relative;
+    opacity: 0;
+    animation: fade-up 1.4s var(--ease-out) 0.4s forwards;
+  }
+  .hero-image {
+    aspect-ratio: 4/5;
+    overflow: hidden;
+    background: var(--beige-soft);
+    position: relative;
+    box-shadow: 0 30px 60px -20px rgba(31, 31, 31, 0.25);
+  }
+  .hero-image img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 8s var(--ease-out);
+  }
+  .hero-image:hover img { transform: scale(1.05); }
+  .hero-image-label {
+    position: absolute;
+    bottom: 24px; left: 24px;
+    background: var(--ivory);
+    padding: 14px 18px;
+    border-left: 2px solid var(--gold);
+  }
+  .hero-image-label .l {
+    font-size: 9.5px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  html[lang="hi"] .hero-image-label .l { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.06em; text-transform: none; font-size: 10.5px; }
+  .hero-image-label .t {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-style: italic;
+    color: var(--black);
+    font-weight: 400;
+  }
+  html[lang="hi"] .hero-image-label .t { font-style: normal; }
+
+  .hero-stats {
+    position: absolute;
+    bottom: -32px; right: 32px;
+    background: var(--black);
+    color: var(--ivory);
+    padding: 32px 40px;
+    display: flex;
+    gap: 40px;
+    z-index: 2;
+  }
+  .hero-stats .stat .n {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--gold);
+  }
+  .hero-stats .stat .l {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(248, 245, 242, 0.7);
+    margin-top: 8px;
+    font-weight: 500;
+  }
+  html[lang="hi"] .hero-stats .stat .l {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    font-size: 11.5px;
+  }
+  @media (max-width: 980px) {
+    .hero-stats { position: relative; bottom: auto; right: auto; margin-top: 24px; padding: 24px 28px; gap: 28px; }
+  }
+  @media (max-width: 480px) {
+    .hero-stats .stat .n { font-size: 28px; }
+    .hero-stats { gap: 20px; padding: 20px 22px; }
+  }
+
+  /* ===== Sections ===== */
+  section { padding: 130px 0; position: relative; }
+  @media (max-width: 640px) { section { padding: 90px 0; } }
+
+  .section-eyebrow {
+    font-size: 10.5px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-weight: 500;
+  }
+  html[lang="hi"] .section-eyebrow { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.06em; text-transform: none; font-size: 12.5px; }
+  .section-eyebrow::before { content: ""; width: 32px; height: 1px; background: var(--gold); }
+  .section-head { margin-bottom: 80px; }
+  .section-head .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 60px;
+    flex-wrap: wrap;
+  }
+  .section-head h2 .it { font-style: italic; color: var(--gold); font-weight: 300; }
+  html[lang="hi"] .section-head h2 .it { font-style: normal; font-weight: 600; }
+  .section-head p { max-width: 380px; font-size: 15.5px; color: var(--mocha-soft); }
+  html[lang="hi"] .section-head p { font-family: 'Noto Sans Devanagari', sans-serif; }
+
+  /* ===== Story Quote ===== */
+  .story { background: var(--ivory); padding: 80px 0; }
+  .story-quote { max-width: 1000px; margin: 0 auto; text-align: center; padding: 0 36px; }
+  .story-quote .mark {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 60px;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 24px;
+  }
+  .story-quote p {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.4rem, 2.6vw, 2.2rem);
+    line-height: 1.4;
+    color: var(--black);
+    font-weight: 400;
+  }
+  html[lang="hi"] .story-quote p { line-height: 1.55; }
+  .story-quote .it { font-style: italic; color: var(--gold); }
+  html[lang="hi"] .story-quote .it { font-style: normal; font-weight: 600; }
+  .story-quote .attribution {
+    margin-top: 36px;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--mocha-soft);
+    font-family: 'Inter', sans-serif;
+  }
+  html[lang="hi"] .story-quote .attribution { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.06em; text-transform: none; font-size: 13px; }
+
+  /* ===== Collections ===== */
+  .collections { background: var(--ivory); padding-bottom: 80px; }
+  .coll-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+  }
+  .coll-grid .coll-card:nth-child(1) { grid-row: span 2; }
+  @media (max-width: 980px) {
+    .coll-grid { grid-template-columns: 1fr 1fr; }
+    .coll-grid .coll-card:nth-child(1) { grid-row: auto; }
+  }
+  @media (max-width: 560px) { .coll-grid { grid-template-columns: 1fr; } }
+
+  .coll-card {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 4/5;
+    cursor: pointer;
+    background: var(--beige-soft);
+  }
+  .coll-card img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 1.2s var(--ease-out);
+  }
+  .coll-card:hover img { transform: scale(1.05); }
+  .coll-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(31, 31, 31, 0.75) 100%);
+    z-index: 1;
+    transition: opacity 0.4s;
+  }
+  .coll-card .coll-content {
+    position: absolute;
+    bottom: 32px; left: 32px; right: 32px;
+    z-index: 2;
+    color: var(--ivory);
+  }
+  .coll-card .coll-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--gold);
+    margin-bottom: 8px;
+    font-weight: 400;
+  }
+  html[lang="hi"] .coll-card .coll-num { font-family: 'Noto Sans Devanagari', sans-serif; font-style: normal; font-size: 13px; letter-spacing: 0.02em; }
+  .coll-card .coll-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    margin-bottom: 12px;
+  }
+  html[lang="hi"] .coll-card .coll-title { line-height: 1.2; letter-spacing: 0; }
+  .coll-card .coll-sub {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.85;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    transition: gap 0.3s var(--ease-out);
+  }
+  html[lang="hi"] .coll-card .coll-sub { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 13px; }
+  .coll-card:hover .coll-sub { gap: 16px; }
+  .coll-card .coll-sub::after { content: "→"; transition: transform 0.3s; }
+  .coll-card:hover .coll-sub::after { transform: translateX(4px); }
+
+  /* ===== Products ===== */
+  .products { background: var(--beige-soft); }
+  .product-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 56px;
+    justify-content: center;
+  }
+  .filter-btn {
+    padding: 10px 22px;
+    background: transparent;
+    color: var(--mocha);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out);
+    font-family: 'Inter', sans-serif;
+  }
+  html[lang="hi"] .filter-btn { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.02em; text-transform: none; font-size: 13.5px; }
+  .filter-btn:hover { color: var(--black); border-color: var(--gold); }
+  .filter-btn.active {
+    background: var(--black);
+    color: var(--ivory);
+    border-color: var(--black);
+  }
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px 24px;
+  }
+  @media (max-width: 1100px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 800px) { .product-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .product-grid { grid-template-columns: 1fr; gap: 32px; } }
+
+  .prod-card { position: relative; cursor: pointer; }
+  .prod-image {
+    aspect-ratio: 3/4;
+    background: var(--ivory);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 18px;
+  }
+  .prod-image img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.9s var(--ease-out);
+  }
+  .prod-card:hover .prod-image img { transform: scale(1.06); }
+  .prod-tag {
+    position: absolute;
+    top: 14px; left: 14px;
+    background: var(--ivory);
+    color: var(--black);
+    padding: 5px 11px;
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    z-index: 2;
+    font-family: 'Inter', sans-serif;
+  }
+  html[lang="hi"] .prod-tag { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 10.5px; }
+  .prod-tag.gold { background: var(--gold); color: var(--ivory); }
+
+  .prod-wish {
+    position: absolute;
+    top: 14px; right: 14px;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--ivory);
+    border: none;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    z-index: 2;
+    transition: all 0.3s var(--ease-out);
+    color: var(--mocha);
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  .prod-card:hover .prod-wish, .prod-wish.active { opacity: 1; transform: translateY(0); }
+  .prod-wish:hover { color: var(--gold); transform: scale(1.08); }
+  .prod-wish svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; transition: fill 0.25s; }
+  .prod-wish.active { color: var(--gold); }
+  .prod-wish.active svg { fill: var(--gold); }
+  .prod-wish.animating { animation: heart-pop 0.5s var(--ease-spring); }
+  @keyframes heart-pop {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.35); }
+  }
+
+  .prod-quick-add {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: var(--black);
+    color: var(--ivory);
+    border: none;
+    padding: 14px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(100%);
+    transition: all 0.4s var(--ease-out);
+    z-index: 2;
+    font-family: 'Inter', sans-serif;
+  }
+  html[lang="hi"] .prod-quick-add { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 13px; }
+  .prod-card:hover .prod-quick-add { opacity: 1; transform: translateY(0); }
+  .prod-quick-add:hover { background: var(--gold); }
+  .prod-quick-add.added { background: var(--gold); }
+
+  .prod-body { padding: 0 4px; }
+  .prod-brand {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  html[lang="hi"] .prod-brand { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.06em; text-transform: none; font-size: 11.5px; }
+  .prod-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 21px;
+    font-weight: 400;
+    color: var(--black);
+    line-height: 1.2;
+    margin-bottom: 8px;
+    letter-spacing: -0.005em;
+  }
+  .prod-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .prod-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--black);
+    letter-spacing: -0.01em;
+  }
+  .prod-mrp {
+    font-size: 13px;
+    color: var(--mocha-soft);
+    text-decoration: line-through;
+  }
+  .prod-save {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin-left: auto;
+  }
+  html[lang="hi"] .prod-save { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.02em; text-transform: none; font-size: 11.5px; }
+
+  /* ===== Atelier ===== */
+  .atelier { background: var(--black); color: var(--ivory); position: relative; overflow: hidden; }
+  .atelier-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    align-items: stretch;
+  }
+  @media (max-width: 900px) { .atelier-grid { grid-template-columns: 1fr; } }
+  .atelier-image {
+    aspect-ratio: 4/5;
+    overflow: hidden;
+    background: var(--mocha);
+  }
+  .atelier-image img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: brightness(0.85) contrast(1.05);
+    transition: transform 1.2s var(--ease-out);
+  }
+  .atelier-image:hover img { transform: scale(1.04); }
+  .atelier-content {
+    padding: 100px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+  @media (max-width: 1100px) { .atelier-content { padding: 80px 60px; } }
+  @media (max-width: 640px) { .atelier-content { padding: 60px 32px; } }
+  .atelier-content .section-eyebrow { color: var(--gold); }
+  .atelier-content h2 {
+    color: var(--ivory);
+    margin-bottom: 32px;
+    font-size: clamp(2.2rem, 4vw, 3.6rem);
+  }
+  .atelier-content h2 .it { color: var(--gold); font-style: italic; font-weight: 300; }
+  html[lang="hi"] .atelier-content h2 .it { font-style: normal; font-weight: 600; }
+  .atelier-content p {
+    color: rgba(248, 245, 242, 0.78);
+    font-size: 16px;
+    line-height: 1.75;
+    margin-bottom: 24px;
+    max-width: 480px;
+  }
+  html[lang="hi"] .atelier-content p { font-family: 'Noto Sans Devanagari', sans-serif; }
+  .atelier-list {
+    margin: 24px 0 36px;
+    border-top: 1px solid rgba(176, 141, 87, 0.3);
+    list-style: none;
+    padding: 0;
+  }
+  .atelier-list li {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 0;
+    border-bottom: 1px solid rgba(176, 141, 87, 0.2);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 19px;
+    color: var(--ivory);
+    font-weight: 400;
+  }
+  html[lang="hi"] .atelier-list li { font-family: 'Noto Serif Devanagari', serif; font-size: 17px; line-height: 1.5; }
+  .atelier-list li::before { content: "✦"; color: var(--gold); font-weight: 400; }
+  .atelier-content .btn-primary {
+    background: transparent;
+    border-color: var(--gold);
+    color: var(--ivory);
+    align-self: flex-start;
+  }
+  .atelier-content .btn-primary::before { background: var(--gold); }
+
+  /* ===== Testimonials ===== */
+  .testimonials { background: var(--ivory); }
+  .test-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+  }
+  @media (max-width: 900px) { .test-grid { grid-template-columns: 1fr; } }
+
+  .test-card {
+    padding: 40px 36px;
+    border-right: 1px solid var(--line);
+    transition: background 0.4s;
+  }
+  .test-card:last-child { border-right: none; }
+  @media (max-width: 900px) {
+    .test-card { border-right: none; border-bottom: 1px solid var(--line); }
+    .test-card:last-child { border-bottom: none; }
+  }
+  .test-card:hover { background: var(--beige-soft); }
+  .test-stars { color: var(--gold); font-size: 13px; letter-spacing: 4px; margin-bottom: 28px; }
+  .test-body {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    line-height: 1.55;
+    color: var(--black);
+    margin-bottom: 32px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: -0.005em;
+  }
+  html[lang="hi"] .test-body { font-style: normal; font-size: 18px; line-height: 1.65; }
+  .test-author { padding-top: 24px; border-top: 1px solid var(--line); }
+  .test-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--black);
+  }
+  .test-meta {
+    font-size: 11px;
+    color: var(--gold);
+    margin-top: 4px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  html[lang="hi"] .test-meta { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+
+  /* ===== Visit ===== */
+  .visit { background: var(--beige-soft); }
+  .visit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  @media (max-width: 900px) { .visit-grid { grid-template-columns: 1fr; gap: 50px; } }
+  .visit-info { display: grid; gap: 4px; margin: 40px 0; }
+  .vi-row {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    padding: 24px 0;
+    border-bottom: 1px solid rgba(176, 141, 87, 0.3);
+    transition: padding-left 0.35s var(--ease-out);
+  }
+  .vi-row:hover { padding-left: 12px; }
+  .vi-row:last-child { border-bottom: none; }
+  .vi-icon {
+    width: 42px; height: 42px;
+    color: var(--gold);
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    transition: all 0.3s var(--ease-spring);
+  }
+  .vi-row:hover .vi-icon { background: var(--gold); color: var(--ivory); transform: rotate(-8deg); }
+  .vi-icon svg { width: 16px; height: 16px; }
+  .vi-label { font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; font-weight: 500; }
+  html[lang="hi"] .vi-label { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .vi-value { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--black); font-weight: 400; letter-spacing: -0.005em; }
+  .vi-value-sm { font-size: 13.5px; color: var(--mocha); margin-top: 4px; }
+  html[lang="hi"] .vi-value-sm { font-family: 'Noto Sans Devanagari', sans-serif; }
+
+  .map-visual {
+    aspect-ratio: 4/5;
+    background: var(--ivory);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--line-warm);
+  }
+  .map-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(176, 141, 87, 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(176, 141, 87, 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .map-routes { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .map-route-path {
+    fill: none;
+    stroke: rgba(176, 141, 87, 0.35);
+    stroke-width: 2;
+    stroke-dasharray: 1200;
+    stroke-dashoffset: 1200;
+    animation: draw-path 3s var(--ease-out) 0.5s forwards;
+  }
+  .map-route-path.b { stroke: var(--gold); stroke-width: 2.5; animation-delay: 1s; }
+  @keyframes draw-path { to { stroke-dashoffset: 0; } }
+  .map-pin {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -100%);
+    z-index: 5;
+    animation: pin-drop 1s var(--ease-spring) 1.5s backwards;
+  }
+  @keyframes pin-drop {
+    from { transform: translate(-50%, -250%); opacity: 0; }
+    to { transform: translate(-50%, -100%); opacity: 1; }
+  }
+  .pin-pulse {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: var(--gold);
+    opacity: 0.3;
+    animation: pin-ring 2.5s infinite ease-out;
+  }
+  @keyframes pin-ring {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.5; }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+  }
+  .pin-body {
+    width: 62px; height: 62px;
+    background: var(--black);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: grid; place-items: center;
+    box-shadow: 0 14px 32px -8px rgba(31, 31, 31, 0.4);
+    position: relative; z-index: 1;
+    border: 3px solid var(--ivory);
+  }
+  .pin-text {
+    transform: rotate(45deg);
+    color: var(--gold);
+    font-family: 'Noto Serif Devanagari', serif;
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .map-label {
+    position: absolute;
+    bottom: 28px; left: 28px;
+    background: var(--ivory);
+    padding: 16px 22px;
+    border-left: 2px solid var(--gold);
+    z-index: 4;
+  }
+  .ml-t { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-style: italic; color: var(--black); font-weight: 500; }
+  html[lang="hi"] .ml-t { font-style: normal; }
+  .ml-s { font-size: 11px; color: var(--gold); margin-top: 4px; letter-spacing: 0.18em; text-transform: uppercase; }
+  html[lang="hi"] .ml-s { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .map-distance {
+    position: absolute;
+    top: 28px; right: 28px;
+    background: var(--black);
+    color: var(--ivory);
+    padding: 12px 18px;
+    z-index: 4;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
+  }
+  html[lang="hi"] .map-distance { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .map-distance .gold { color: var(--gold); }
+
+  /* ===== Big CTA ===== */
+  .big-cta {
+    background: var(--ivory);
+    text-align: center;
+    padding: 160px 0 140px;
+    position: relative;
+  }
+  .big-cta::before {
+    content: "अरीबा";
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Noto Serif Devanagari', serif;
+    font-size: clamp(180px, 24vw, 360px);
+    color: rgba(176, 141, 87, 0.06);
+    pointer-events: none;
+    line-height: 1;
+    z-index: 0;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  .big-cta .container { position: relative; z-index: 1; max-width: 800px; }
+  .big-cta h2 {
+    color: var(--black);
+    font-size: clamp(2.6rem, 5.5vw, 5rem);
+    margin-bottom: 32px;
+    line-height: 1.05;
+  }
+  html[lang="hi"] .big-cta h2 { line-height: 1.2; }
+  .big-cta h2 .it { font-style: italic; color: var(--gold); font-weight: 300; }
+  html[lang="hi"] .big-cta h2 .it { font-style: normal; font-weight: 600; }
+  .big-cta p {
+    color: var(--mocha);
+    font-size: 17px;
+    max-width: 520px;
+    margin: 0 auto 48px;
+    line-height: 1.7;
+  }
+  html[lang="hi"] .big-cta p { font-family: 'Noto Sans Devanagari', sans-serif; }
+  .big-cta .ctas { display: inline-flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+
+  /* ===== Footer ===== */
+  footer {
+    background: var(--black);
+    color: var(--ivory);
+    padding: 90px 0 36px;
+    position: relative;
+  }
+  footer::before {
+    content: ""; position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .footer-top {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    gap: 60px;
+    padding-bottom: 60px;
+    border-bottom: 1px solid rgba(176, 141, 87, 0.2);
+    margin-bottom: 36px;
+  }
+  @media (max-width: 900px) { .footer-top { grid-template-columns: 1fr 1fr; gap: 40px; } }
+  @media (max-width: 560px) { .footer-top { grid-template-columns: 1fr; } }
+
+  .footer-brand .logo .logo-text .name { color: var(--ivory); }
+  .footer-brand .logo .logo-text .tag { color: var(--gold); }
+  .footer-brand p {
+    margin-top: 24px;
+    font-size: 14.5px;
+    color: rgba(248, 245, 242, 0.65);
+    line-height: 1.7;
+    max-width: 340px;
+  }
+  html[lang="hi"] .footer-brand p { font-family: 'Noto Sans Devanagari', sans-serif; }
+  .footer-col h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--gold);
+    margin-bottom: 24px;
+    font-weight: 500;
+    font-style: italic;
+  }
+  html[lang="hi"] .footer-col h4 { font-family: 'Noto Serif Devanagari', serif; font-style: normal; font-size: 17px; }
+  .footer-col ul { list-style: none; padding: 0; }
+  .footer-col li {
+    font-size: 13.5px;
+    color: rgba(248, 245, 242, 0.65);
+    margin-bottom: 14px;
+    transition: all 0.25s var(--ease-out);
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    display: inline-block;
+  }
+  html[lang="hi"] .footer-col li { font-family: 'Noto Sans Devanagari', sans-serif; }
+  .footer-col li:hover { color: var(--gold); transform: translateX(4px); }
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(248, 245, 242, 0.5);
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  html[lang="hi"] .footer-bottom { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.02em; text-transform: none; font-size: 13px; }
+  .footer-bottom .built {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 14px;
+    color: rgba(248, 245, 242, 0.65);
+  }
+  html[lang="hi"] .footer-bottom .built { font-family: 'Noto Serif Devanagari', serif; font-style: normal; }
+  .footer-bottom .built strong {
+    color: var(--gold);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  /* ===== Float / Drawer / Toast ===== */
+  .wa-float {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    width: 60px; height: 60px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--ivory);
+    box-shadow: 0 14px 32px rgba(176, 141, 87, 0.5);
+    z-index: 90;
+    transition: transform 0.3s var(--ease-spring);
+  }
+  .wa-float::before {
+    content: ""; position: absolute; inset: -6px;
+    background: var(--gold);
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: pulse-ring 2.5s infinite ease-out;
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(0.9); opacity: 0.5; }
+    100% { transform: scale(1.4); opacity: 0; }
+  }
+  .wa-float:hover { transform: scale(1.1); }
+  .wa-float svg { width: 26px; height: 26px; position: relative; z-index: 1; }
+
+  .drawer-overlay {
+    position: fixed; inset: 0;
+    background: rgba(31, 31, 31, 0.5);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s var(--ease-smooth);
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: all; }
+  .drawer {
+    position: fixed;
+    top: 0; right: 0;
+    width: min(460px, 100%);
+    height: 100vh;
+    background: var(--ivory);
+    z-index: 201;
+    transform: translateX(100%);
+    transition: transform 0.5s var(--ease-out);
+    display: flex;
+    flex-direction: column;
+    box-shadow: -20px 0 60px rgba(31, 31, 31, 0.15);
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-header {
+    padding: 28px 32px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .drawer-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    color: var(--black);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+  }
+  .drawer-title .it { font-style: italic; color: var(--gold); }
+  html[lang="hi"] .drawer-title .it { font-style: normal; font-weight: 600; }
+  .drawer-close {
+    width: 38px; height: 38px;
+    background: transparent;
+    border: 1px solid var(--line);
+    cursor: pointer;
+    display: grid; place-items: center;
+    color: var(--black);
+    transition: all 0.3s var(--ease-out);
+  }
+  .drawer-close:hover { background: var(--black); color: var(--ivory); border-color: var(--black); }
+  .drawer-tabs {
+    display: flex;
+    padding: 0 32px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 16px 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mocha-soft);
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: color 0.25s;
+  }
+  html[lang="hi"] .tab-btn { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 13.5px; }
+  .tab-btn:hover { color: var(--black); }
+  .tab-btn.active { color: var(--black); }
+  .tab-btn.active::after {
+    content: "";
+    position: absolute;
+    bottom: -1px; left: 20%; right: 20%;
+    height: 1px;
+    background: var(--gold);
+  }
+  .tab-btn .badge {
+    background: var(--beige-soft);
+    color: var(--mocha);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+    letter-spacing: 0;
+    font-family: 'Inter', sans-serif;
+  }
+  .tab-btn.active .badge { background: var(--gold); color: var(--ivory); }
+  .drawer-content { flex: 1; overflow-y: auto; padding: 10px 0; }
+  .drawer-empty {
+    text-align: center;
+    padding: 80px 40px;
+    color: var(--mocha-soft);
+  }
+  .drawer-empty-icon {
+    width: 64px; height: 64px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    margin: 0 auto 24px;
+    color: var(--gold);
+  }
+  .drawer-empty-icon svg { width: 24px; height: 24px; }
+  .drawer-empty .et {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--black);
+    margin-bottom: 10px;
+    font-weight: 400;
+    font-style: italic;
+  }
+  html[lang="hi"] .drawer-empty .et { font-family: 'Noto Serif Devanagari', serif; font-style: normal; }
+  .drawer-empty .es { font-size: 13.5px; line-height: 1.6; }
+  html[lang="hi"] .drawer-empty .es { font-family: 'Noto Sans Devanagari', sans-serif; }
+
+  .cart-item {
+    display: flex;
+    gap: 16px;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--line);
+    animation: slide-in 0.35s var(--ease-out);
+  }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .ci-image {
+    width: 80px; height: 100px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--beige-soft);
+  }
+  .ci-image img { width: 100%; height: 100%; object-fit: cover; }
+  .ci-body { flex: 1; min-width: 0; }
+  .ci-brand {
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  html[lang="hi"] .ci-brand { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 11px; }
+  .ci-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--black);
+    line-height: 1.25;
+    margin-bottom: 8px;
+  }
+  .ci-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--black);
+  }
+  .ci-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .qty-btn {
+    width: 24px; height: 24px;
+    background: transparent;
+    border: 1px solid var(--line);
+    cursor: pointer;
+    display: grid; place-items: center;
+    color: var(--black);
+    transition: all 0.2s;
+  }
+  .qty-btn:hover { background: var(--black); color: var(--ivory); border-color: var(--black); }
+  .qty-num {
+    min-width: 28px;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    color: var(--black);
+    font-size: 16px;
+  }
+  .ci-remove {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--mocha-soft);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+    padding: 4px 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+  html[lang="hi"] .ci-remove { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .ci-remove:hover { color: var(--gold); }
+  .ci-wish-add {
+    background: var(--black);
+    color: var(--ivory);
+    border: none;
+    padding: 8px 14px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  html[lang="hi"] .ci-wish-add { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .ci-wish-add:hover { background: var(--gold); }
+
+  .drawer-footer {
+    border-top: 1px solid var(--line);
+    padding: 24px 32px 28px;
+    background: var(--beige-soft);
+  }
+  .df-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+  }
+  .df-total .lbl {
+    font-size: 10.5px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--mocha);
+    font-weight: 500;
+  }
+  html[lang="hi"] .df-total .lbl { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .df-total .amt {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    color: var(--black);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .df-note {
+    font-size: 14px;
+    color: var(--mocha-soft);
+    margin-bottom: 18px;
+    line-height: 1.55;
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+  }
+  html[lang="hi"] .df-note { font-family: 'Noto Sans Devanagari', sans-serif; font-style: normal; font-size: 13.5px; }
+  .btn-wa {
+    width: 100%;
+    background: var(--black);
+    color: var(--ivory);
+    padding: 17px;
+    border: none;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.3s var(--ease-out);
+  }
+  html[lang="hi"] .btn-wa { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 13.5px; }
+  .btn-wa:hover { background: var(--gold); }
+  .btn-wa svg { width: 16px; height: 16px; }
+
+  .toast {
+    position: fixed;
+    bottom: 100px; right: 28px;
+    background: var(--black);
+    color: var(--ivory);
+    padding: 16px 22px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    z-index: 250;
+    box-shadow: 0 14px 32px -8px rgba(31, 31, 31, 0.4);
+    transform: translateX(120%);
+    transition: transform 0.4s var(--ease-out);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 340px;
+    border-left: 2px solid var(--gold);
+  }
+  html[lang="hi"] .toast { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.02em; font-size: 13px; }
+  .toast.show { transform: translateX(0); }
+  .toast svg { width: 16px; height: 16px; color: var(--gold); flex-shrink: 0; }
+  .toast strong { color: var(--gold); font-weight: 500; }
+  @media (max-width: 540px) {
+    .toast { right: 16px; left: 16px; max-width: none; }
+    .wa-float { bottom: 100px; }
+  }
+
+  /* Reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1s var(--ease-out), transform 1s var(--ease-out);
+  }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+  .reveal-stagger > * {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+  }
+  .reveal-stagger.in > * { opacity: 1; transform: translateY(0); }
+  .reveal-stagger.in > *:nth-child(1) { transition-delay: 0.05s; }
+  .reveal-stagger.in > *:nth-child(2) { transition-delay: 0.15s; }
+  .reveal-stagger.in > *:nth-child(3) { transition-delay: 0.25s; }
+  .reveal-stagger.in > *:nth-child(4) { transition-delay: 0.35s; }
+  .reveal-stagger.in > *:nth-child(5) { transition-delay: 0.45s; }
+  .reveal-stagger.in > *:nth-child(6) { transition-delay: 0.55s; }
+  .reveal-stagger.in > *:nth-child(7) { transition-delay: 0.65s; }
+  .reveal-stagger.in > *:nth-child(8) { transition-delay: 0.75s; }
+</style>
+</head>
+<body>
+
+<!-- Top Marquee -->
+<div class="top-bar">
+  <div class="marquee-top" id="marquee"></div>
+</div>
+
+<!-- Header -->
+<header id="header">
+  <div class="nav">
+    <a href="#" class="logo">
+      <div class="logo-mark">अ</div>
+      <div class="logo-text">
+        <div class="name" data-i18n="brand_name">Areeba</div>
+        <div class="tag" data-i18n="brand_tag">Designer Atelier · Mathura</div>
+      </div>
+    </a>
+    <nav class="nav-links">
+      <a href="#collections" data-i18n="nav_collections">Collections</a>
+      <a href="#shop" data-i18n="nav_shop">Boutique</a>
+      <a href="#atelier" data-i18n="nav_atelier">Bespoke</a>
+      <a href="#stories" data-i18n="nav_stories">Stories</a>
+      <a href="#visit" data-i18n="nav_visit">Visit</a>
+    </nav>
+    <div class="header-actions">
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn hi-btn" data-lang="hi">हिं</button>
+      </div>
+      <button class="icon-btn" id="wishBtn" aria-label="Wishlist">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        <span class="count" id="wishCount">0</span>
+      </button>
+      <button class="icon-btn" id="cartBtn" aria-label="Cart">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2l1.5 4.5h13L19 18a2 2 0 01-2 1.5H9.5A2 2 0 017.5 18L6 2zM6 2H3"/><circle cx="10" cy="22" r="1"/><circle cx="18" cy="22" r="1"/></svg>
+        <span class="count" id="cartCount">0</span>
+      </button>
+      <a href="https://wa.me/919997669618" class="wa-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884"/></svg>
+        <span class="wa-text" data-i18n="cta_enquire">Enquire</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-bg">
+    <img src="https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=2000&q=80&auto=format&fit=crop" alt="" loading="eager" />
+  </div>
+  <div class="hero-grain"></div>
+  <div class="hero-grid">
+    <div class="hero-content">
+      <div class="eyebrow" data-i18n="hero_eyebrow">Sanjay Nagar · Mathura</div>
+      <h1 data-i18n-html="hero_h1"><span class="row"><span>The atelier</span></span><span class="row"><span>for the <span class="italic">modern</span></span></span><span class="row"><span><span class="italic">Mathura</span> bride.</span></span></h1>
+      <p class="hero-sub" data-i18n="hero_sub">A designer studio where every lehenga, saree, and suit is fitted, finished, and quietly perfected — by appointment, in a way that the readymade rack simply cannot promise.</p>
+      <div class="hero-ctas">
+        <a href="https://wa.me/919997669618?text=Hi%20Areeba%20Boutique" class="btn-primary">
+          <span data-i18n="hero_cta_primary">Book a fitting</span>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+        </a>
+        <a href="#shop" class="btn-ghost" data-i18n="hero_cta_ghost">View boutique</a>
+      </div>
+    </div>
+
+    <div class="hero-image-wrap">
+      <div class="hero-image">
+        <img src="https://images.unsplash.com/photo-1733937111165-36efb3ded769?w=1100&q=80&auto=format&fit=crop" alt="" onerror="this.style.display='none'" />
+        <div class="hero-image-label">
+          <div class="l" data-i18n="hero_label_l">Bridal Edit · 2026</div>
+          <div class="t" data-i18n="hero_label_t">"Noor" — Aubergine Lehenga</div>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="n">12<span style="color:var(--gold);">+</span></div>
+          <div class="l" data-i18n-html="stat1_l">Bridal<br>Brides</div>
+        </div>
+        <div class="stat">
+          <div class="n">200<span style="color:var(--gold);">+</span></div>
+          <div class="l" data-i18n-html="stat2_l">Pieces<br>Stitched</div>
+        </div>
+        <div class="stat">
+          <div class="n">5.0</div>
+          <div class="l" data-i18n-html="stat3_l">Google<br>Rating</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Story -->
+<section class="story">
+  <div class="story-quote reveal">
+    <div class="mark">"</div>
+    <p data-i18n-html="story_quote">Every Areeba piece begins as a conversation. About the bride, the occasion, the way the dupatta must fall when she walks. <span class="it">Then we cut. Then we stitch. Then we listen again.</span></p>
+    <div class="attribution" data-i18n="story_attr">— Areeba · The Atelier</div>
+  </div>
+</section>
+
+<!-- Collections -->
+<section class="collections" id="collections">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="row">
+        <div>
+          <div class="section-eyebrow" data-i18n="coll_eyebrow">The Wardrobe</div>
+          <h2 data-i18n-html="coll_h2">Five collections,<br>one <span class="it">atelier.</span></h2>
+        </div>
+        <p data-i18n="coll_p">Bridal lehengas, designer sarees, festive suits, occasion wear, and the kind of indo-western pieces that fit a Mathura wedding and a Delhi dinner equally.</p>
+      </div>
+    </div>
+
+    <div class="coll-grid reveal-stagger">
+      <div class="coll-card">
+        <img src="https://images.unsplash.com/photo-1733937111165-36efb3ded769?w=900&q=80&auto=format&fit=crop" alt="" onerror="this.style.display='none'" />
+        <div class="coll-content">
+          <div class="coll-num" data-i18n="coll1_num">No. 01</div>
+          <div class="coll-title" data-i18n="coll1_title">The Bridal Edit</div>
+          <div class="coll-sub" data-i18n="coll1_sub">Lehengas · Sarees · Sets</div>
+        </div>
+      </div>
+      <div class="coll-card">
+        <img src="https://images.unsplash.com/photo-1572804013427-4d7ca7268217?w=700&q=80&auto=format&fit=crop" alt="" onerror="this.style.display='none'" />
+        <div class="coll-content">
+          <div class="coll-num" data-i18n="coll2_num">No. 02</div>
+          <div class="coll-title" data-i18n="coll2_title">Festive Closet</div>
+          <div class="coll-sub" data-i18n="coll2_sub">Anarkali · Sharara</div>
+        </div>
+      </div>
+      <div class="coll-card">
+        <img src="https://images.unsplash.com/photo-1571513722275-4b41940f54b8?w=700&q=80&auto=format&fit=crop" alt="" onerror="this.style.display='none'" />
+        <div class="coll-content">
+          <div class="coll-num" data-i18n="coll3_num">No. 03</div>
+          <div class="coll-title" data-i18n="coll3_title">Indo-Western</div>
+          <div class="coll-sub" data-i18n="coll3_sub">Fusion · Resort '26</div>
+        </div>
+      </div>
+      <div class="coll-card">
+        <img src="https://images.unsplash.com/photo-1612722432474-b971cdcea546?w=700&q=80&auto=format&fit=crop" alt="" onerror="this.style.display='none'" />
+        <div class="coll-content">
+          <div class="coll-num" data-i18n="coll4_num">No. 04</div>
+          <div class="coll-title" data-i18n="coll4_title">Day &amp; Occasion</div>
+          <div class="coll-sub" data-i18n="coll4_sub">Easy · Refined</div>
+        </div>
+      </div>
+      <div class="coll-card">
+        <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=700&q=80&auto=format&fit=crop" alt="" onerror="this.style.display='none'" />
+        <div class="coll-content">
+          <div class="coll-num" data-i18n="coll5_num">No. 05</div>
+          <div class="coll-title" data-i18n="coll5_title">The Accents</div>
+          <div class="coll-sub" data-i18n="coll5_sub">Jewellery · Drape</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Boutique -->
+<section class="products" id="shop">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="row">
+        <div>
+          <div class="section-eyebrow" data-i18n="shop_eyebrow">The Boutique</div>
+          <h2 data-i18n-html="shop_h2">This season's<br><span class="it">favourites.</span></h2>
+        </div>
+        <p data-i18n="shop_p">Drop a piece into your cart, send your selection over WhatsApp, and we'll share fit availability, final pricing, and an appointment to try it on.</p>
+      </div>
+    </div>
+
+    <div class="product-filters" id="prodFilters">
+      <button class="filter-btn active" data-filter="all" data-i18n="filter_all">All Pieces</button>
+      <button class="filter-btn" data-filter="bridal" data-i18n="filter_bridal">Bridal</button>
+      <button class="filter-btn" data-filter="saree" data-i18n="filter_saree">Sarees</button>
+      <button class="filter-btn" data-filter="festive" data-i18n="filter_festive">Festive</button>
+      <button class="filter-btn" data-filter="indo" data-i18n="filter_indo">Indo-Western</button>
+      <button class="filter-btn" data-filter="accessory" data-i18n="filter_accessory">Accents</button>
+    </div>
+
+    <div class="product-grid" id="prodGrid"></div>
+  </div>
+</section>
+
+<!-- Atelier -->
+<section class="atelier" id="atelier">
+  <div class="atelier-grid">
+    <div class="atelier-image reveal">
+      <img src="https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=1000&q=80&auto=format&fit=crop" alt="" onerror="this.style.display='none'" />
+    </div>
+    <div class="atelier-content reveal">
+      <div class="section-eyebrow" data-i18n="atelier_eyebrow">The Bespoke Service</div>
+      <h2 data-i18n-html="atelier_h2">Stitched for<br>one <span class="it">person.</span></h2>
+      <p data-i18n="atelier_p">Every garment in the boutique can be re-cut, re-coloured, re-embroidered for you — or designed from a sketch on a page. This is what most of our work is, actually. A conversation, a sample, three fittings, and a piece that fits no one else but you.</p>
+      <ul class="atelier-list">
+        <li data-i18n="atelier_li1">Bridal lehengas, fully bespoke — 6 to 8 weeks</li>
+        <li data-i18n="atelier_li2">Saree blouses, perfectly fitted — 1 week</li>
+        <li data-i18n="atelier_li3">Suit sets, designed to sketch — 2 to 3 weeks</li>
+        <li data-i18n="atelier_li4">Alterations on existing pieces — same day</li>
+      </ul>
+      <a href="https://wa.me/919997669618?text=Hi%20Areeba" class="btn-primary">
+        <span data-i18n="atelier_cta">Start a bespoke piece</span>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials -->
+<section class="testimonials" id="stories">
+  <div class="container">
+    <div class="section-head reveal" style="text-align: center;">
+      <div class="row" style="justify-content: center; flex-direction: column; align-items: center;">
+        <div style="text-align: center;">
+          <div class="section-eyebrow" style="justify-content: center;" data-i18n="stories_eyebrow">Stories from our brides</div>
+          <h2 data-i18n-html="stories_h2">What they<br><span class="it">tell us</span> after.</h2>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-grid reveal-stagger">
+      <div class="test-card">
+        <div class="test-stars">★★★★★</div>
+        <div class="test-body" data-i18n="test1_body">"Areeba ne mera bridal lehenga aisa fit kiya jaisa kisi ne pehle nahi kiya. Three fittings, har baar kuch chhota sa improve hua. Family ne kaha 'tu hi lag rahi hai, kapde nahi'."</div>
+        <div class="test-author">
+          <div class="test-name" data-i18n="test1_name">Priya M.</div>
+          <div class="test-meta" data-i18n="test1_meta">Bride · Mathura</div>
+        </div>
+      </div>
+      <div class="test-card">
+        <div class="test-stars">★★★★★</div>
+        <div class="test-body" data-i18n="test2_body">"Came in for a saree blouse. Ended up with a full festive set, custom designed. Her eye for what suits a body type is rare — she sees what you'd look best in before you say a word."</div>
+        <div class="test-author">
+          <div class="test-name" data-i18n="test2_name">Anushka G.</div>
+          <div class="test-meta" data-i18n="test2_meta">Returning Client</div>
+        </div>
+      </div>
+      <div class="test-card">
+        <div class="test-stars">★★★★★</div>
+        <div class="test-body" data-i18n="test3_body">"Soft-spoken, but the work speaks. Two of my cousins also got their wedding pieces done here after seeing mine. The detailing on the dupatta — entirely hand-done — was the moment."</div>
+        <div class="test-author">
+          <div class="test-name" data-i18n="test3_name">Ritika V.</div>
+          <div class="test-meta" data-i18n="test3_meta">Bridesmaid · Agra</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Visit -->
+<section class="visit" id="visit">
+  <div class="container">
+    <div class="visit-grid">
+      <div class="reveal">
+        <div class="section-eyebrow" data-i18n="visit_eyebrow">Visit the Studio</div>
+        <h2 data-i18n-html="visit_h2">Walk in, or<br>book the <span class="it">studio</span>.</h2>
+        <p data-i18n="visit_p" style="font-size: 16px; line-height: 1.7; max-width: 480px; margin-top: 24px;">For a bridal or bespoke consultation, an appointment lets us prepare swatches, samples, and references before you arrive. For a quick try-on, drop in any day.</p>
+
+        <div class="visit-info">
+          <div class="vi-row">
+            <div class="vi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="3"/></svg>
+            </div>
+            <div>
+              <div class="vi-label" data-i18n="visit_addr_label">The Studio</div>
+              <div class="vi-value" data-i18n="visit_addr_value">Sanjay Nagar, Mathura</div>
+              <div class="vi-value-sm" data-i18n="visit_addr_sm">Uttar Pradesh 281001, India</div>
+            </div>
+          </div>
+          <div class="vi-row">
+            <div class="vi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            </div>
+            <div>
+              <div class="vi-label" data-i18n="visit_phone_label">Call or WhatsApp</div>
+              <div class="vi-value">+91 99976 69618</div>
+              <div class="vi-value-sm" data-i18n="visit_phone_sm">Replies same day, most often</div>
+            </div>
+          </div>
+          <div class="vi-row">
+            <div class="vi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div>
+              <div class="vi-label" data-i18n="visit_hours_label">By Appointment</div>
+              <div class="vi-value" data-i18n="visit_hours_value">10:30 AM — 8:00 PM</div>
+              <div class="vi-value-sm" data-i18n="visit_hours_sm">All seven days · Bridal slots by booking</div>
+            </div>
+          </div>
+        </div>
+
+        <a href="https://wa.me/919997669618" class="btn-primary">
+          <span data-i18n="visit_cta">Book your visit</span>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+        </a>
+      </div>
+
+      <div class="map-visual reveal">
+        <div class="map-grid"></div>
+        <svg class="map-routes" viewBox="0 0 400 500" preserveAspectRatio="none">
+          <path class="map-route-path" d="M 0 350 Q 100 320, 180 280 T 400 200"/>
+          <path class="map-route-path" d="M 0 100 Q 150 150, 200 250"/>
+          <path class="map-route-path b" d="M 50 480 Q 150 400, 200 240"/>
+        </svg>
+        <div class="map-pin">
+          <div class="pin-pulse"></div>
+          <div class="pin-body"><div class="pin-text">अ</div></div>
+        </div>
+        <div class="map-label">
+          <div class="ml-t" data-i18n="map_label_t">Areeba · Sanjay Nagar</div>
+          <div class="ml-s" data-i18n="map_label_s">Mathura · 281001</div>
+        </div>
+        <div class="map-distance">
+          <span class="gold">✦</span>
+          <span data-i18n="map_distance">2 km from City Centre</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Big CTA -->
+<section class="big-cta">
+  <div class="container">
+    <h2 class="reveal" data-i18n-html="bigcta_h2">Have a wedding<br>on the <span class="it">calendar?</span></h2>
+    <p class="reveal" data-i18n="bigcta_p">A bridal piece takes six to eight weeks. The earlier you reach out, the more conversation, more sketches, more time with your dupatta.</p>
+    <div class="ctas reveal">
+      <a href="https://wa.me/919997669618" class="btn-primary">
+        <span data-i18n="bigcta_primary">Begin a bridal piece</span>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </a>
+      <a href="tel:+919997669618" class="btn-ghost" data-i18n="bigcta_ghost">Or call +91 99976 69618</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="logo">
+          <div class="logo-mark">अ</div>
+          <div class="logo-text">
+            <div class="name" data-i18n="brand_name">Areeba</div>
+            <div class="tag" data-i18n="brand_tag">Designer Atelier · Mathura</div>
+          </div>
+        </a>
+        <p data-i18n="footer_brand_p">A designer studio in Sanjay Nagar — bridal lehengas, designer sarees, festive suits, and bespoke tailoring for the women of Mathura, Vrindavan, and beyond.</p>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer_col1_h">The Wardrobe</h4>
+        <ul>
+          <li data-i18n="footer_col1_1">The Bridal Edit</li>
+          <li data-i18n="footer_col1_2">Designer Sarees</li>
+          <li data-i18n="footer_col1_3">Festive Closet</li>
+          <li data-i18n="footer_col1_4">Indo-Western</li>
+          <li data-i18n="footer_col1_5">The Accents</li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer_col2_h">The Studio</h4>
+        <ul>
+          <li data-i18n="footer_col2_1">Sanjay Nagar, Mathura</li>
+          <li data-i18n="footer_col2_2">U.P. 281001, India</li>
+          <li data-i18n="footer_col2_3">10:30 AM — 8:00 PM</li>
+          <li data-i18n="footer_col2_4">By appointment</li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer_col3_h">In Touch</h4>
+        <ul>
+          <li>+91 99976 69618</li>
+          <li data-i18n="footer_col3_2">WhatsApp anytime</li>
+          <li data-i18n="footer_col3_3">Bridal consultations</li>
+          <li data-i18n="footer_col3_4">Bespoke enquiries</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div data-i18n="footer_copy">© 2026 Areeba Boutique. All rights reserved.</div>
+      <div class="built" data-i18n-html="footer_built">Built with <strong>Open Idea</strong> — AI websites for Indian SMBs</div>
+    </div>
+  </div>
+</footer>
+
+<a href="https://wa.me/919997669618" class="wa-float" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884"/></svg>
+</a>
+
+<!-- Drawer -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-header">
+    <div class="drawer-title" data-i18n-html="drawer_title">Your <span class="it">selection</span></div>
+    <button class="drawer-close" id="drawerClose" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="drawer-tabs">
+    <button class="tab-btn active" data-tab="cart"><span data-i18n="tab_cart">Cart</span> <span class="badge" id="cartTabCount">0</span></button>
+    <button class="tab-btn" data-tab="wishlist"><span data-i18n="tab_wishlist">Wishlist</span> <span class="badge" id="wishTabCount">0</span></button>
+  </div>
+  <div class="drawer-content" id="drawerContent"></div>
+  <div class="drawer-footer" id="drawerFooter" style="display:none;"></div>
+</aside>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+  <span id="toastText"></span>
+</div>
+
+<script>
+  const T = {
+    en: {
+      marquee: ["Bridal Edit '26 — Now Open", "Custom Tailoring by Appointment", "Stitching Services Available", "Free Consultation in Mathura"],
+      brand_name: "Areeba",
+      brand_tag: "Designer Atelier · Mathura",
+      nav_collections: "Collections",
+      nav_shop: "Boutique",
+      nav_atelier: "Bespoke",
+      nav_stories: "Stories",
+      nav_visit: "Visit",
+      cta_enquire: "Enquire",
+
+      hero_eyebrow: "Sanjay Nagar · Mathura",
+      hero_h1: '<span class="row"><span>The atelier</span></span><span class="row"><span>for the <span class="italic">modern</span></span></span><span class="row"><span><span class="italic">Mathura</span> bride.</span></span>',
+      hero_sub: "A designer studio where every lehenga, saree, and suit is fitted, finished, and quietly perfected — by appointment, in a way that the readymade rack simply cannot promise.",
+      hero_cta_primary: "Book a fitting",
+      hero_cta_ghost: "View boutique",
+      hero_label_l: "Bridal Edit · 2026",
+      hero_label_t: '"Noor" — Aubergine Lehenga',
+      stat1_l: "Bridal<br>Brides",
+      stat2_l: "Pieces<br>Stitched",
+      stat3_l: "Google<br>Rating",
+
+      story_quote: 'Every Areeba piece begins as a conversation. About the bride, the occasion, the way the dupatta must fall when she walks. <span class="it">Then we cut. Then we stitch. Then we listen again.</span>',
+      story_attr: "— Areeba · The Atelier",
+
+      coll_eyebrow: "The Wardrobe",
+      coll_h2: 'Five collections,<br>one <span class="it">atelier.</span>',
+      coll_p: "Bridal lehengas, designer sarees, festive suits, occasion wear, and the kind of indo-western pieces that fit a Mathura wedding and a Delhi dinner equally.",
+
+      coll1_num: "No. 01", coll1_title: "The Bridal Edit", coll1_sub: "Lehengas · Sarees · Sets",
+      coll2_num: "No. 02", coll2_title: "Festive Closet", coll2_sub: "Anarkali · Sharara",
+      coll3_num: "No. 03", coll3_title: "Indo-Western", coll3_sub: "Fusion · Resort '26",
+      coll4_num: "No. 04", coll4_title: "Day & Occasion", coll4_sub: "Easy · Refined",
+      coll5_num: "No. 05", coll5_title: "The Accents", coll5_sub: "Jewellery · Drape",
+
+      shop_eyebrow: "The Boutique",
+      shop_h2: 'This season\'s<br><span class="it">favourites.</span>',
+      shop_p: "Drop a piece into your cart, send your selection over WhatsApp, and we'll share fit availability, final pricing, and an appointment to try it on.",
+
+      filter_all: "All Pieces",
+      filter_bridal: "Bridal",
+      filter_saree: "Sarees",
+      filter_festive: "Festive",
+      filter_indo: "Indo-Western",
+      filter_accessory: "Accents",
+
+      atelier_eyebrow: "The Bespoke Service",
+      atelier_h2: 'Stitched for<br>one <span class="it">person.</span>',
+      atelier_p: "Every garment in the boutique can be re-cut, re-coloured, re-embroidered for you — or designed from a sketch on a page. This is what most of our work is, actually. A conversation, a sample, three fittings, and a piece that fits no one else but you.",
+      atelier_li1: "Bridal lehengas, fully bespoke — 6 to 8 weeks",
+      atelier_li2: "Saree blouses, perfectly fitted — 1 week",
+      atelier_li3: "Suit sets, designed to sketch — 2 to 3 weeks",
+      atelier_li4: "Alterations on existing pieces — same day",
+      atelier_cta: "Start a bespoke piece",
+
+      stories_eyebrow: "Stories from our brides",
+      stories_h2: 'What they<br><span class="it">tell us</span> after.',
+      test1_body: '"Areeba ne mera bridal lehenga aisa fit kiya jaisa kisi ne pehle nahi kiya. Three fittings, har baar kuch chhota sa improve hua. Family ne kaha \'tu hi lag rahi hai, kapde nahi\'."',
+      test1_name: "Priya M.", test1_meta: "Bride · Mathura",
+      test2_body: '"Came in for a saree blouse. Ended up with a full festive set, custom designed. Her eye for what suits a body type is rare — she sees what you\'d look best in before you say a word."',
+      test2_name: "Anushka G.", test2_meta: "Returning Client",
+      test3_body: '"Soft-spoken, but the work speaks. Two of my cousins also got their wedding pieces done here after seeing mine. The detailing on the dupatta — entirely hand-done — was the moment."',
+      test3_name: "Ritika V.", test3_meta: "Bridesmaid · Agra",
+
+      visit_eyebrow: "Visit the Studio",
+      visit_h2: 'Walk in, or<br>book the <span class="it">studio</span>.',
+      visit_p: "For a bridal or bespoke consultation, an appointment lets us prepare swatches, samples, and references before you arrive. For a quick try-on, drop in any day.",
+      visit_addr_label: "The Studio",
+      visit_addr_value: "Sanjay Nagar, Mathura",
+      visit_addr_sm: "Uttar Pradesh 281001, India",
+      visit_phone_label: "Call or WhatsApp",
+      visit_phone_sm: "Replies same day, most often",
+      visit_hours_label: "By Appointment",
+      visit_hours_value: "10:30 AM — 8:00 PM",
+      visit_hours_sm: "All seven days · Bridal slots by booking",
+      visit_cta: "Book your visit",
+      map_label_t: "Areeba · Sanjay Nagar",
+      map_label_s: "Mathura · 281001",
+      map_distance: "2 km from City Centre",
+
+      bigcta_h2: 'Have a wedding<br>on the <span class="it">calendar?</span>',
+      bigcta_p: "A bridal piece takes six to eight weeks. The earlier you reach out, the more conversation, more sketches, more time with your dupatta.",
+      bigcta_primary: "Begin a bridal piece",
+      bigcta_ghost: "Or call +91 99976 69618",
+
+      footer_brand_p: "A designer studio in Sanjay Nagar — bridal lehengas, designer sarees, festive suits, and bespoke tailoring for the women of Mathura, Vrindavan, and beyond.",
+      footer_col1_h: "The Wardrobe",
+      footer_col1_1: "The Bridal Edit", footer_col1_2: "Designer Sarees", footer_col1_3: "Festive Closet", footer_col1_4: "Indo-Western", footer_col1_5: "The Accents",
+      footer_col2_h: "The Studio",
+      footer_col2_1: "Sanjay Nagar, Mathura", footer_col2_2: "U.P. 281001, India", footer_col2_3: "10:30 AM — 8:00 PM", footer_col2_4: "By appointment",
+      footer_col3_h: "In Touch",
+      footer_col3_2: "WhatsApp anytime", footer_col3_3: "Bridal consultations", footer_col3_4: "Bespoke enquiries",
+      footer_copy: "© 2026 Areeba Boutique. All rights reserved.",
+      footer_built: 'Built with <strong>Open Idea</strong> — AI websites for Indian SMBs',
+
+      drawer_title: 'Your <span class="it">selection</span>',
+      tab_cart: "Cart",
+      tab_wishlist: "Wishlist",
+      cart_empty_t: "Nothing in your cart, yet",
+      cart_empty_s: "Add pieces from the boutique — we'll bundle your enquiry into one neat message for Areeba.",
+      wish_empty_t: "Your wishlist is empty",
+      wish_empty_s: "Tap the small heart on any piece to save it here.",
+      ci_remove: "Remove",
+      ci_move_to_cart: "Move to cart",
+      df_total: "Indicative Total",
+      df_note: "A guideline price. Final number includes fit alterations, lining choices, and the time we spend on the piece. Areeba will share the exact number on WhatsApp.",
+      btn_send_wa: "Send enquiry on WhatsApp",
+
+      toast_added: "added to cart",
+      toast_wished: "saved to wishlist",
+      toast_moved: "Moved to cart",
+
+      wa_greeting: "Hi Areeba! I would like to enquire about these pieces:",
+      wa_qty: "Qty",
+      wa_total: "Indicative total",
+      wa_close: "Could you share availability, fit options, and when I can come in for a fitting? Thank you!"
+    },
+    hi: {
+      marquee: ["ब्राइडल एडिट '26 — अब उपलब्ध", "कस्टम सिलाई · अपॉइंटमेंट से", "स्टिचिंग सेवा उपलब्ध", "मथुरा में निःशुल्क सलाह"],
+      brand_name: "अरीबा",
+      brand_tag: "डिज़ाइनर एटलियर · मथुरा",
+      nav_collections: "कलेक्शन",
+      nav_shop: "बूटीक",
+      nav_atelier: "कस्टम सिलाई",
+      nav_stories: "कहानियाँ",
+      nav_visit: "मिलिए",
+      cta_enquire: "संपर्क करें",
+
+      hero_eyebrow: "संजय नगर · मथुरा",
+      hero_h1: '<span class="row"><span>मथुरा की</span></span><span class="row"><span><span class="italic">मॉडर्न</span> दुल्हन</span></span><span class="row"><span>का एटलियर।</span></span>',
+      hero_sub: "एक डिज़ाइनर स्टूडियो — जहाँ हर लहंगा, साड़ी, और सूट सिर्फ़ आपके फिटिंग में आता है, संवारा जाता है, और शांति से बेहतर बनाया जाता है। अपॉइंटमेंट से, इस तरीक़े से जो रेडीमेड कभी दे ही नहीं सकता।",
+      hero_cta_primary: "फिटिंग बुक करें",
+      hero_cta_ghost: "बूटीक देखें",
+      hero_label_l: "ब्राइडल एडिट · 2026",
+      hero_label_t: '"नूर" — बैंगन लहंगा',
+      stat1_l: "ब्राइडल<br>ग्राहक",
+      stat2_l: "पीस<br>तैयार",
+      stat3_l: "गूगल<br>रेटिंग",
+
+      story_quote: 'हर अरीबा पीस एक बातचीत से शुरू होता है। दुल्हन के बारे में, मौक़े के बारे में, और इस बारे में कि दुपट्टा कैसे गिरना चाहिए जब वे चलें। <span class="it">फिर हम काटते हैं। फिर सिलाई। फिर हम दोबारा सुनते हैं।</span>',
+      story_attr: "— अरीबा · एटलियर",
+
+      coll_eyebrow: "वार्डरोब",
+      coll_h2: 'पाँच कलेक्शन,<br>एक <span class="it">एटलियर।</span>',
+      coll_p: "ब्राइडल लहंगे, डिज़ाइनर साड़ियाँ, फेस्टिव सूट, ओकेज़न वियर, और वे इंडो-वेस्टर्न पीस जो मथुरा की शादी और दिल्ली के डिनर — दोनों में बराबर जँचें।",
+
+      coll1_num: "नं. 01", coll1_title: "ब्राइडल एडिट", coll1_sub: "लहंगा · साड़ी · सूट",
+      coll2_num: "नं. 02", coll2_title: "फेस्टिव कलेक्शन", coll2_sub: "अनारकली · शरारा",
+      coll3_num: "नं. 03", coll3_title: "इंडो-वेस्टर्न", coll3_sub: "फ्यूज़न · रिज़ॉर्ट '26",
+      coll4_num: "नं. 04", coll4_title: "डे · ओकेज़न", coll4_sub: "आसान · रिफाइंड",
+      coll5_num: "नं. 05", coll5_title: "एक्सेसरीज़", coll5_sub: "ज्वैलरी · ड्रेप",
+
+      shop_eyebrow: "बूटीक",
+      shop_h2: 'इस सीज़न की<br><span class="it">पसंद।</span>',
+      shop_p: "कोई पीस अपनी कार्ट में डालें, अपना सेलेक्शन WhatsApp पर भेजें, और हम आपको फिटिंग की उपलब्धता, फाइनल क़ीमत, और ट्राय-ऑन अपॉइंटमेंट साझा करेंगे।",
+
+      filter_all: "सभी पीस",
+      filter_bridal: "ब्राइडल",
+      filter_saree: "साड़ी",
+      filter_festive: "फेस्टिव",
+      filter_indo: "इंडो-वेस्टर्न",
+      filter_accessory: "एक्सेसरीज़",
+
+      atelier_eyebrow: "कस्टम सर्विस",
+      atelier_h2: 'सिर्फ़ आपके<br>लिए <span class="it">सिले।</span>',
+      atelier_p: "बूटीक का हर गारमेंट आपके लिए दोबारा कतरा, रंगा, और कढ़ाई किया जा सकता है — या एक स्केच से शुरू करके पूरी तरह डिज़ाइन किया जा सकता है। ज़्यादातर हमारा यही काम है। एक बातचीत, एक सैंपल, तीन फिटिंग, और एक ऐसा पीस जो किसी और को नहीं — सिर्फ़ आपको फिट होता है।",
+      atelier_li1: "ब्राइडल लहंगे, पूरी तरह कस्टम — 6 से 8 हफ़्ते",
+      atelier_li2: "साड़ी ब्लाउज़, परफेक्ट फिटिंग — 1 हफ़्ता",
+      atelier_li3: "सूट सेट, स्केच से डिज़ाइन — 2 से 3 हफ़्ते",
+      atelier_li4: "मौजूदा पीस में अल्टरेशन — उसी दिन",
+      atelier_cta: "कस्टम पीस शुरू करें",
+
+      stories_eyebrow: "हमारी दुल्हनों की कहानियाँ",
+      stories_h2: 'वे हमें बाद में<br><span class="it">क्या</span> कहती हैं।',
+      test1_body: '"अरीबा ने मेरा ब्राइडल लहंगा ऐसा फिट किया जैसा किसी ने पहले नहीं किया। तीन फिटिंग, हर बार कुछ छोटा सा बेहतर हुआ। फ़ैमिली ने कहा \'तू ही लग रही है, कपड़े नहीं\'।"',
+      test1_name: "प्रिया एम.", test1_meta: "दुल्हन · मथुरा",
+      test2_body: '"एक साड़ी ब्लाउज़ के लिए आई थी। एक पूरा फेस्टिव सूट कस्टम डिज़ाइन के साथ लेकर गई। बॉडी टाइप पर क्या जँचेगा — यह नज़र दुर्लभ है। आपके बोलने से पहले ही वे देख लेती हैं।"',
+      test2_name: "अनुष्का जी.", test2_meta: "रिकरिंग क्लाइंट",
+      test3_body: '"शांत स्वभाव, लेकिन काम बोलता है। मेरा देखकर मेरी दो कज़िन्स ने भी यहीं अपनी शादी के कपड़े बनवाए। दुपट्टे की डिटेलिंग — पूरी हाथ से — वे ख़ास पल था।"',
+      test3_name: "रितिका वी.", test3_meta: "ब्राइड्समेड · आगरा",
+
+      visit_eyebrow: "स्टूडियो आइए",
+      visit_h2: 'चले आइए, या<br>स्टूडियो <span class="it">बुक</span> करें।',
+      visit_p: "ब्राइडल या कस्टम कंसल्टेशन के लिए, अपॉइंटमेंट से हम स्वैच, सैंपल, और रेफरेंस आपके आने से पहले तैयार रख सकते हैं। एक ट्राय-ऑन के लिए, किसी भी दिन चले आइए।",
+      visit_addr_label: "स्टूडियो",
+      visit_addr_value: "संजय नगर, मथुरा",
+      visit_addr_sm: "उत्तर प्रदेश 281001, भारत",
+      visit_phone_label: "कॉल या WhatsApp",
+      visit_phone_sm: "ज़्यादातर उसी दिन जवाब",
+      visit_hours_label: "अपॉइंटमेंट से",
+      visit_hours_value: "सुबह 10:30 — रात 8:00",
+      visit_hours_sm: "सातों दिन · ब्राइडल स्लॉट बुकिंग से",
+      visit_cta: "अपनी विज़िट बुक करें",
+      map_label_t: "अरीबा · संजय नगर",
+      map_label_s: "मथुरा · 281001",
+      map_distance: "सिटी सेंटर से 2 किमी",
+
+      bigcta_h2: 'कैलेंडर पर कोई<br><span class="it">शादी</span> है?',
+      bigcta_p: "एक ब्राइडल पीस में छह से आठ हफ़्ते लगते हैं। जितनी जल्दी आप संपर्क करें, उतनी ज़्यादा बातचीत, ज़्यादा स्केच, और आपके दुपट्टे के साथ ज़्यादा वक़्त।",
+      bigcta_primary: "ब्राइडल पीस शुरू करें",
+      bigcta_ghost: "या कॉल करें +91 99976 69618",
+
+      footer_brand_p: "संजय नगर में एक डिज़ाइनर स्टूडियो — मथुरा, वृंदावन, और इससे आगे की महिलाओं के लिए ब्राइडल लहंगे, डिज़ाइनर साड़ियाँ, फेस्टिव सूट, और कस्टम सिलाई।",
+      footer_col1_h: "वार्डरोब",
+      footer_col1_1: "ब्राइडल एडिट", footer_col1_2: "डिज़ाइनर साड़ियाँ", footer_col1_3: "फेस्टिव कलेक्शन", footer_col1_4: "इंडो-वेस्टर्न", footer_col1_5: "एक्सेसरीज़",
+      footer_col2_h: "स्टूडियो",
+      footer_col2_1: "संजय नगर, मथुरा", footer_col2_2: "उ.प्र. 281001, भारत", footer_col2_3: "सुबह 10:30 — रात 8:00", footer_col2_4: "अपॉइंटमेंट से",
+      footer_col3_h: "संपर्क",
+      footer_col3_2: "WhatsApp कभी भी", footer_col3_3: "ब्राइडल कंसल्टेशन", footer_col3_4: "कस्टम पूछताछ",
+      footer_copy: "© 2026 अरीबा बूटीक. सर्वाधिकार सुरक्षित।",
+      footer_built: 'बना है <strong>Open Idea</strong> पर — भारतीय SMB के लिए AI वेबसाइट',
+
+      drawer_title: 'आपका <span class="it">चयन</span>',
+      tab_cart: "कार्ट",
+      tab_wishlist: "विशलिस्ट",
+      cart_empty_t: "कार्ट अभी ख़ाली है",
+      cart_empty_s: "बूटीक से कुछ पीस जोड़ें — हम आपकी पूछताछ को एक साफ़ मैसेज में अरीबा के पास भेज देंगे।",
+      wish_empty_t: "विशलिस्ट ख़ाली है",
+      wish_empty_s: "किसी पीस पर छोटे दिल को टैप करके यहाँ सेव करें।",
+      ci_remove: "हटाएँ",
+      ci_move_to_cart: "कार्ट में ले जाएँ",
+      df_total: "अनुमानित कुल",
+      df_note: "यह एक संकेत मूल्य है। फाइनल नंबर में फिट अल्टरेशन, लाइनिंग चॉइस, और हमारा काम का समय शामिल होता है। अरीबा सटीक नंबर WhatsApp पर साझा करेंगी।",
+      btn_send_wa: "WhatsApp पर भेजें",
+
+      toast_added: "कार्ट में जोड़ा गया",
+      toast_wished: "विशलिस्ट में सेव किया",
+      toast_moved: "कार्ट में ले गए",
+
+      wa_greeting: "नमस्ते अरीबा! मैं इन पीस के बारे में पूछना चाहती हूँ:",
+      wa_qty: "मात्रा",
+      wa_total: "अनुमानित कुल",
+      wa_close: "क्या आप उपलब्धता, फिट ऑप्शन, और कब फिटिंग के लिए आ सकती हूँ — यह बता सकती हैं? धन्यवाद!"
+    }
+  };
+
+  const PRODUCTS = [
+    { id: 'p1',  cat: 'bridal',    img: 'photo-1583391733956-3750e0ff4e8b', price: 18500, mrp: 24000,
+      name_en: 'Aaftab — Ivory Sharara Set',     name_hi: 'आफताब — आइवरी शरारा सेट',
+      tag_en: 'Bridal Edit', tag_hi: 'ब्राइडल एडिट', tagGold: true },
+    { id: 'p2',  cat: 'bridal',    img: 'photo-1733937111165-36efb3ded769', price: 22500, mrp: 28500,
+      name_en: 'Aubergine Bridal Lehenga',       name_hi: 'बैंगन ब्राइडल लहंगा',
+      tag_en: 'Heritage', tag_hi: 'हेरिटेज' },
+    { id: 'p3',  cat: 'indo',      img: 'photo-1571513722275-4b41940f54b8', price:  9500, mrp: 13000,
+      name_en: 'Sahar — Cream Pantsuit',         name_hi: 'सहर — क्रीम पैंटसूट',
+      tag_en: "Resort '26", tag_hi: "रिज़ॉर्ट '26" },
+    { id: 'p4',  cat: 'festive',   img: 'photo-1594633312681-425c7b97ccd1', price:  6500, mrp:  8500,
+      name_en: 'Peach Satin Festive Pant Set',   name_hi: 'पीच साटन फेस्टिव पैंट सूट' },
+    { id: 'p5',  cat: 'festive',   img: 'photo-1572804013427-4d7ca7268217', price:  7200, mrp:  9500,
+      name_en: 'Sindoor Floral Anarkali',        name_hi: 'सिंदूर फ्लोरल अनारकली',
+      tag_en: 'Festive', tag_hi: 'फेस्टिव' },
+    { id: 'p6',  cat: 'indo',      img: 'photo-1612722432474-b971cdcea546', price:  5500, mrp:  7200,
+      name_en: 'Honey Silk Wrap Dress',          name_hi: 'हनी सिल्क रैप ड्रेस' },
+    { id: 'p7',  cat: 'festive',   img: 'photo-1551803091-e20673f15770', price:  8900, mrp: 11500,
+      name_en: 'Midnight Lace Cocktail Suit',    name_hi: 'मिडनाइट लेस कॉकटेल सूट' },
+    { id: 'p8',  cat: 'accessory', img: 'photo-1599643478518-a784e5dc4c8f', price:  3800, mrp:  4800,
+      name_en: 'Pearl Drop Heritage Set',        name_hi: 'पर्ल ड्रॉप हेरिटेज सेट',
+      tag_en: 'Accents', tag_hi: 'एक्सेसरीज़' },
+    { id: 'p9',  cat: 'indo',      img: 'photo-1617922001439-4a2e6562f328', price:  4500, mrp:  6200,
+      name_en: 'Botanica Day Dress',             name_hi: 'बोटैनिका डे ड्रेस' },
+    { id: 'p10', cat: 'bridal',    img: 'photo-1583391733956-3750e0ff4e8b', price: 12500, mrp: 15500,
+      name_en: 'Mehndi Champagne Suit',          name_hi: 'मेहंदी शैम्पेन सूट',
+      tag_en: 'Bridal', tag_hi: 'ब्राइडल' },
+    { id: 'p11', cat: 'saree',     img: 'photo-1572804013427-4d7ca7268217', price: 11500, mrp: 14500,
+      name_en: 'Pomegranate Silk Saree',         name_hi: 'अनार सिल्क साड़ी' },
+    { id: 'p12', cat: 'festive',   img: 'photo-1612722432474-b971cdcea546', price:  7800, mrp:  9800,
+      name_en: 'Saffron Anarkali Set',           name_hi: 'केसर अनारकली सेट' }
+  ];
+
+  const STORE = {
+    cart: {},
+    wishlist: [],
+    lang: 'en',
+    init() {
+      try {
+        this.cart = JSON.parse(localStorage.getItem('areeba_cart') || '{}');
+        this.wishlist = JSON.parse(localStorage.getItem('areeba_wishlist') || '[]');
+        this.lang = localStorage.getItem('areeba_lang') || 'en';
+      } catch (e) { this.cart = {}; this.wishlist = []; this.lang = 'en'; }
+    },
+    save() {
+      try {
+        localStorage.setItem('areeba_cart', JSON.stringify(this.cart));
+        localStorage.setItem('areeba_wishlist', JSON.stringify(this.wishlist));
+        localStorage.setItem('areeba_lang', this.lang);
+      } catch (e) {}
+    }
+  };
+
+  const fmt = n => '₹' + n.toLocaleString('en-IN');
+  const imgUrl = id => `https://images.unsplash.com/${id}?w=700&q=80&auto=format&fit=crop`;
+  const t = key => (T[STORE.lang] && T[STORE.lang][key]) || (T.en[key] || key);
+  let currentFilter = 'all';
+  let currentTab = 'cart';
+
+  function applyLang() {
+    const lang = STORE.lang;
+    document.getElementById('htmlRoot').setAttribute('lang', lang);
+
+    const marquee = document.getElementById('marquee');
+    const items = T[lang].marquee;
+    marquee.innerHTML = items.concat(items).map(s => `<span>${s}</span>`).join('');
+
+    document.querySelectorAll('.lang-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === lang);
+    });
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      if (T[lang][key] !== undefined) el.textContent = T[lang][key];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      const key = el.dataset.i18nHtml;
+      if (T[lang][key] !== undefined) el.innerHTML = T[lang][key];
+    });
+
+    renderProducts();
+    renderDrawer();
+  }
+
+  function renderProducts() {
+    const grid = document.getElementById('prodGrid');
+    if (!grid) return;
+    const items = currentFilter === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.cat === currentFilter);
+    const lang = STORE.lang;
+    grid.innerHTML = items.map(p => {
+      const inWish = STORE.wishlist.includes(p.id);
+      const inCart = !!STORE.cart[p.id];
+      const save = Math.round(((p.mrp - p.price) / p.mrp) * 100);
+      const name = p['name_' + lang] || p.name_en;
+      const tag = p['tag_' + lang] || p.tag_en;
+      const addLabel = inCart ? (lang === 'hi' ? 'जोड़ा गया · ✓' : 'Added · ✓') : (lang === 'hi' ? '+ कार्ट में जोड़ें' : '+ Add to cart');
+      return `
+        <div class="prod-card">
+          <div class="prod-image">
+            <img src="${imgUrl(p.img)}" alt="${name}" loading="lazy" onerror="this.style.display='none'" />
+            ${tag ? `<span class="prod-tag ${p.tagGold ? 'gold' : ''}">${tag}</span>` : ''}
+            <button class="prod-wish ${inWish ? 'active' : ''}" data-id="${p.id}" aria-label="Save">
+              <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+            </button>
+            <button class="prod-quick-add ${inCart ? 'added' : ''}" data-id="${p.id}">${addLabel}</button>
+          </div>
+          <div class="prod-body">
+            <div class="prod-brand">${lang === 'hi' ? 'अरीबा' : 'Areeba'}</div>
+            <div class="prod-name">${name}</div>
+            <div class="prod-price-row">
+              <div class="prod-price">${fmt(p.price)}</div>
+              <div class="prod-mrp">${fmt(p.mrp)}</div>
+              ${save > 0 ? `<div class="prod-save">−${save}%</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function updateCounts() {
+    const cartTotal = Object.values(STORE.cart).reduce((a, b) => a + b, 0);
+    const wishTotal = STORE.wishlist.length;
+    const cc = document.getElementById('cartCount');
+    const wc = document.getElementById('wishCount');
+    if (cc) { cc.textContent = cartTotal; cc.classList.toggle('show', cartTotal > 0); }
+    if (wc) { wc.textContent = wishTotal; wc.classList.toggle('show', wishTotal > 0); }
+    document.getElementById('cartTabCount').textContent = cartTotal;
+    document.getElementById('wishTabCount').textContent = wishTotal;
+  }
+
+  function pulseBtn(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('pulse');
+    void el.offsetWidth;
+    el.classList.add('pulse');
+  }
+
+  function addToCart(id) {
+    STORE.cart[id] = (STORE.cart[id] || 0) + 1;
+    STORE.save();
+    updateCounts();
+    const p = PRODUCTS.find(x => x.id === id);
+    const name = p['name_' + STORE.lang] || p.name_en;
+    showToast(`<strong>${name}</strong> · ${t('toast_added')}`);
+    pulseBtn('cartBtn');
+    renderProducts();
+    renderDrawer();
+  }
+
+  function removeFromCart(id) {
+    delete STORE.cart[id];
+    STORE.save();
+    updateCounts();
+    renderProducts();
+    renderDrawer();
+  }
+
+  function changeQty(id, delta) {
+    const newQty = (STORE.cart[id] || 0) + delta;
+    if (newQty <= 0) delete STORE.cart[id];
+    else STORE.cart[id] = newQty;
+    STORE.save();
+    updateCounts();
+    renderProducts();
+    renderDrawer();
+  }
+
+  function toggleWishlist(id) {
+    const i = STORE.wishlist.indexOf(id);
+    if (i === -1) {
+      STORE.wishlist.push(id);
+      const p = PRODUCTS.find(x => x.id === id);
+      const name = p['name_' + STORE.lang] || p.name_en;
+      showToast(`<strong>${name}</strong> · ${t('toast_wished')}`);
+      pulseBtn('wishBtn');
+    } else {
+      STORE.wishlist.splice(i, 1);
+    }
+    STORE.save();
+    updateCounts();
+    renderProducts();
+    renderDrawer();
+  }
+
+  function moveWishToCart(id) {
+    STORE.cart[id] = (STORE.cart[id] || 0) + 1;
+    const i = STORE.wishlist.indexOf(id);
+    if (i > -1) STORE.wishlist.splice(i, 1);
+    STORE.save();
+    updateCounts();
+    showToast(t('toast_moved'));
+    pulseBtn('cartBtn');
+    renderProducts();
+    renderDrawer();
+  }
+
+  function showToast(html) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toastText').innerHTML = html;
+    toast.classList.add('show');
+    clearTimeout(window._tt);
+    window._tt = setTimeout(() => toast.classList.remove('show'), 2800);
+  }
+
+  function renderDrawer() {
+    const content = document.getElementById('drawerContent');
+    const footer = document.getElementById('drawerFooter');
+    if (!content) return;
+    const lang = STORE.lang;
+
+    if (currentTab === 'cart') {
+      const ids = Object.keys(STORE.cart);
+      if (ids.length === 0) {
+        content.innerHTML = `
+          <div class="drawer-empty">
+            <div class="drawer-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2l1.5 4.5h13L19 18a2 2 0 01-2 1.5H9.5A2 2 0 017.5 18L6 2zM6 2H3"/><circle cx="10" cy="22" r="1"/><circle cx="18" cy="22" r="1"/></svg></div>
+            <div class="et">${t('cart_empty_t')}</div>
+            <div class="es">${t('cart_empty_s')}</div>
+          </div>`;
+        footer.style.display = 'none';
+        footer.innerHTML = '';
+        return;
+      }
+      content.innerHTML = ids.map(id => {
+        const p = PRODUCTS.find(x => x.id === id);
+        const name = p['name_' + lang] || p.name_en;
+        const qty = STORE.cart[id];
+        return `
+          <div class="cart-item">
+            <div class="ci-image"><img src="${imgUrl(p.img)}" alt="" onerror="this.style.display='none'" /></div>
+            <div class="ci-body">
+              <div class="ci-brand">${lang === 'hi' ? 'अरीबा' : 'Areeba'}</div>
+              <div class="ci-name">${name}</div>
+              <div class="ci-price">${fmt(p.price * qty)}</div>
+              <div class="ci-controls">
+                <button class="qty-btn qty-minus" data-id="${p.id}" aria-label="-"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg></button>
+                <span class="qty-num">${qty}</span>
+                <button class="qty-btn qty-plus" data-id="${p.id}" aria-label="+"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></button>
+                <button class="ci-remove" data-id="${p.id}">${t('ci_remove')}</button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+      const total = ids.reduce((sum, id) => sum + PRODUCTS.find(x => x.id === id).price * STORE.cart[id], 0);
+      footer.style.display = 'block';
+      footer.innerHTML = `
+        <div class="df-total">
+          <div class="lbl">${t('df_total')}</div>
+          <div class="amt">${fmt(total)}</div>
+        </div>
+        <div class="df-note">${t('df_note')}</div>
+        <button class="btn-wa" id="orderBtn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
+          ${t('btn_send_wa')}
+        </button>`;
+      const ob = document.getElementById('orderBtn');
+      if (ob) ob.onclick = orderViaWhatsApp;
+    } else {
+      if (STORE.wishlist.length === 0) {
+        content.innerHTML = `
+          <div class="drawer-empty">
+            <div class="drawer-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+            <div class="et">${t('wish_empty_t')}</div>
+            <div class="es">${t('wish_empty_s')}</div>
+          </div>`;
+        footer.style.display = 'none';
+        footer.innerHTML = '';
+        return;
+      }
+      content.innerHTML = STORE.wishlist.map(id => {
+        const p = PRODUCTS.find(x => x.id === id);
+        const name = p['name_' + lang] || p.name_en;
+        return `
+          <div class="cart-item">
+            <div class="ci-image"><img src="${imgUrl(p.img)}" alt="" onerror="this.style.display='none'" /></div>
+            <div class="ci-body">
+              <div class="ci-brand">${lang === 'hi' ? 'अरीबा' : 'Areeba'}</div>
+              <div class="ci-name">${name}</div>
+              <div class="ci-price">${fmt(p.price)}</div>
+              <div class="ci-controls">
+                <button class="ci-wish-add wish-to-cart" data-id="${p.id}">${t('ci_move_to_cart')}</button>
+                <button class="ci-remove wish-remove" data-id="${p.id}">${t('ci_remove')}</button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+      footer.style.display = 'none';
+      footer.innerHTML = '';
+    }
+  }
+
+  function openDrawer(tab) {
+    currentTab = tab || 'cart';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
+    renderDrawer();
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('drawerOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDrawer() {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawerOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function orderViaWhatsApp() {
+    const ids = Object.keys(STORE.cart);
+    if (!ids.length) return;
+    const lang = STORE.lang;
+    let msg = t('wa_greeting') + '\n\n';
+    let total = 0;
+    ids.forEach((p_id, i) => {
+      const p = PRODUCTS.find(x => x.id === p_id);
+      const name = p['name_' + lang] || p.name_en;
+      const qty = STORE.cart[p_id];
+      const lt = p.price * qty;
+      total += lt;
+      msg += `${i + 1}. ${name}\n   ${t('wa_qty')}: ${qty} × ${fmt(p.price)} = ${fmt(lt)}\n\n`;
+    });
+    msg += `*${t('wa_total')}: ${fmt(total)}*\n\n${t('wa_close')}`;
+    window.open('https://wa.me/919997669618?text=' + encodeURIComponent(msg), '_blank');
+  }
+
+  const header = document.getElementById('header');
+  window.addEventListener('scroll', () => {
+    header.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+  document.querySelectorAll('.reveal, .reveal-stagger').forEach(el => revealObserver.observe(el));
+
+  STORE.init();
+  applyLang();
+  updateCounts();
+
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      if (lang === STORE.lang) return;
+      STORE.lang = lang;
+      STORE.save();
+      applyLang();
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    const wishBtn = e.target.closest('.prod-wish');
+    if (wishBtn) {
+      wishBtn.classList.add('animating');
+      setTimeout(() => wishBtn.classList.remove('animating'), 500);
+      toggleWishlist(wishBtn.dataset.id);
+      return;
+    }
+    const addBtn = e.target.closest('.prod-quick-add');
+    if (addBtn) { addToCart(addBtn.dataset.id); return; }
+    const qtyPlus = e.target.closest('.qty-plus');
+    if (qtyPlus) { changeQty(qtyPlus.dataset.id, +1); return; }
+    const qtyMinus = e.target.closest('.qty-minus');
+    if (qtyMinus) { changeQty(qtyMinus.dataset.id, -1); return; }
+    const wishToCart = e.target.closest('.wish-to-cart');
+    if (wishToCart) { moveWishToCart(wishToCart.dataset.id); return; }
+    const ciRemove = e.target.closest('.ci-remove');
+    if (ciRemove) {
+      if (ciRemove.classList.contains('wish-remove')) toggleWishlist(ciRemove.dataset.id);
+      else removeFromCart(ciRemove.dataset.id);
+      return;
+    }
+    const filterBtn = e.target.closest('.filter-btn');
+    if (filterBtn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      filterBtn.classList.add('active');
+      currentFilter = filterBtn.dataset.filter;
+      renderProducts();
+      return;
+    }
+    const tabBtn = e.target.closest('.tab-btn');
+    if (tabBtn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      tabBtn.classList.add('active');
+      currentTab = tabBtn.dataset.tab;
+      renderDrawer();
+      return;
+    }
+  });
+
+  document.getElementById('cartBtn').onclick = () => openDrawer('cart');
+  document.getElementById('wishBtn').onclick = () => openDrawer('wishlist');
+  document.getElementById('drawerClose').onclick = closeDrawer;
+  document.getElementById('drawerOverlay').onclick = closeDrawer;
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+</script>
+
+</body>
+</html>
