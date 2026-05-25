@@ -1,0 +1,2972 @@
+<!DOCTYPE html>
+<html lang="en" id="htmlRoot">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sahil Sugandh — Attars of Kannauj</title>
+<meta name="description" content="Hand-distilled Kannauj attars — gulab, mogra, mitti, oudh, chandan. Traditional deg-bhapka method, 100% natural, alcohol-free." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:wght@300..700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Serif+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FFF9F5;
+    --cream-deep: #F5EEE6;
+    --blush: #F5E6E8;
+    --blush-deep: #EBD4D8;
+    --rose: #D8A7B1;
+    --rose-deep: #C28B96;
+    --rose-soft: #E5C0C7;
+    --gold: #C9A66B;
+    --gold-deep: #A88748;
+    --gold-soft: #DDC094;
+    --plum: #5C374C;
+    --plum-soft: #7A5468;
+    --plum-deep: #3F2434;
+    --line: #EAD9DC;
+    --line-gold: #E6D3B0;
+    --ink: #2A1A24;
+
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; overflow-x: hidden; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--cream);
+    color: var(--plum);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    font-weight: 400;
+  }
+  html[lang="hi"] body { font-family: 'Noto Sans Devanagari', 'Inter', sans-serif; }
+  html[lang="hi"] h1,
+  html[lang="hi"] h2,
+  html[lang="hi"] h3,
+  html[lang="hi"] .prod-name,
+  html[lang="hi"] .ci-name,
+  html[lang="hi"] .test-body,
+  html[lang="hi"] .drawer-title,
+  html[lang="hi"] .vi-value,
+  html[lang="hi"] .ml-t,
+  html[lang="hi"] .hero-image-label .t,
+  html[lang="hi"] .story-quote p,
+  html[lang="hi"] .coll-card .coll-title,
+  html[lang="hi"] .df-total .amt,
+  html[lang="hi"] .note-tier-title,
+  html[lang="hi"] .craft-num,
+  html[lang="hi"] .craft-h {
+    font-family: 'Noto Serif Devanagari', serif;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  html[lang="hi"] h1 .italic,
+  html[lang="hi"] h2 .it,
+  html[lang="hi"] .it { font-style: normal; font-weight: 600; }
+
+  h1, h2, h3 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    color: var(--plum);
+  }
+  h1 { font-size: clamp(3rem, 8vw, 7.5rem); }
+  h2 { font-size: clamp(2.4rem, 5.5vw, 4.6rem); letter-spacing: -0.02em; }
+  h3 { font-size: clamp(1.4rem, 2.2vw, 2rem); }
+
+  p { color: var(--plum-soft); line-height: 1.7; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+
+  .container { max-width: 1320px; margin: 0 auto; padding: 0 36px; }
+  @media (max-width: 640px) { .container { padding: 0 22px; } }
+
+  /* ===== Top Bar ===== */
+  .top-bar {
+    background: var(--plum);
+    color: var(--cream);
+    overflow: hidden;
+    padding: 11px 0;
+    font-size: 11.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  html[lang="hi"] .top-bar { letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .marquee-top {
+    display: flex; gap: 60px;
+    animation: marquee 40s linear infinite;
+    white-space: nowrap; width: max-content;
+  }
+  .marquee-top span {
+    display: inline-flex; align-items: center; gap: 16px;
+    color: rgba(255, 249, 245, 0.85);
+  }
+  .marquee-top span::after {
+    content: "✦";
+    color: var(--gold);
+    margin-left: 60px;
+    font-size: 10px;
+    opacity: 0.85;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ===== Header ===== */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 249, 245, 0.88);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border-bottom: 1px solid transparent;
+    transition: all 0.3s var(--ease-smooth);
+  }
+  header.scrolled {
+    background: rgba(255, 249, 245, 0.96);
+    border-bottom-color: var(--line);
+  }
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 36px;
+    max-width: 1320px;
+    margin: 0 auto;
+    transition: padding 0.3s var(--ease-smooth);
+    gap: 24px;
+  }
+  header.scrolled .nav { padding: 14px 36px; }
+  @media (max-width: 640px) { .nav { padding: 14px 22px; gap: 12px; } }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .logo-mark {
+    width: 46px; height: 46px;
+    background: var(--plum);
+    color: var(--gold);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: 'Noto Serif Devanagari', serif;
+    font-weight: 700;
+    font-size: 22px;
+    border: 2px solid var(--gold);
+    box-shadow: inset 0 0 0 2px var(--plum), 0 0 0 1px var(--gold-soft);
+    position: relative;
+  }
+  .logo-mark::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 1px dashed var(--gold-soft);
+    opacity: 0;
+    transition: opacity 0.4s, transform 0.6s var(--ease-out);
+  }
+  .logo:hover .logo-mark::before {
+    opacity: 1;
+    transform: rotate(60deg);
+  }
+  .logo-text { line-height: 1.1; }
+  .logo-text .name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 21px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--plum);
+    text-transform: uppercase;
+  }
+  html[lang="hi"] .logo-text .name {
+    font-family: 'Noto Serif Devanagari', serif;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 20px;
+  }
+  .logo-text .tag {
+    font-size: 9.5px;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--gold-deep);
+    margin-top: 5px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+  html[lang="hi"] .logo-text .tag {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    font-size: 10.5px;
+  }
+  @media (max-width: 640px) {
+    .logo-mark { width: 38px; height: 38px; font-size: 18px; }
+    .logo-text .name { font-size: 16px; }
+    .logo-text .tag { font-size: 8.5px; }
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    font-size: 13px;
+    color: var(--plum-soft);
+    letter-spacing: 0.04em;
+  }
+  html[lang="hi"] .nav-links {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0;
+  }
+  .nav-links a {
+    transition: color 0.25s var(--ease-out);
+    position: relative;
+    padding: 4px 0;
+  }
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    bottom: -2px; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold);
+    transition: width 0.35s var(--ease-out);
+  }
+  .nav-links a:hover { color: var(--plum); }
+  .nav-links a:hover::after { width: 100%; }
+  @media (max-width: 980px) { .nav-links { display: none; } }
+
+  /* Lang Toggle */
+  .lang-toggle {
+    display: inline-flex;
+    background: transparent;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    border-radius: 999px;
+    padding: 2px;
+    flex-shrink: 0;
+  }
+  .lang-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--plum-soft);
+    cursor: pointer;
+    border-radius: 999px;
+    transition: all 0.25s var(--ease-out);
+    font-family: 'Inter', sans-serif;
+    min-width: 34px;
+  }
+  .lang-btn.active {
+    background: var(--plum);
+    color: var(--cream);
+  }
+  .lang-btn.hi-btn {
+    font-family: 'Noto Serif Devanagari', serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0;
+  }
+
+  .header-actions { display: flex; align-items: center; gap: 4px; }
+  .icon-btn {
+    position: relative;
+    width: 42px; height: 42px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--plum);
+    cursor: pointer;
+    transition: all 0.25s var(--ease-out);
+  }
+  .icon-btn:hover { background: var(--blush); color: var(--gold-deep); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .icon-btn .count {
+    position: absolute;
+    top: 2px; right: 2px;
+    min-width: 18px; height: 18px;
+    background: var(--rose);
+    color: var(--cream);
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    display: grid; place-items: center;
+    padding: 0 5px;
+    border: 2px solid var(--cream);
+    transform: scale(0);
+    transition: transform 0.3s var(--ease-spring);
+    font-family: 'Inter', sans-serif;
+  }
+  .icon-btn .count.show { transform: scale(1); }
+  .icon-btn.pulse { animation: btn-pulse 0.6s var(--ease-spring); }
+  @keyframes btn-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+  .wa-btn {
+    margin-left: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: var(--plum);
+    color: var(--cream);
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transition: all 0.3s var(--ease-out);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--plum);
+  }
+  html[lang="hi"] .wa-btn {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 13px;
+  }
+  .wa-btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--gold);
+    transform: translateY(100%);
+    transition: transform 0.4s var(--ease-out);
+  }
+  .wa-btn > * { position: relative; z-index: 1; }
+  .wa-btn:hover::before { transform: translateY(0); }
+  .wa-btn:hover { border-color: var(--gold); }
+  .wa-btn svg { width: 14px; height: 14px; }
+  @media (max-width: 640px) {
+    .wa-btn { padding: 9px 14px; font-size: 11px; gap: 6px; }
+    .wa-btn .wa-text { display: none; }
+    .icon-btn { width: 36px; height: 36px; }
+    .lang-btn { padding: 5px 9px; font-size: 10px; min-width: 28px; }
+  }
+
+  /* ===== Section Divider ===== */
+  .divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 0 20%;
+    margin: 0;
+  }
+  .divider::before, .divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-soft), transparent);
+  }
+  .divider svg {
+    width: 32px;
+    height: 32px;
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+  @media (max-width: 720px) { .divider { padding: 0 8%; } }
+
+  /* ===== Hero ===== */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--cream) 0%, var(--blush) 100%);
+    padding: 80px 0 140px;
+  }
+  .hero::before {
+    content: "";
+    position: absolute;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--rose-soft) 0%, transparent 70%);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    bottom: -150px; left: -150px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, var(--gold-soft) 0%, transparent 70%);
+    opacity: 0.25;
+    pointer-events: none;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    width: 100%;
+    align-items: center;
+    gap: 80px;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 40px 36px 0;
+    position: relative;
+    z-index: 2;
+  }
+  @media (max-width: 980px) {
+    .hero { padding: 60px 0 100px; }
+    .hero-grid { grid-template-columns: 1fr; padding: 40px 22px 0; gap: 60px; }
+  }
+
+  .hero-content { opacity: 0; animation: fade-in 1s var(--ease-out) 0.2s forwards; position: relative; }
+  @keyframes fade-in { to { opacity: 1; } }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gold-deep);
+    margin-bottom: 32px;
+    font-weight: 500;
+  }
+  html[lang="hi"] .eyebrow {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    font-size: 12.5px;
+  }
+  .eyebrow svg { width: 14px; height: 14px; color: var(--gold); }
+  .eyebrow::after {
+    content: "";
+    width: 32px; height: 1px;
+    background: var(--gold);
+  }
+
+  .hero h1 {
+    font-size: clamp(3rem, 8.5vw, 7.5rem);
+    font-weight: 300;
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+    color: var(--plum);
+    margin-bottom: 32px;
+  }
+  html[lang="hi"] .hero h1 {
+    font-size: clamp(2.4rem, 6.5vw, 5.6rem);
+    line-height: 1.15;
+    letter-spacing: -0.005em;
+  }
+  .hero h1 .row { display: block; overflow: hidden; }
+  .hero h1 .row span {
+    display: inline-block;
+    transform: translateY(110%);
+    animation: rise 1.2s var(--ease-out) forwards;
+  }
+  .hero h1 .row:nth-child(1) span { animation-delay: 0.3s; }
+  .hero h1 .row:nth-child(2) span { animation-delay: 0.45s; }
+  .hero h1 .row:nth-child(3) span { animation-delay: 0.6s; }
+  @keyframes rise { to { transform: translateY(0); } }
+  .hero h1 .italic { font-style: italic; color: var(--gold-deep); font-weight: 400; }
+  html[lang="hi"] .hero h1 .italic { font-style: normal; color: var(--gold-deep); font-weight: 600; }
+
+  .hero-sub {
+    font-size: 17px;
+    line-height: 1.65;
+    max-width: 480px;
+    margin-bottom: 44px;
+    color: var(--plum-soft);
+    opacity: 0;
+    animation: fade-up 0.9s var(--ease-out) 0.95s forwards;
+  }
+  html[lang="hi"] .hero-sub { font-family: 'Noto Sans Devanagari', sans-serif; font-size: 16px; line-height: 1.75; }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-ctas {
+    display: flex; gap: 14px; flex-wrap: wrap;
+    opacity: 0;
+    animation: fade-up 0.9s var(--ease-out) 1.1s forwards;
+  }
+  .btn-primary {
+    background: var(--plum);
+    color: var(--cream);
+    padding: 17px 32px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.35s var(--ease-out);
+    border: 1px solid var(--plum);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    border-radius: 999px;
+  }
+  html[lang="hi"] .btn-primary { font-family: 'Noto Sans Devanagari', sans-serif; text-transform: none; letter-spacing: 0.04em; font-size: 13.5px; }
+  .btn-primary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--gold);
+    transform: translateX(-101%);
+    transition: transform 0.4s var(--ease-out);
+  }
+  .btn-primary > * { position: relative; z-index: 1; }
+  .btn-primary:hover { border-color: var(--gold); color: var(--cream); }
+  .btn-primary:hover::before { transform: translateX(0); }
+  .btn-primary svg { width: 14px; height: 14px; transition: transform 0.3s; }
+  .btn-primary:hover svg { transform: translateX(4px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--plum);
+    padding: 17px 28px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border: 1px solid var(--plum);
+    transition: all 0.3s var(--ease-out);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    border-radius: 999px;
+  }
+  html[lang="hi"] .btn-ghost { font-family: 'Noto Sans Devanagari', sans-serif; text-transform: none; letter-spacing: 0.04em; font-size: 13.5px; }
+  .btn-ghost:hover { background: var(--plum); color: var(--cream); }
+
+  /* Hero image */
+  .hero-image-wrap {
+    position: relative;
+    opacity: 0;
+    animation: fade-up 1.4s var(--ease-out) 0.4s forwards;
+  }
+  .hero-image {
+    aspect-ratio: 4/5;
+    overflow: hidden;
+    background: var(--cream-deep);
+    position: relative;
+    border-radius: 4px;
+    box-shadow: 0 40px 80px -30px rgba(92, 55, 76, 0.35);
+  }
+  .hero-image img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 8s var(--ease-out);
+  }
+  .hero-image:hover img { transform: scale(1.06); }
+  .hero-image-label {
+    position: absolute;
+    bottom: 24px; left: 24px;
+    background: var(--cream);
+    padding: 14px 20px;
+    border-left: 2px solid var(--gold);
+    box-shadow: 0 10px 24px -8px rgba(92, 55, 76, 0.2);
+  }
+  .hero-image-label .l {
+    font-size: 9.5px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold-deep);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  html[lang="hi"] .hero-image-label .l { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.06em; text-transform: none; font-size: 10.5px; }
+  .hero-image-label .t {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--plum);
+    font-weight: 400;
+  }
+  html[lang="hi"] .hero-image-label .t { font-style: normal; }
+
+  .hero-stats {
+    position: absolute;
+    bottom: -32px; right: -16px;
+    background: var(--plum);
+    color: var(--cream);
+    padding: 28px 36px;
+    display: flex;
+    gap: 36px;
+    z-index: 2;
+    border-radius: 4px;
+    box-shadow: 0 20px 40px -10px rgba(92, 55, 76, 0.45);
+  }
+  .hero-stats .stat .n {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--gold-soft);
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+  }
+  .hero-stats .stat .l {
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 249, 245, 0.7);
+    margin-top: 8px;
+    font-weight: 500;
+  }
+  html[lang="hi"] .hero-stats .stat .l {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    font-size: 11.5px;
+  }
+  @media (max-width: 980px) {
+    .hero-stats { position: relative; bottom: auto; right: auto; margin-top: 24px; padding: 22px 28px; gap: 28px; }
+  }
+  @media (max-width: 480px) {
+    .hero-stats .stat .n { font-size: 26px; }
+    .hero-stats { gap: 18px; padding: 18px 22px; }
+  }
+
+  /* ===== Sections ===== */
+  section { padding: 130px 0; position: relative; }
+  @media (max-width: 640px) { section { padding: 80px 0; } }
+
+  .section-eyebrow {
+    font-size: 10.5px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--gold-deep);
+    margin-bottom: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-weight: 500;
+  }
+  html[lang="hi"] .section-eyebrow { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.06em; text-transform: none; font-size: 12.5px; }
+  .section-eyebrow svg { width: 12px; height: 12px; color: var(--gold); }
+  .section-eyebrow::after {
+    content: "";
+    width: 32px; height: 1px;
+    background: var(--gold);
+  }
+  .section-head { margin-bottom: 70px; }
+  .section-head .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 60px;
+    flex-wrap: wrap;
+  }
+  .section-head h2 .it { font-style: italic; color: var(--gold-deep); font-weight: 400; }
+  html[lang="hi"] .section-head h2 .it { font-style: normal; font-weight: 600; }
+  .section-head p { max-width: 380px; font-size: 15.5px; color: var(--plum-soft); }
+  html[lang="hi"] .section-head p { font-family: 'Noto Sans Devanagari', sans-serif; }
+
+  /* ===== Heritage Quote ===== */
+  .story { background: var(--cream); padding: 80px 0; }
+  .story-quote { max-width: 1000px; margin: 0 auto; text-align: center; padding: 0 36px; }
+  .story-quote .mark {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 70px;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 20px;
+  }
+  .story-quote p {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.4rem, 2.6vw, 2.2rem);
+    line-height: 1.4;
+    color: var(--plum);
+    font-weight: 400;
+  }
+  html[lang="hi"] .story-quote p { line-height: 1.55; }
+  .story-quote .it { font-style: italic; color: var(--gold-deep); }
+  html[lang="hi"] .story-quote .it { font-style: normal; font-weight: 600; }
+  .story-quote .attribution {
+    margin-top: 36px;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--plum-soft);
+    font-family: 'Inter', sans-serif;
+  }
+  html[lang="hi"] .story-quote .attribution { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.06em; text-transform: none; font-size: 13px; }
+
+  /* ===== Note Pyramid ===== */
+  .notes-section {
+    background: linear-gradient(180deg, var(--cream) 0%, var(--blush) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .notes-section::before {
+    content: "";
+    position: absolute;
+    top: 10%; left: -100px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, var(--rose-soft) 0%, transparent 70%);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .notes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 80px;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+  }
+  @media (max-width: 900px) { .notes-grid { grid-template-columns: 1fr; gap: 50px; } }
+
+  .notes-pyramid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+  .note-tier {
+    background: var(--cream);
+    border: 1px solid var(--line-gold);
+    padding: 22px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.4s var(--ease-out);
+    position: relative;
+    border-radius: 4px;
+    box-shadow: 0 8px 24px -8px rgba(92, 55, 76, 0.08);
+  }
+  .note-tier:hover {
+    background: var(--plum);
+    border-color: var(--plum);
+    color: var(--cream);
+    transform: scale(1.02);
+    box-shadow: 0 20px 40px -10px rgba(92, 55, 76, 0.3);
+  }
+  .note-tier-top { width: 50%; max-width: 280px; }
+  .note-tier-mid { width: 75%; max-width: 420px; }
+  .note-tier-base { width: 100%; max-width: 560px; }
+  .note-tier-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--gold-deep);
+    margin-bottom: 4px;
+    transition: color 0.4s;
+  }
+  html[lang="hi"] .note-tier-num { font-family: 'Noto Sans Devanagari', sans-serif; font-style: normal; font-size: 12.5px; }
+  .note-tier:hover .note-tier-num { color: var(--gold-soft); }
+  .note-tier-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--plum);
+    font-weight: 500;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+    transition: color 0.4s;
+  }
+  .note-tier:hover .note-tier-title { color: var(--cream); }
+  .note-tier-items {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--plum-soft);
+    font-weight: 500;
+    transition: color 0.4s;
+  }
+  html[lang="hi"] .note-tier-items { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.03em; text-transform: none; font-size: 13.5px; }
+  .note-tier:hover .note-tier-items { color: rgba(255, 249, 245, 0.85); }
+
+  .notes-pyramid-connector {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 70%;
+    background: linear-gradient(180deg, var(--gold), transparent);
+    opacity: 0.3;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ===== Collections ===== */
+  .collections { background: var(--cream); padding-bottom: 80px; }
+  .coll-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 24px;
+  }
+  .coll-grid .coll-card:nth-child(1) { grid-row: span 2; }
+  @media (max-width: 980px) {
+    .coll-grid { grid-template-columns: 1fr 1fr; }
+    .coll-grid .coll-card:nth-child(1) { grid-row: auto; }
+  }
+  @media (max-width: 560px) { .coll-grid { grid-template-columns: 1fr; } }
+
+  .coll-card {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 4/5;
+    cursor: pointer;
+    background: var(--blush);
+    border-radius: 4px;
+  }
+  .coll-card img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 1.2s var(--ease-out);
+  }
+  .coll-card.no-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--blush) 0%, var(--rose-soft) 100%);
+  }
+  .coll-card.no-img.gold { background: linear-gradient(135deg, var(--cream-deep) 0%, var(--gold-soft) 100%); }
+  .coll-card.no-img.plum { background: linear-gradient(135deg, var(--rose-soft) 0%, var(--plum-soft) 100%); }
+  .coll-card.no-img .coll-illus {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(92, 55, 76, 0.18);
+    font-size: 180px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 300;
+    line-height: 1;
+    pointer-events: none;
+  }
+  html[lang="hi"] .coll-card.no-img .coll-illus { font-family: 'Noto Serif Devanagari', serif; font-style: normal; font-size: 140px; }
+  .coll-card:hover img { transform: scale(1.05); }
+  .coll-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 35%, rgba(63, 36, 52, 0.78) 100%);
+    z-index: 1;
+    transition: opacity 0.4s;
+  }
+  .coll-card.no-img::before {
+    background: linear-gradient(180deg, transparent 45%, rgba(63, 36, 52, 0.45) 100%);
+  }
+  .coll-card .coll-content {
+    position: absolute;
+    bottom: 32px; left: 32px; right: 32px;
+    z-index: 2;
+    color: var(--cream);
+  }
+  .coll-card .coll-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--gold-soft);
+    margin-bottom: 8px;
+    font-weight: 400;
+  }
+  html[lang="hi"] .coll-card .coll-num { font-family: 'Noto Sans Devanagari', sans-serif; font-style: normal; font-size: 13px; letter-spacing: 0.02em; }
+  .coll-card .coll-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    margin-bottom: 12px;
+  }
+  html[lang="hi"] .coll-card .coll-title { line-height: 1.2; letter-spacing: 0; }
+  .coll-card .coll-sub {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.85;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    transition: gap 0.3s var(--ease-out);
+  }
+  html[lang="hi"] .coll-card .coll-sub { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 13px; }
+  .coll-card:hover .coll-sub { gap: 16px; }
+  .coll-card .coll-sub::after { content: "→"; transition: transform 0.3s; }
+  .coll-card:hover .coll-sub::after { transform: translateX(4px); }
+
+  /* ===== Products ===== */
+  .products { background: var(--blush); }
+  .product-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 56px;
+    justify-content: center;
+  }
+  .filter-btn {
+    padding: 10px 22px;
+    background: transparent;
+    color: var(--plum);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out);
+    font-family: 'Inter', sans-serif;
+    border-radius: 999px;
+  }
+  html[lang="hi"] .filter-btn { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.02em; text-transform: none; font-size: 13.5px; }
+  .filter-btn:hover { color: var(--plum); border-color: var(--gold); }
+  .filter-btn.active {
+    background: var(--plum);
+    color: var(--cream);
+    border-color: var(--plum);
+  }
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px 24px;
+  }
+  @media (max-width: 1100px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 800px) { .product-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .product-grid { grid-template-columns: 1fr; gap: 32px; } }
+
+  .prod-card { position: relative; cursor: pointer; }
+  .prod-image {
+    aspect-ratio: 3/4;
+    background: var(--cream);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 18px;
+    border-radius: 4px;
+  }
+  .prod-image img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.9s var(--ease-out);
+  }
+  .prod-card:hover .prod-image img { transform: scale(1.06); }
+  .prod-tag {
+    position: absolute;
+    top: 14px; left: 14px;
+    background: var(--cream);
+    color: var(--plum);
+    padding: 5px 11px;
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    z-index: 2;
+    font-family: 'Inter', sans-serif;
+    border-radius: 999px;
+  }
+  html[lang="hi"] .prod-tag { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 10.5px; }
+  .prod-tag.gold { background: var(--gold); color: var(--cream); }
+  .prod-tag.rose { background: var(--rose); color: var(--cream); }
+
+  .prod-wish {
+    position: absolute;
+    top: 14px; right: 14px;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--cream);
+    border: none;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    z-index: 2;
+    transition: all 0.3s var(--ease-out);
+    color: var(--plum-soft);
+    opacity: 0;
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px -2px rgba(92, 55, 76, 0.15);
+  }
+  .prod-card:hover .prod-wish, .prod-wish.active { opacity: 1; transform: translateY(0); }
+  .prod-wish:hover { color: var(--rose-deep); transform: scale(1.08); }
+  .prod-wish svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; transition: fill 0.25s; }
+  .prod-wish.active { color: var(--rose-deep); }
+  .prod-wish.active svg { fill: var(--rose-deep); }
+  .prod-wish.animating { animation: heart-pop 0.5s var(--ease-spring); }
+  @keyframes heart-pop {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.35); }
+  }
+
+  .prod-quick-add {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: var(--plum);
+    color: var(--cream);
+    border: none;
+    padding: 14px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(100%);
+    transition: all 0.4s var(--ease-out);
+    z-index: 2;
+    font-family: 'Inter', sans-serif;
+  }
+  html[lang="hi"] .prod-quick-add { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 13px; }
+  .prod-card:hover .prod-quick-add { opacity: 1; transform: translateY(0); }
+  .prod-quick-add:hover { background: var(--gold); }
+  .prod-quick-add.added { background: var(--gold); }
+
+  .prod-body { padding: 0 4px; }
+  .prod-brand {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold-deep);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  html[lang="hi"] .prod-brand { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.06em; text-transform: none; font-size: 11.5px; }
+  .prod-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--plum);
+    line-height: 1.2;
+    margin-bottom: 4px;
+    letter-spacing: -0.005em;
+  }
+  .prod-subtitle {
+    font-size: 12.5px;
+    color: var(--plum-soft);
+    margin-bottom: 10px;
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+  }
+  html[lang="hi"] .prod-subtitle { font-family: 'Noto Sans Devanagari', sans-serif; font-style: normal; font-size: 13px; }
+  .prod-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .prod-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--plum);
+    letter-spacing: -0.01em;
+  }
+  .prod-mrp {
+    font-size: 13px;
+    color: var(--plum-soft);
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+  .prod-size {
+    font-size: 10.5px;
+    color: var(--gold-deep);
+    margin-left: auto;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  html[lang="hi"] .prod-size { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.02em; text-transform: none; font-size: 12px; }
+
+  /* ===== The Craft ===== */
+  .craft {
+    background: var(--plum);
+    color: var(--cream);
+    position: relative;
+    overflow: hidden;
+  }
+  .craft::before {
+    content: "";
+    position: absolute;
+    top: -200px; right: -200px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(201, 166, 107, 0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .craft .section-eyebrow { color: var(--gold); }
+  .craft .section-eyebrow::after { background: var(--gold); }
+  .craft h2 { color: var(--cream); }
+  .craft h2 .it { color: var(--gold); }
+  .craft-intro {
+    max-width: 720px;
+    margin: 0 auto 80px;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+  .craft-intro p {
+    color: rgba(255, 249, 245, 0.75);
+    font-size: 16px;
+    line-height: 1.75;
+    margin-top: 32px;
+    max-width: 580px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  html[lang="hi"] .craft-intro p { font-family: 'Noto Sans Devanagari', sans-serif; }
+
+  .craft-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    position: relative;
+    z-index: 2;
+  }
+  @media (max-width: 900px) {
+    .craft-steps { grid-template-columns: repeat(2, 1fr); gap: 0; }
+  }
+  @media (max-width: 480px) { .craft-steps { grid-template-columns: 1fr; } }
+
+  .craft-step {
+    padding: 40px 28px;
+    border-right: 1px solid rgba(201, 166, 107, 0.18);
+    border-bottom: 1px solid rgba(201, 166, 107, 0.18);
+    transition: background 0.4s;
+    position: relative;
+  }
+  .craft-step:last-child { border-right: none; }
+  @media (max-width: 900px) {
+    .craft-step:nth-child(2n) { border-right: none; }
+  }
+  @media (max-width: 480px) {
+    .craft-step { border-right: none; }
+  }
+  .craft-step:hover { background: rgba(201, 166, 107, 0.06); }
+
+  .craft-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 56px;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 24px;
+    font-weight: 300;
+  }
+  html[lang="hi"] .craft-num { font-style: normal; font-size: 48px; font-weight: 500; }
+  .craft-h {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--cream);
+    font-weight: 500;
+    margin-bottom: 14px;
+    letter-spacing: -0.005em;
+  }
+  .craft-p {
+    font-size: 14px;
+    color: rgba(255, 249, 245, 0.7);
+    line-height: 1.7;
+  }
+  html[lang="hi"] .craft-p { font-family: 'Noto Sans Devanagari', sans-serif; }
+
+  /* ===== Testimonials ===== */
+  .testimonials { background: var(--cream); }
+  .test-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+  }
+  @media (max-width: 900px) { .test-grid { grid-template-columns: 1fr; } }
+
+  .test-card {
+    padding: 40px 36px;
+    border-right: 1px solid var(--line);
+    transition: background 0.4s;
+  }
+  .test-card:last-child { border-right: none; }
+  @media (max-width: 900px) {
+    .test-card { border-right: none; border-bottom: 1px solid var(--line); }
+    .test-card:last-child { border-bottom: none; }
+  }
+  .test-card:hover { background: var(--blush); }
+  .test-stars { color: var(--gold); font-size: 13px; letter-spacing: 4px; margin-bottom: 28px; }
+  .test-body {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--plum);
+    margin-bottom: 32px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: -0.005em;
+  }
+  html[lang="hi"] .test-body { font-style: normal; font-size: 17.5px; line-height: 1.65; }
+  .test-author { padding-top: 24px; border-top: 1px solid var(--line); }
+  .test-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--plum);
+  }
+  .test-meta {
+    font-size: 11px;
+    color: var(--gold-deep);
+    margin-top: 4px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  html[lang="hi"] .test-meta { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+
+  /* ===== Visit ===== */
+  .visit { background: var(--blush); }
+  .visit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  @media (max-width: 900px) { .visit-grid { grid-template-columns: 1fr; gap: 50px; } }
+  .visit-info { display: grid; gap: 4px; margin: 40px 0; }
+  .vi-row {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--line-gold);
+    transition: padding-left 0.35s var(--ease-out);
+  }
+  .vi-row:hover { padding-left: 12px; }
+  .vi-row:last-child { border-bottom: none; }
+  .vi-icon {
+    width: 42px; height: 42px;
+    color: var(--gold-deep);
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    transition: all 0.3s var(--ease-spring);
+    background: var(--cream);
+  }
+  .vi-row:hover .vi-icon { background: var(--gold); color: var(--cream); transform: rotate(-8deg); }
+  .vi-icon svg { width: 16px; height: 16px; }
+  .vi-label { font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold-deep); margin-bottom: 8px; font-weight: 500; }
+  html[lang="hi"] .vi-label { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .vi-value { font-family: 'Cormorant Garamond', serif; font-size: 21px; color: var(--plum); font-weight: 500; letter-spacing: -0.005em; }
+  .vi-value-sm { font-size: 13.5px; color: var(--plum-soft); margin-top: 4px; }
+  html[lang="hi"] .vi-value-sm { font-family: 'Noto Sans Devanagari', sans-serif; }
+
+  .map-visual {
+    aspect-ratio: 4/5;
+    background: var(--cream);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--line-gold);
+    border-radius: 4px;
+  }
+  .map-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(201, 166, 107, 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(201, 166, 107, 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .map-routes { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .map-route-path {
+    fill: none;
+    stroke: rgba(201, 166, 107, 0.35);
+    stroke-width: 2;
+    stroke-dasharray: 1200;
+    stroke-dashoffset: 1200;
+    animation: draw-path 3s var(--ease-out) 0.5s forwards;
+  }
+  .map-route-path.b { stroke: var(--gold); stroke-width: 2.5; animation-delay: 1s; }
+  @keyframes draw-path { to { stroke-dashoffset: 0; } }
+  .map-pin {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -100%);
+    z-index: 5;
+    animation: pin-drop 1s var(--ease-spring) 1.5s backwards;
+  }
+  @keyframes pin-drop {
+    from { transform: translate(-50%, -250%); opacity: 0; }
+    to { transform: translate(-50%, -100%); opacity: 1; }
+  }
+  .pin-pulse {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: var(--rose);
+    opacity: 0.3;
+    animation: pin-ring 2.5s infinite ease-out;
+  }
+  @keyframes pin-ring {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.5; }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+  }
+  .pin-body {
+    width: 62px; height: 62px;
+    background: var(--plum);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: grid; place-items: center;
+    box-shadow: 0 14px 32px -8px rgba(92, 55, 76, 0.4);
+    position: relative; z-index: 1;
+    border: 3px solid var(--cream);
+  }
+  .pin-text {
+    transform: rotate(45deg);
+    color: var(--gold);
+    font-family: 'Noto Serif Devanagari', serif;
+    font-size: 26px;
+    font-weight: 700;
+  }
+  .map-label {
+    position: absolute;
+    bottom: 28px; left: 28px;
+    background: var(--cream);
+    padding: 16px 22px;
+    border-left: 2px solid var(--gold);
+    z-index: 4;
+    box-shadow: 0 12px 28px -8px rgba(92, 55, 76, 0.2);
+  }
+  .ml-t { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-style: italic; color: var(--plum); font-weight: 500; }
+  html[lang="hi"] .ml-t { font-style: normal; }
+  .ml-s { font-size: 11px; color: var(--gold-deep); margin-top: 4px; letter-spacing: 0.18em; text-transform: uppercase; }
+  html[lang="hi"] .ml-s { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .map-distance {
+    position: absolute;
+    top: 28px; right: 28px;
+    background: var(--plum);
+    color: var(--cream);
+    padding: 12px 18px;
+    z-index: 4;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
+    border-radius: 999px;
+  }
+  html[lang="hi"] .map-distance { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .map-distance .gold { color: var(--gold); }
+
+  /* ===== Big CTA ===== */
+  .big-cta {
+    background: var(--cream);
+    text-align: center;
+    padding: 150px 0 130px;
+    position: relative;
+    overflow: hidden;
+  }
+  .big-cta::before {
+    content: "खुशबू";
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Noto Serif Devanagari', serif;
+    font-size: clamp(180px, 26vw, 380px);
+    color: rgba(201, 166, 107, 0.08);
+    pointer-events: none;
+    line-height: 1;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+  .big-cta .container { position: relative; z-index: 1; max-width: 800px; }
+  .big-cta h2 {
+    color: var(--plum);
+    font-size: clamp(2.4rem, 5.5vw, 4.6rem);
+    margin-bottom: 32px;
+    line-height: 1.05;
+  }
+  html[lang="hi"] .big-cta h2 { line-height: 1.2; }
+  .big-cta h2 .it { font-style: italic; color: var(--gold-deep); font-weight: 400; }
+  html[lang="hi"] .big-cta h2 .it { font-style: normal; font-weight: 600; }
+  .big-cta p {
+    color: var(--plum-soft);
+    font-size: 17px;
+    max-width: 520px;
+    margin: 0 auto 48px;
+    line-height: 1.7;
+  }
+  html[lang="hi"] .big-cta p { font-family: 'Noto Sans Devanagari', sans-serif; }
+  .big-cta .ctas { display: inline-flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+
+  /* ===== Footer ===== */
+  footer {
+    background: var(--plum-deep);
+    color: var(--cream);
+    padding: 80px 0 36px;
+    position: relative;
+  }
+  footer::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .footer-top {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    gap: 60px;
+    padding-bottom: 60px;
+    border-bottom: 1px solid rgba(201, 166, 107, 0.2);
+    margin-bottom: 36px;
+  }
+  @media (max-width: 900px) { .footer-top { grid-template-columns: 1fr 1fr; gap: 40px; } }
+  @media (max-width: 560px) { .footer-top { grid-template-columns: 1fr; } }
+
+  .footer-brand .logo .logo-mark { background: var(--cream); color: var(--plum-deep); border-color: var(--gold); }
+  .footer-brand .logo .logo-text .name { color: var(--cream); }
+  .footer-brand .logo .logo-text .tag { color: var(--gold-soft); }
+  .footer-brand p {
+    margin-top: 24px;
+    font-size: 14.5px;
+    color: rgba(255, 249, 245, 0.65);
+    line-height: 1.7;
+    max-width: 340px;
+  }
+  html[lang="hi"] .footer-brand p { font-family: 'Noto Sans Devanagari', sans-serif; }
+  .footer-col h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--gold-soft);
+    margin-bottom: 24px;
+    font-weight: 500;
+    font-style: italic;
+  }
+  html[lang="hi"] .footer-col h4 { font-family: 'Noto Serif Devanagari', serif; font-style: normal; font-size: 17px; }
+  .footer-col ul { list-style: none; padding: 0; }
+  .footer-col li {
+    font-size: 13.5px;
+    color: rgba(255, 249, 245, 0.65);
+    margin-bottom: 14px;
+    transition: all 0.25s var(--ease-out);
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    display: inline-block;
+  }
+  html[lang="hi"] .footer-col li { font-family: 'Noto Sans Devanagari', sans-serif; }
+  .footer-col li:hover { color: var(--gold); transform: translateX(4px); }
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 249, 245, 0.5);
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  html[lang="hi"] .footer-bottom { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.02em; text-transform: none; font-size: 13px; }
+  .footer-bottom .built {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 14px;
+    color: rgba(255, 249, 245, 0.65);
+  }
+  html[lang="hi"] .footer-bottom .built { font-family: 'Noto Serif Devanagari', serif; font-style: normal; }
+  .footer-bottom .built strong {
+    color: var(--gold);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  /* ===== Float WA / Drawer / Toast ===== */
+  .wa-float {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    width: 60px; height: 60px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--cream);
+    box-shadow: 0 14px 32px rgba(201, 166, 107, 0.5);
+    z-index: 90;
+    transition: transform 0.3s var(--ease-spring);
+  }
+  .wa-float::before {
+    content: ""; position: absolute; inset: -6px;
+    background: var(--gold);
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: pulse-ring 2.5s infinite ease-out;
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(0.9); opacity: 0.5; }
+    100% { transform: scale(1.4); opacity: 0; }
+  }
+  .wa-float:hover { transform: scale(1.1); }
+  .wa-float svg { width: 26px; height: 26px; position: relative; z-index: 1; }
+
+  .drawer-overlay {
+    position: fixed; inset: 0;
+    background: rgba(63, 36, 52, 0.5);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s var(--ease-smooth);
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: all; }
+  .drawer {
+    position: fixed;
+    top: 0; right: 0;
+    width: min(460px, 100%);
+    height: 100vh;
+    background: var(--cream);
+    z-index: 201;
+    transform: translateX(100%);
+    transition: transform 0.5s var(--ease-out);
+    display: flex;
+    flex-direction: column;
+    box-shadow: -20px 0 60px rgba(92, 55, 76, 0.15);
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-header {
+    padding: 28px 32px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .drawer-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    color: var(--plum);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+  }
+  .drawer-title .it { font-style: italic; color: var(--gold-deep); }
+  html[lang="hi"] .drawer-title .it { font-style: normal; font-weight: 600; }
+  .drawer-close {
+    width: 38px; height: 38px;
+    background: transparent;
+    border: 1px solid var(--line);
+    cursor: pointer;
+    display: grid; place-items: center;
+    color: var(--plum);
+    transition: all 0.3s var(--ease-out);
+    border-radius: 50%;
+  }
+  .drawer-close:hover { background: var(--plum); color: var(--cream); border-color: var(--plum); }
+  .drawer-tabs {
+    display: flex;
+    padding: 0 32px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 16px 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--plum-soft);
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: color 0.25s;
+  }
+  html[lang="hi"] .tab-btn { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 13.5px; }
+  .tab-btn:hover, .tab-btn.active { color: var(--plum); }
+  .tab-btn.active::after {
+    content: "";
+    position: absolute;
+    bottom: -1px; left: 20%; right: 20%;
+    height: 1px;
+    background: var(--gold);
+  }
+  .tab-btn .badge {
+    background: var(--blush);
+    color: var(--plum);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+    letter-spacing: 0;
+    font-family: 'Inter', sans-serif;
+  }
+  .tab-btn.active .badge { background: var(--gold); color: var(--cream); }
+  .drawer-content { flex: 1; overflow-y: auto; padding: 10px 0; }
+  .drawer-empty {
+    text-align: center;
+    padding: 80px 40px;
+    color: var(--plum-soft);
+  }
+  .drawer-empty-icon {
+    width: 64px; height: 64px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    margin: 0 auto 24px;
+    color: var(--gold-deep);
+  }
+  .drawer-empty-icon svg { width: 24px; height: 24px; }
+  .drawer-empty .et {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--plum);
+    margin-bottom: 10px;
+    font-weight: 500;
+    font-style: italic;
+  }
+  html[lang="hi"] .drawer-empty .et { font-family: 'Noto Serif Devanagari', serif; font-style: normal; }
+  .drawer-empty .es { font-size: 13.5px; line-height: 1.6; }
+  html[lang="hi"] .drawer-empty .es { font-family: 'Noto Sans Devanagari', sans-serif; }
+
+  .cart-item {
+    display: flex;
+    gap: 16px;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--line);
+    animation: slide-in 0.35s var(--ease-out);
+  }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .ci-image {
+    width: 80px; height: 100px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--cream-deep);
+    border-radius: 4px;
+  }
+  .ci-image img { width: 100%; height: 100%; object-fit: cover; }
+  .ci-body { flex: 1; min-width: 0; }
+  .ci-brand {
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold-deep);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  html[lang="hi"] .ci-brand { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 11px; }
+  .ci-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--plum);
+    line-height: 1.25;
+    margin-bottom: 6px;
+  }
+  .ci-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--plum);
+  }
+  .ci-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .qty-btn {
+    width: 24px; height: 24px;
+    background: transparent;
+    border: 1px solid var(--line);
+    cursor: pointer;
+    display: grid; place-items: center;
+    color: var(--plum);
+    transition: all 0.2s;
+    border-radius: 50%;
+  }
+  .qty-btn:hover { background: var(--plum); color: var(--cream); border-color: var(--plum); }
+  .qty-num {
+    min-width: 28px;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    color: var(--plum);
+    font-size: 16px;
+  }
+  .ci-remove {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--plum-soft);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+    padding: 4px 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+  html[lang="hi"] .ci-remove { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .ci-remove:hover { color: var(--rose-deep); }
+  .ci-wish-add {
+    background: var(--plum);
+    color: var(--cream);
+    border: none;
+    padding: 8px 14px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: 'Inter', sans-serif;
+    border-radius: 999px;
+  }
+  html[lang="hi"] .ci-wish-add { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .ci-wish-add:hover { background: var(--gold); }
+
+  .drawer-footer {
+    border-top: 1px solid var(--line);
+    padding: 24px 32px 28px;
+    background: var(--blush);
+  }
+  .df-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+  }
+  .df-total .lbl {
+    font-size: 10.5px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--plum);
+    font-weight: 500;
+  }
+  html[lang="hi"] .df-total .lbl { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 12.5px; }
+  .df-total .amt {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    color: var(--plum);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .df-note {
+    font-size: 14px;
+    color: var(--plum-soft);
+    margin-bottom: 18px;
+    line-height: 1.55;
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+  }
+  html[lang="hi"] .df-note { font-family: 'Noto Sans Devanagari', sans-serif; font-style: normal; font-size: 13.5px; }
+  .btn-wa {
+    width: 100%;
+    background: var(--plum);
+    color: var(--cream);
+    padding: 17px;
+    border: none;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.3s var(--ease-out);
+    border-radius: 999px;
+  }
+  html[lang="hi"] .btn-wa { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 13.5px; }
+  .btn-wa:hover { background: var(--gold); }
+  .btn-wa svg { width: 16px; height: 16px; }
+
+  .toast {
+    position: fixed;
+    bottom: 100px; right: 28px;
+    background: var(--plum);
+    color: var(--cream);
+    padding: 16px 22px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    z-index: 250;
+    box-shadow: 0 14px 32px -8px rgba(92, 55, 76, 0.4);
+    transform: translateX(120%);
+    transition: transform 0.4s var(--ease-out);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 340px;
+    border-left: 2px solid var(--gold);
+    border-radius: 4px;
+  }
+  html[lang="hi"] .toast { font-family: 'Noto Sans Devanagari', sans-serif; letter-spacing: 0.02em; font-size: 13px; }
+  .toast.show { transform: translateX(0); }
+  .toast svg { width: 16px; height: 16px; color: var(--gold); flex-shrink: 0; }
+  .toast strong { color: var(--gold); font-weight: 500; }
+  @media (max-width: 540px) {
+    .toast { right: 16px; left: 16px; max-width: none; }
+    .wa-float { bottom: 100px; }
+  }
+
+  /* Reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1s var(--ease-out), transform 1s var(--ease-out);
+  }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+  .reveal-stagger > * {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+  }
+  .reveal-stagger.in > * { opacity: 1; transform: translateY(0); }
+  .reveal-stagger.in > *:nth-child(1) { transition-delay: 0.05s; }
+  .reveal-stagger.in > *:nth-child(2) { transition-delay: 0.15s; }
+  .reveal-stagger.in > *:nth-child(3) { transition-delay: 0.25s; }
+  .reveal-stagger.in > *:nth-child(4) { transition-delay: 0.35s; }
+  .reveal-stagger.in > *:nth-child(5) { transition-delay: 0.45s; }
+  .reveal-stagger.in > *:nth-child(6) { transition-delay: 0.55s; }
+  .reveal-stagger.in > *:nth-child(7) { transition-delay: 0.65s; }
+  .reveal-stagger.in > *:nth-child(8) { transition-delay: 0.75s; }
+</style>
+</head>
+<body>
+
+<!-- Top Marquee -->
+<div class="top-bar">
+  <div class="marquee-top" id="marquee"></div>
+</div>
+
+<!-- Header -->
+<header id="header">
+  <div class="nav">
+    <a href="#" class="logo">
+      <div class="logo-mark">स</div>
+      <div class="logo-text">
+        <div class="name" data-i18n="brand_name">Sahil Sugandh</div>
+        <div class="tag" data-i18n="brand_tag">Attars of Kannauj · Since 1965</div>
+      </div>
+    </a>
+    <nav class="nav-links">
+      <a href="#notes" data-i18n="nav_notes">Notes</a>
+      <a href="#collections" data-i18n="nav_collections">Collections</a>
+      <a href="#shop" data-i18n="nav_shop">Attars</a>
+      <a href="#craft" data-i18n="nav_craft">The Craft</a>
+      <a href="#visit" data-i18n="nav_visit">Visit</a>
+    </nav>
+    <div class="header-actions">
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn hi-btn" data-lang="hi">हि</button>
+      </div>
+      <button class="icon-btn" id="wishBtn" aria-label="Wishlist">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        <span class="count" id="wishCount">0</span>
+      </button>
+      <button class="icon-btn" id="cartBtn" aria-label="Cart">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2l1.5 4.5h13L19 18a2 2 0 01-2 1.5H9.5A2 2 0 017.5 18L6 2zM6 2H3"/><circle cx="10" cy="22" r="1"/><circle cx="18" cy="22" r="1"/></svg>
+        <span class="count" id="cartCount">0</span>
+      </button>
+      <a href="https://wa.me/919838535257" class="wa-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884"/></svg>
+        <span class="wa-text" data-i18n="cta_enquire">Enquire</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-grid">
+    <div class="hero-content">
+      <div class="eyebrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+        <span data-i18n="hero_eyebrow">Kannauj · Uttar Pradesh</span>
+      </div>
+      <h1 data-i18n-html="hero_h1"><span class="row"><span>The scent of</span></span><span class="row"><span><span class="italic">Kannauj</span>,</span></span><span class="row"><span>distilled.</span></span></h1>
+      <p class="hero-sub" data-i18n="hero_sub">For sixty years, by hand, in copper. Rose, jasmine, oudh, and the famous mitti — the smell of the first rain captured in a bottle. Traditional deg-bhapka, never any alcohol.</p>
+      <div class="hero-ctas">
+        <a href="#shop" class="btn-primary">
+          <span data-i18n="hero_cta_primary">Shop the attars</span>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+        </a>
+        <a href="#craft" class="btn-ghost" data-i18n="hero_cta_ghost">Our craft</a>
+      </div>
+    </div>
+
+    <div class="hero-image-wrap">
+      <div class="hero-image">
+        <img src="https://images.pexels.com/photos/1190829/pexels-photo-1190829.jpeg?w=1100&q=80&auto=compress&cs=tinysrgb" alt="" onerror="this.style.display='none'" />
+        <div class="hero-image-label">
+          <div class="l" data-i18n="hero_label_l">House Signature</div>
+          <div class="t" data-i18n="hero_label_t">"Gulab" — First Rose of Kannauj</div>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="n">60<span style="color:var(--rose);">+</span></div>
+          <div class="l" data-i18n-html="stat1_l">Years of<br>Craft</div>
+        </div>
+        <div class="stat">
+          <div class="n">24<span style="color:var(--rose);">+</span></div>
+          <div class="l" data-i18n-html="stat2_l">Single<br>Attars</div>
+        </div>
+        <div class="stat">
+          <div class="n">100<span style="color:var(--rose);">%</span></div>
+          <div class="l" data-i18n-html="stat3_l">Natural ·<br>Alcohol-free</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Heritage Quote -->
+<section class="story">
+  <div class="story-quote reveal">
+    <div class="mark">"</div>
+    <p data-i18n-html="story_quote">In Kannauj, the air itself learns to smell. <span class="it">For four hundred years</span>, this small town has known one thing better than any other in the world — how to catch a flower's breath, and keep it.</p>
+    <div class="attribution" data-i18n="story_attr">— Sahil Sugandh · est. 1965</div>
+  </div>
+</section>
+
+<!-- Note Pyramid -->
+<section class="notes-section" id="notes">
+  <div class="container">
+    <div class="notes-grid">
+      <div class="reveal">
+        <div class="section-eyebrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L4 7v10l8 5 8-5V7l-8-5z"/></svg>
+          <span data-i18n="notes_eyebrow">The Three Notes</span>
+        </div>
+        <h2 data-i18n-html="notes_h2">Every attar<br>has <span class="it">three</span> lives.</h2>
+        <p style="margin-top: 28px; font-size: 16px; line-height: 1.75; max-width: 460px;" data-i18n="notes_p">An attar opens with one note, settles into another, and ends with a third — the way a memory does. The top is what you notice in the first breath. The heart is what you wear for the next hour. The base is what your shawl remembers two days later.</p>
+      </div>
+      <div class="notes-pyramid reveal">
+        <div class="note-tier note-tier-top">
+          <div class="note-tier-num" data-i18n="note1_num">First Breath</div>
+          <div class="note-tier-title" data-i18n="note1_title">Top Notes</div>
+          <div class="note-tier-items" data-i18n="note1_items">Kewda · Mogra · Citrus</div>
+        </div>
+        <div class="note-tier note-tier-mid">
+          <div class="note-tier-num" data-i18n="note2_num">The Heart</div>
+          <div class="note-tier-title" data-i18n="note2_title">Heart Notes</div>
+          <div class="note-tier-items" data-i18n="note2_items">Gulab · Champa · Saffron</div>
+        </div>
+        <div class="note-tier note-tier-base">
+          <div class="note-tier-num" data-i18n="note3_num">Long Memory</div>
+          <div class="note-tier-title" data-i18n="note3_title">Base Notes</div>
+          <div class="note-tier-items" data-i18n="note3_items">Oudh · Chandan · Mitti · Musk</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Collections -->
+<section class="collections" id="collections">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="row">
+        <div>
+          <div class="section-eyebrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/></svg>
+            <span data-i18n="coll_eyebrow">The Wardrobe of Attars</span>
+          </div>
+          <h2 data-i18n-html="coll_h2">Five families,<br>one <span class="it">tradition.</span></h2>
+        </div>
+        <p data-i18n="coll_p">Each attar in our house belongs to a family — flower, earth, wood, spice, or the rare heritage blends our grandfather kept for himself. Pick the one your skin remembers.</p>
+      </div>
+    </div>
+
+    <div class="coll-grid reveal-stagger">
+      <div class="coll-card">
+        <img src="https://images.pexels.com/photos/1190829/pexels-photo-1190829.jpeg?w=900&q=80&auto=compress&cs=tinysrgb" alt="" onerror="this.style.display='none'" />
+        <div class="coll-content">
+          <div class="coll-num" data-i18n="coll1_num">No. 01 · Pushpa</div>
+          <div class="coll-title" data-i18n="coll1_title">The Flowers</div>
+          <div class="coll-sub" data-i18n="coll1_sub">Gulab · Mogra · Champa</div>
+        </div>
+      </div>
+      <div class="coll-card no-img">
+        <div class="coll-illus">मि</div>
+        <div class="coll-content">
+          <div class="coll-num" data-i18n="coll2_num">No. 02 · Mitti</div>
+          <div class="coll-title" data-i18n="coll2_title">The Earth</div>
+          <div class="coll-sub" data-i18n="coll2_sub">Mitti · Khus · Vetiver</div>
+        </div>
+      </div>
+      <div class="coll-card no-img gold">
+        <div class="coll-illus">क</div>
+        <div class="coll-content">
+          <div class="coll-num" data-i18n="coll3_num">No. 03 · Kashtha</div>
+          <div class="coll-title" data-i18n="coll3_title">The Wood</div>
+          <div class="coll-sub" data-i18n="coll3_sub">Chandan · Oudh</div>
+        </div>
+      </div>
+      <div class="coll-card no-img plum">
+        <div class="coll-illus">के</div>
+        <div class="coll-content">
+          <div class="coll-num" data-i18n="coll4_num">No. 04 · Masala</div>
+          <div class="coll-title" data-i18n="coll4_title">The Spice</div>
+          <div class="coll-sub" data-i18n="coll4_sub">Saffron · Kewda</div>
+        </div>
+      </div>
+      <div class="coll-card">
+        <img src="https://images.pexels.com/photos/932577/pexels-photo-932577.jpeg?w=700&q=80&auto=compress&cs=tinysrgb" alt="" onerror="this.style.display='none'" />
+        <div class="coll-content">
+          <div class="coll-num" data-i18n="coll5_num">No. 05 · Virasat</div>
+          <div class="coll-title" data-i18n="coll5_title">The Heritage</div>
+          <div class="coll-sub" data-i18n="coll5_sub">Hina · Rare blends</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Boutique Products -->
+<section class="products" id="shop">
+  <div class="container">
+    <div class="section-head reveal" style="text-align: center;">
+      <div class="row" style="justify-content: center; flex-direction: column; align-items: center;">
+        <div style="text-align: center;">
+          <div class="section-eyebrow" style="justify-content: center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11H5l7-9 7 9h-4M9 11v9h6v-9"/></svg>
+            <span data-i18n="shop_eyebrow">The Bottles</span>
+          </div>
+          <h2 data-i18n-html="shop_h2">Twenty-four attars,<br>each in <span class="it">ten ml.</span></h2>
+        </div>
+        <p style="text-align: center; margin: 16px auto 0; max-width: 540px;" data-i18n="shop_p">Pure attar — no alcohol, no carrier. A single drop on the pulse, behind the ear, in the hair. It will stay with you through the day, and visit you again at night when you take off your clothes.</p>
+      </div>
+    </div>
+
+    <div class="product-filters" id="prodFilters">
+      <button class="filter-btn active" data-filter="all" data-i18n="filter_all">All Attars</button>
+      <button class="filter-btn" data-filter="flower" data-i18n="filter_flower">Flowers</button>
+      <button class="filter-btn" data-filter="earth" data-i18n="filter_earth">Earth</button>
+      <button class="filter-btn" data-filter="wood" data-i18n="filter_wood">Wood</button>
+      <button class="filter-btn" data-filter="spice" data-i18n="filter_spice">Spice</button>
+      <button class="filter-btn" data-filter="heritage" data-i18n="filter_heritage">Heritage</button>
+    </div>
+
+    <div class="product-grid" id="prodGrid"></div>
+  </div>
+</section>
+
+<!-- The Craft -->
+<section class="craft" id="craft">
+  <div class="container">
+    <div class="craft-intro reveal">
+      <div class="section-eyebrow" style="justify-content: center;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2l6 6 6-6M6 22l6-6 6 6M2 6l6 6-6 6M22 6l-6 6 6 6"/></svg>
+        <span data-i18n="craft_eyebrow">The Deg-Bhapka Method</span>
+      </div>
+      <h2 data-i18n-html="craft_h2">Copper, water,<br>fire, and <span class="it">patience.</span></h2>
+      <p data-i18n="craft_p">Every attar in our house begins the same way it began four centuries ago. A copper still buried in clay. A bamboo pipe. A receiver of pure sandalwood oil. And the slowest possible fire — because hurry destroys scent.</p>
+    </div>
+
+    <div class="craft-steps reveal-stagger">
+      <div class="craft-step">
+        <div class="craft-num">01</div>
+        <div class="craft-h" data-i18n="craft1_h">Harvest at dawn</div>
+        <p class="craft-p" data-i18n="craft1_p">Roses picked before sunrise — the petals still hold the night's water, and the scent has not been burned off by sun.</p>
+      </div>
+      <div class="craft-step">
+        <div class="craft-num">02</div>
+        <div class="craft-h" data-i18n="craft2_h">Into the deg</div>
+        <p class="craft-p" data-i18n="craft2_p">Flowers and water in the copper still. Sealed with a dough of wheat flour. Heated over a slow cow-dung fire for hours.</p>
+      </div>
+      <div class="craft-step">
+        <div class="craft-num">03</div>
+        <div class="craft-h" data-i18n="craft3_h">Through the bamboo</div>
+        <p class="craft-p" data-i18n="craft3_p">The fragrant steam travels through bamboo — never metal — to keep the scent pure. It then enters the bhapka receiver.</p>
+      </div>
+      <div class="craft-step">
+        <div class="craft-num">04</div>
+        <div class="craft-h" data-i18n="craft4_h">Caught by sandalwood</div>
+        <p class="craft-p" data-i18n="craft4_p">The bhapka holds pure sandalwood oil. The flower's essence dissolves into the wood. After 15-20 such cycles, the attar is ready.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials -->
+<section class="testimonials" id="stories">
+  <div class="container">
+    <div class="section-head reveal" style="text-align: center;">
+      <div class="row" style="justify-content: center; flex-direction: column; align-items: center;">
+        <div style="text-align: center;">
+          <div class="section-eyebrow" style="justify-content: center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+            <span data-i18n="stories_eyebrow">From those who wear it</span>
+          </div>
+          <h2 data-i18n-html="stories_h2">What they say,<br><span class="it">after</span> the bottle.</h2>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-grid reveal-stagger">
+      <div class="test-card">
+        <div class="test-stars">★★★★★</div>
+        <div class="test-body" data-i18n="test1_body">"Gulab attar mangwaaya tha shaadi ke liye. Itni purani khushboo, jaisi dadi ke pallu mein hoti thi. Family ne kaha 'kahaan se laaye ye?' Sahil ji ne pack itne pyaar se bheja, lagaa jaise koi rishtedaar bhej raha ho."</div>
+        <div class="test-author">
+          <div class="test-name" data-i18n="test1_name">Meera S.</div>
+          <div class="test-meta" data-i18n="test1_meta">Bride · Lucknow</div>
+        </div>
+      </div>
+      <div class="test-card">
+        <div class="test-stars">★★★★★</div>
+        <div class="test-body" data-i18n="test2_body">"The Mitti attar is genuinely magic. The smell of the first monsoon shower, in a 10ml bottle. I keep one on my desk and one in my travel bag. People stop me and ask, every time."</div>
+        <div class="test-author">
+          <div class="test-name" data-i18n="test2_name">Aditya R.</div>
+          <div class="test-meta" data-i18n="test2_meta">Returning customer · Mumbai</div>
+        </div>
+      </div>
+      <div class="test-card">
+        <div class="test-stars">★★★★★</div>
+        <div class="test-body" data-i18n="test3_body">"Maine Oudh-e-Khaas mangaaya — daam thoda zyada laga pehle. Phir lagaane par samjha. Ek boond, do din rehta hai. Aur har baar alag lagta hai — subah cool, raat ko warm. Wajib hai itna."</div>
+        <div class="test-author">
+          <div class="test-name" data-i18n="test3_name">Arjun K.</div>
+          <div class="test-meta" data-i18n="test3_meta">Collector · Delhi</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Visit -->
+<section class="visit" id="visit">
+  <div class="container">
+    <div class="visit-grid">
+      <div class="reveal">
+        <div class="section-eyebrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="3"/></svg>
+          <span data-i18n="visit_eyebrow">Visit our shop</span>
+        </div>
+        <h2 data-i18n-html="visit_h2">In Safdarganj,<br>by the <span class="it">old road</span>.</h2>
+        <p data-i18n="visit_p" style="font-size: 16px; line-height: 1.7; max-width: 480px; margin-top: 24px;">The shop is small. The shelves are dark wood. The attars are in cut-glass bottles with hand-tied labels. You can smell ten before you choose one — that's how we have always done it.</p>
+
+        <div class="visit-info">
+          <div class="vi-row">
+            <div class="vi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="3"/></svg>
+            </div>
+            <div>
+              <div class="vi-label" data-i18n="visit_addr_label">The Shop</div>
+              <div class="vi-value" data-i18n="visit_addr_value">122, Ajaypal Road, Safdarganj</div>
+              <div class="vi-value-sm" data-i18n="visit_addr_sm">Kannauj, U.P. 209725, India</div>
+            </div>
+          </div>
+          <div class="vi-row">
+            <div class="vi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            </div>
+            <div>
+              <div class="vi-label" data-i18n="visit_phone_label">Call or WhatsApp</div>
+              <div class="vi-value">+91 98385 35257</div>
+              <div class="vi-value-sm" data-i18n="visit_phone_sm">Same-day replies, all India shipping</div>
+            </div>
+          </div>
+          <div class="vi-row">
+            <div class="vi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div>
+              <div class="vi-label" data-i18n="visit_hours_label">Open</div>
+              <div class="vi-value" data-i18n="visit_hours_value">10:00 AM — 8:00 PM</div>
+              <div class="vi-value-sm" data-i18n="visit_hours_sm">All seven days · Closed on Holi</div>
+            </div>
+          </div>
+        </div>
+
+        <a href="https://wa.me/919838535257" class="btn-primary">
+          <span data-i18n="visit_cta">Send us a message</span>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+        </a>
+      </div>
+
+      <div class="map-visual reveal">
+        <div class="map-grid"></div>
+        <svg class="map-routes" viewBox="0 0 400 500" preserveAspectRatio="none">
+          <path class="map-route-path" d="M 0 350 Q 100 320, 180 280 T 400 200"/>
+          <path class="map-route-path" d="M 0 100 Q 150 150, 200 250"/>
+          <path class="map-route-path b" d="M 50 480 Q 150 400, 200 240"/>
+        </svg>
+        <div class="map-pin">
+          <div class="pin-pulse"></div>
+          <div class="pin-body"><div class="pin-text">स</div></div>
+        </div>
+        <div class="map-label">
+          <div class="ml-t" data-i18n="map_label_t">Sahil Sugandh · Safdarganj</div>
+          <div class="ml-s" data-i18n="map_label_s">Kannauj · 209725</div>
+        </div>
+        <div class="map-distance">
+          <span class="gold">◆</span>
+          <span data-i18n="map_distance">Heart of Old Kannauj</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Big CTA -->
+<section class="big-cta">
+  <div class="container">
+    <h2 class="reveal" data-i18n-html="bigcta_h2">Send a bottle.<br>Send <span class="it">a memory.</span></h2>
+    <p class="reveal" data-i18n="bigcta_p">Order one attar, or a set. We pack each in a soft cloth bag, with a hand-written note. Pan-India delivery in 3-5 days.</p>
+    <div class="ctas reveal">
+      <a href="#shop" class="btn-primary">
+        <span data-i18n="bigcta_primary">Browse the attars</span>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </a>
+      <a href="tel:+919838535257" class="btn-ghost" data-i18n="bigcta_ghost">Or call +91 98385 35257</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="logo">
+          <div class="logo-mark">स</div>
+          <div class="logo-text">
+            <div class="name" data-i18n="brand_name">Sahil Sugandh</div>
+            <div class="tag" data-i18n="brand_tag">Attars of Kannauj · Since 1965</div>
+          </div>
+        </a>
+        <p data-i18n="footer_brand_p">A small attar house in old Kannauj — hand-distilled flowers, earth, wood, and spice, in the way our grandfather did it, and his before him.</p>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer_col1_h">The Families</h4>
+        <ul>
+          <li data-i18n="footer_col1_1">Pushpa — Flowers</li>
+          <li data-i18n="footer_col1_2">Mitti — Earth</li>
+          <li data-i18n="footer_col1_3">Kashtha — Wood</li>
+          <li data-i18n="footer_col1_4">Masala — Spice</li>
+          <li data-i18n="footer_col1_5">Virasat — Heritage</li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer_col2_h">The Shop</h4>
+        <ul>
+          <li data-i18n="footer_col2_1">122, Ajaypal Road</li>
+          <li data-i18n="footer_col2_2">Safdarganj, Kannauj</li>
+          <li data-i18n="footer_col2_3">10:00 AM — 8:00 PM</li>
+          <li data-i18n="footer_col2_4">All India shipping</li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer_col3_h">In Touch</h4>
+        <ul>
+          <li>+91 98385 35257</li>
+          <li data-i18n="footer_col3_2">WhatsApp anytime</li>
+          <li data-i18n="footer_col3_3">Custom blends</li>
+          <li data-i18n="footer_col3_4">Wholesale enquiries</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div data-i18n="footer_copy">© 2026 Sahil Sugandh, Kannauj. All rights reserved.</div>
+      <div class="built" data-i18n-html="footer_built">Built with <strong>Open Idea</strong> — AI websites for Indian SMBs</div>
+    </div>
+  </div>
+</footer>
+
+<a href="https://wa.me/919838535257" class="wa-float" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884"/></svg>
+</a>
+
+<!-- Drawer -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-header">
+    <div class="drawer-title" data-i18n-html="drawer_title">Your <span class="it">selection</span></div>
+    <button class="drawer-close" id="drawerClose" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="drawer-tabs">
+    <button class="tab-btn active" data-tab="cart"><span data-i18n="tab_cart">Cart</span> <span class="badge" id="cartTabCount">0</span></button>
+    <button class="tab-btn" data-tab="wishlist"><span data-i18n="tab_wishlist">Wishlist</span> <span class="badge" id="wishTabCount">0</span></button>
+  </div>
+  <div class="drawer-content" id="drawerContent"></div>
+  <div class="drawer-footer" id="drawerFooter" style="display:none;"></div>
+</aside>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+  <span id="toastText"></span>
+</div>
+
+<script>
+  // ===== Translations =====
+  const T = {
+    en: {
+      marquee: ["Hand-distilled in Kannauj since 1965", "Traditional Deg-Bhapka Method", "100% Natural · Alcohol-Free", "Free India shipping above ₹2,000"],
+      brand_name: "Sahil Sugandh",
+      brand_tag: "Attars of Kannauj · Since 1965",
+      nav_notes: "Notes",
+      nav_collections: "Collections",
+      nav_shop: "Attars",
+      nav_craft: "The Craft",
+      nav_visit: "Visit",
+      cta_enquire: "Enquire",
+
+      hero_eyebrow: "Kannauj · Uttar Pradesh",
+      hero_h1: '<span class="row"><span>The scent of</span></span><span class="row"><span><span class="italic">Kannauj</span>,</span></span><span class="row"><span>distilled.</span></span>',
+      hero_sub: "For sixty years, by hand, in copper. Rose, jasmine, oudh, and the famous mitti — the smell of the first rain captured in a bottle. Traditional deg-bhapka, never any alcohol.",
+      hero_cta_primary: "Shop the attars",
+      hero_cta_ghost: "Our craft",
+      hero_label_l: "House Signature",
+      hero_label_t: '"Gulab" — First Rose of Kannauj',
+      stat1_l: "Years of<br>Craft",
+      stat2_l: "Single<br>Attars",
+      stat3_l: "Natural ·<br>Alcohol-free",
+
+      story_quote: 'In Kannauj, the air itself learns to smell. <span class="it">For four hundred years</span>, this small town has known one thing better than any other in the world — how to catch a flower\'s breath, and keep it.',
+      story_attr: "— Sahil Sugandh · est. 1965",
+
+      notes_eyebrow: "The Three Notes",
+      notes_h2: 'Every attar<br>has <span class="it">three</span> lives.',
+      notes_p: "An attar opens with one note, settles into another, and ends with a third — the way a memory does. The top is what you notice in the first breath. The heart is what you wear for the next hour. The base is what your shawl remembers two days later.",
+      note1_num: "First Breath",
+      note1_title: "Top Notes",
+      note1_items: "Kewda · Mogra · Citrus",
+      note2_num: "The Heart",
+      note2_title: "Heart Notes",
+      note2_items: "Gulab · Champa · Saffron",
+      note3_num: "Long Memory",
+      note3_title: "Base Notes",
+      note3_items: "Oudh · Chandan · Mitti · Musk",
+
+      coll_eyebrow: "The Wardrobe of Attars",
+      coll_h2: 'Five families,<br>one <span class="it">tradition.</span>',
+      coll_p: "Each attar in our house belongs to a family — flower, earth, wood, spice, or the rare heritage blends our grandfather kept for himself. Pick the one your skin remembers.",
+      coll1_num: "No. 01 · Pushpa", coll1_title: "The Flowers", coll1_sub: "Gulab · Mogra · Champa",
+      coll2_num: "No. 02 · Mitti", coll2_title: "The Earth", coll2_sub: "Mitti · Khus · Vetiver",
+      coll3_num: "No. 03 · Kashtha", coll3_title: "The Wood", coll3_sub: "Chandan · Oudh",
+      coll4_num: "No. 04 · Masala", coll4_title: "The Spice", coll4_sub: "Saffron · Kewda",
+      coll5_num: "No. 05 · Virasat", coll5_title: "The Heritage", coll5_sub: "Hina · Rare blends",
+
+      shop_eyebrow: "The Bottles",
+      shop_h2: 'Twenty-four attars,<br>each in <span class="it">ten ml.</span>',
+      shop_p: "Pure attar — no alcohol, no carrier. A single drop on the pulse, behind the ear, in the hair. It will stay with you through the day, and visit you again at night when you take off your clothes.",
+
+      filter_all: "All Attars",
+      filter_flower: "Flowers",
+      filter_earth: "Earth",
+      filter_wood: "Wood",
+      filter_spice: "Spice",
+      filter_heritage: "Heritage",
+
+      craft_eyebrow: "The Deg-Bhapka Method",
+      craft_h2: 'Copper, water,<br>fire, and <span class="it">patience.</span>',
+      craft_p: "Every attar in our house begins the same way it began four centuries ago. A copper still buried in clay. A bamboo pipe. A receiver of pure sandalwood oil. And the slowest possible fire — because hurry destroys scent.",
+      craft1_h: "Harvest at dawn",
+      craft1_p: "Roses picked before sunrise — the petals still hold the night's water, and the scent has not been burned off by sun.",
+      craft2_h: "Into the deg",
+      craft2_p: "Flowers and water in the copper still. Sealed with a dough of wheat flour. Heated over a slow cow-dung fire for hours.",
+      craft3_h: "Through the bamboo",
+      craft3_p: "The fragrant steam travels through bamboo — never metal — to keep the scent pure. It then enters the bhapka receiver.",
+      craft4_h: "Caught by sandalwood",
+      craft4_p: "The bhapka holds pure sandalwood oil. The flower's essence dissolves into the wood. After 15-20 such cycles, the attar is ready.",
+
+      stories_eyebrow: "From those who wear it",
+      stories_h2: 'What they say,<br><span class="it">after</span> the bottle.',
+      test1_body: '"Gulab attar mangwaaya tha shaadi ke liye. Itni purani khushboo, jaisi dadi ke pallu mein hoti thi. Family ne kaha \'kahaan se laaye ye?\' Sahil ji ne pack itne pyaar se bheja, lagaa jaise koi rishtedaar bhej raha ho."',
+      test1_name: "Meera S.", test1_meta: "Bride · Lucknow",
+      test2_body: '"The Mitti attar is genuinely magic. The smell of the first monsoon shower, in a 10ml bottle. I keep one on my desk and one in my travel bag. People stop me and ask, every time."',
+      test2_name: "Aditya R.", test2_meta: "Returning customer · Mumbai",
+      test3_body: '"Maine Oudh-e-Khaas mangaaya — daam thoda zyada laga pehle. Phir lagaane par samjha. Ek boond, do din rehta hai. Aur har baar alag lagta hai — subah cool, raat ko warm. Wajib hai itna."',
+      test3_name: "Arjun K.", test3_meta: "Collector · Delhi",
+
+      visit_eyebrow: "Visit our shop",
+      visit_h2: 'In Safdarganj,<br>by the <span class="it">old road</span>.',
+      visit_p: "The shop is small. The shelves are dark wood. The attars are in cut-glass bottles with hand-tied labels. You can smell ten before you choose one — that's how we have always done it.",
+      visit_addr_label: "The Shop",
+      visit_addr_value: "122, Ajaypal Road, Safdarganj",
+      visit_addr_sm: "Kannauj, U.P. 209725, India",
+      visit_phone_label: "Call or WhatsApp",
+      visit_phone_sm: "Same-day replies, all India shipping",
+      visit_hours_label: "Open",
+      visit_hours_value: "10:00 AM — 8:00 PM",
+      visit_hours_sm: "All seven days · Closed on Holi",
+      visit_cta: "Send us a message",
+      map_label_t: "Sahil Sugandh · Safdarganj",
+      map_label_s: "Kannauj · 209725",
+      map_distance: "Heart of Old Kannauj",
+
+      bigcta_h2: 'Send a bottle.<br>Send <span class="it">a memory.</span>',
+      bigcta_p: "Order one attar, or a set. We pack each in a soft cloth bag, with a hand-written note. Pan-India delivery in 3-5 days.",
+      bigcta_primary: "Browse the attars",
+      bigcta_ghost: "Or call +91 98385 35257",
+
+      footer_brand_p: "A small attar house in old Kannauj — hand-distilled flowers, earth, wood, and spice, in the way our grandfather did it, and his before him.",
+      footer_col1_h: "The Families",
+      footer_col1_1: "Pushpa — Flowers", footer_col1_2: "Mitti — Earth", footer_col1_3: "Kashtha — Wood", footer_col1_4: "Masala — Spice", footer_col1_5: "Virasat — Heritage",
+      footer_col2_h: "The Shop",
+      footer_col2_1: "122, Ajaypal Road", footer_col2_2: "Safdarganj, Kannauj", footer_col2_3: "10:00 AM — 8:00 PM", footer_col2_4: "All India shipping",
+      footer_col3_h: "In Touch",
+      footer_col3_2: "WhatsApp anytime", footer_col3_3: "Custom blends", footer_col3_4: "Wholesale enquiries",
+      footer_copy: "© 2026 Sahil Sugandh, Kannauj. All rights reserved.",
+      footer_built: 'Built with <strong>Open Idea</strong> — AI websites for Indian SMBs',
+
+      drawer_title: 'Your <span class="it">selection</span>',
+      tab_cart: "Cart",
+      tab_wishlist: "Wishlist",
+      cart_empty_t: "Nothing in your basket, yet",
+      cart_empty_s: "Add an attar from the shop — we'll bundle your selection into one neat WhatsApp message.",
+      wish_empty_t: "Your wishlist is empty",
+      wish_empty_s: "Tap the small heart on any attar to save it for later.",
+      ci_remove: "Remove",
+      ci_move_to_cart: "Move to cart",
+      df_total: "Order Total",
+      df_note: "Includes pure attar in cut-glass 10ml bottle with cork stopper, soft cloth pouch, and hand-written note. Shipping is free above ₹2,000.",
+      btn_send_wa: "Place order via WhatsApp",
+
+      toast_added: "added to cart",
+      toast_wished: "saved to wishlist",
+      toast_moved: "Moved to cart",
+
+      wa_greeting: "Hello Sahil Sugandh! I would like to order:",
+      wa_qty: "Qty",
+      wa_total: "Order total",
+      wa_close: "Please confirm availability and let me know shipping details. Thank you!"
+    },
+    hi: {
+      marquee: ["1965 से कन्नौज में हाथ से तैयार", "पारंपरिक देग-भपका विधि", "100% प्राकृतिक · अल्कोहल-रहित", "₹2,000+ पर मुफ्त डिलीवरी"],
+      brand_name: "साहिल सुगंध",
+      brand_tag: "कन्नौज के अत्तर · 1965 से",
+      nav_notes: "खुशबू",
+      nav_collections: "कलेक्शन",
+      nav_shop: "अत्तर",
+      nav_craft: "कारीगरी",
+      nav_visit: "पधारिए",
+      cta_enquire: "संपर्क करें",
+
+      hero_eyebrow: "कन्नौज · उत्तर प्रदेश",
+      hero_h1: '<span class="row"><span><span class="italic">कन्नौज</span> की</span></span><span class="row"><span>खुशबू,</span></span><span class="row"><span>बूंद-बूंद।</span></span>',
+      hero_sub: "साठ साल से, हाथ से, तांबे में। गुलाब, मोगरा, ऊद, और हमारा मशहूर मिट्टी — पहली बारिश की खुशबू एक शीशी में। पारंपरिक देग-भपका विधि, अल्कोहल का नामो-निशान नहीं।",
+      hero_cta_primary: "अत्तर खरीदें",
+      hero_cta_ghost: "हमारी कारीगरी",
+      hero_label_l: "हमारी पहचान",
+      hero_label_t: '"गुलाब" — कन्नौज का पहला फूल',
+      stat1_l: "साल की<br>कारीगरी",
+      stat2_l: "एकल<br>अत्तर",
+      stat3_l: "प्राकृतिक ·<br>अल्कोहल-रहित",
+
+      story_quote: 'कन्नौज में, हवा खुद खुशबू समझती है। <span class="it">चार सौ सालों से</span>, यह छोटा सा कस्बा एक चीज़ दुनिया में किसी से बेहतर जानता है — फूल की सांस कैसे पकड़ी जाए, और कैसे संभाली जाए।',
+      story_attr: "— साहिल सुगंध · स्थापित 1965",
+
+      notes_eyebrow: "तीन खुशबूएं",
+      notes_h2: 'हर अत्तर के<br><span class="it">तीन</span> रूप।',
+      notes_p: "एक अत्तर एक खुशबू से खुलता है, दूसरी में जमता है, और तीसरी में खत्म होता है — जैसे यादें होती हैं। पहली खुशबू पहली सांस की होती है। असली दिल अगले एक घंटे की। और लंबी याद वो होती है जो दुपट्टा दो दिन बाद भी याद रखता है।",
+      note1_num: "पहली सांस",
+      note1_title: "पहली खुशबू",
+      note1_items: "केवड़ा · मोगरा · सिट्रस",
+      note2_num: "असली दिल",
+      note2_title: "बीच की खुशबू",
+      note2_items: "गुलाब · चंपा · केसर",
+      note3_num: "लंबी याद",
+      note3_title: "बाक़ी खुशबू",
+      note3_items: "ऊद · चंदन · मिट्टी · कस्तूरी",
+
+      coll_eyebrow: "अत्तरों का वार्डरोब",
+      coll_h2: 'पांच परिवार,<br>एक <span class="it">परंपरा।</span>',
+      coll_p: "हमारी घर के हर अत्तर का एक परिवार है — फूल, मिट्टी, चंदन, मसाला, या वे दुर्लभ विरासत के मिश्रण जो हमारे दादा अपने लिए रखते थे। वो चुनिए जो आपकी त्वचा याद रखे।",
+      coll1_num: "नं. 01 · पुष्पा", coll1_title: "फूल", coll1_sub: "गुलाब · मोगरा · चंपा",
+      coll2_num: "नं. 02 · मिट्टी", coll2_title: "मिट्टी", coll2_sub: "मिट्टी · खस · वेटिवर",
+      coll3_num: "नं. 03 · काष्ठ", coll3_title: "चंदन", coll3_sub: "चंदन · ऊद",
+      coll4_num: "नं. 04 · मसाला", coll4_title: "मसाला", coll4_sub: "केसर · केवड़ा",
+      coll5_num: "नं. 05 · विरासत", coll5_title: "विरासत", coll5_sub: "हिना · दुर्लभ मिश्रण",
+
+      shop_eyebrow: "शीशियां",
+      shop_h2: 'चौबीस अत्तर,<br>हर एक <span class="it">दस ml।</span>',
+      shop_p: "शुद्ध अत्तर — कोई अल्कोहल नहीं, कोई कैरियर नहीं। एक बूंद कलाई पर, कान के पीछे, बालों में। दिन भर साथ रहेगा, और रात को कपड़े उतारते वक्त फिर मिलेगा।",
+
+      filter_all: "सभी अत्तर",
+      filter_flower: "फूल",
+      filter_earth: "मिट्टी",
+      filter_wood: "चंदन",
+      filter_spice: "मसाला",
+      filter_heritage: "विरासत",
+
+      craft_eyebrow: "देग-भपका विधि",
+      craft_h2: 'तांबा, पानी,<br>आग, और <span class="it">सब्र।</span>',
+      craft_p: "हमारी घर का हर अत्तर उसी तरह शुरू होता है जैसे चार सौ साल पहले शुरू होता था। मिट्टी में दबा तांबे का देग। बांस की नली। शुद्ध चंदन के तेल का भपका। और सबसे धीमी आग — क्योंकि जल्दबाजी खुशबू को मार देती है।",
+      craft1_h: "तड़के की कटाई",
+      craft1_p: "गुलाब सूरज उगने से पहले तोड़े जाते हैं — पंखुड़ियों में अब भी रात का पानी होता है, और खुशबू को धूप ने अभी जलाया नहीं।",
+      craft2_h: "देग में डाला",
+      craft2_p: "फूल और पानी तांबे की देग में। गेहूं के आटे की लोई से सील। घंटों धीमी गोबर की आग पर।",
+      craft3_h: "बांस से होते हुए",
+      craft3_p: "खुशबू वाली भाप बांस से गुज़रती है — कभी धातु से नहीं — ताकि खुशबू शुद्ध रहे। फिर वे भपका रिसीवर में प्रवेश करती हैं।",
+      craft4_h: "चंदन में समाई",
+      craft4_p: "भपके में शुद्ध चंदन का तेल होता है। फूल की आत्मा चंदन में घुल जाती है। 15-20 ऐसे चक्रों के बाद, अत्तर तैयार।",
+
+      stories_eyebrow: "जो लोग पहनते हैं",
+      stories_h2: 'शीशी के <span class="it">बाद</span><br>लोग क्या कहते हैं।',
+      test1_body: '"गुलाब अत्तर मंगवाया था शादी के लिए। इतनी पुरानी खुशबू, जैसी दादी के पल्लू में होती थी। फैमिली ने कहा \'कहां से लाए ये?\' साहिल जी ने पैक इतने प्यार से भेजा, लगा जैसे कोई रिश्तेदार भेज रहा हो।"',
+      test1_name: "मीरा एस.", test1_meta: "दुल्हन · लखनऊ",
+      test2_body: '"मिट्टी अत्तर सच में जादू है। पहली बारिश की खुशबू, 10ml की शीशी में। एक डेस्क पर रखते हूं, एक ट्रैवल बैग में। हर बार लोग रोककर पूछते हैं — कौन सा है।"',
+      test2_name: "आदित्य आर.", test2_meta: "रिकर्निंग ग्राहक · मुंबई",
+      test3_body: '"मैंने ऊद-ए-खास मंगाया — दाम थोड़ा ज़्यादा लगा पहले। फिर लगाने पर समझा। एक बूंद, दो दिन रहती है। और हर बार अलग लगती है — सुबह ठंडी, रात को गर्म। वाजिब है इतना।"',
+      test3_name: "अर्जुन के.", test3_meta: "कलेक्टर · दिल्ली",
+
+      visit_eyebrow: "हमारी दुकान पर आइए",
+      visit_h2: 'सफदरगंज में,<br>पुरानी <span class="it">सड़क</span> पर।',
+      visit_p: "दुकान छोटी है। शेल्फ काली लकड़ी की हैं। अत्तर कटे हुए शीशियों में हैं, हाथ से बंधे लेबल के साथ। एक चुनने से पहले आप दस सूंघ सकते हैं — हम हमेशा ऐसी तरह करते आ रहे हैं।",
+      visit_addr_label: "दुकान",
+      visit_addr_value: "122, अजयपाल रोड, सफदरगंज",
+      visit_addr_sm: "कन्नौज, उ.प्र. 209725, भारत",
+      visit_phone_label: "कॉल या WhatsApp",
+      visit_phone_sm: "उसी दिन जवाब, पूरे भारत में डिलीवरी",
+      visit_hours_label: "खुले",
+      visit_hours_value: "सुबह 10:00 — रात 8:00",
+      visit_hours_sm: "सातों दिन · होली पर बंद",
+      visit_cta: "हमें मैसेज भेजिए",
+      map_label_t: "साहिल सुगंध · सफदरगंज",
+      map_label_s: "कन्नौज · 209725",
+      map_distance: "पुराने कन्नौज का दिल",
+
+      bigcta_h2: 'एक शीशी भेजिए।<br>एक <span class="it">याद</span> भेजिए।',
+      bigcta_p: "एक अत्तर मंगवाइए, या पूरा सेट। हम हर एक को मुलायम कपड़े की पोटली में पैक करते हैं, हाथ से लिखी एक नोट के साथ। पूरे भारत में 3-5 दिनों में डिलीवरी।",
+      bigcta_primary: "अत्तर देखिए",
+      bigcta_ghost: "या कॉल करें +91 98385 35257",
+
+      footer_brand_p: "पुराने कन्नौज में एक छोटी सी अत्तर की दुकान — फूल, मिट्टी, चंदन, और मसाले हाथ से तैयार, उसी तरह जैसे हमारे दादा करते थे, और उनसे पहले उनके।",
+      footer_col1_h: "परिवार",
+      footer_col1_1: "पुष्पा — फूल", footer_col1_2: "मिट्टी — मिट्टी", footer_col1_3: "काष्ठ — चंदन", footer_col1_4: "मसाला — मसाला", footer_col1_5: "विरासत — हेरिटेज",
+      footer_col2_h: "दुकान",
+      footer_col2_1: "122, अजयपाल रोड", footer_col2_2: "सफदरगंज, कन्नौज", footer_col2_3: "सुबह 10:00 — रात 8:00", footer_col2_4: "पूरे भारत में डिलीवरी",
+      footer_col3_h: "संपर्क",
+      footer_col3_2: "WhatsApp अभी भी", footer_col3_3: "कस्टम मिश्रण", footer_col3_4: "थोक पूछताए",
+      footer_copy: "© 2026 साहिल सुगंध, कन्नौज. सर्वाधिकार सुरक्षित।",
+      footer_built: 'बना है <strong>Open Idea</strong> पर — भारतीय SMB के लिए AI वेबसाइट',
+
+      drawer_title: 'आपका <span class="it">चयन</span>',
+      tab_cart: "कार्ट",
+      tab_wishlist: "विशलिस्ट",
+      cart_empty_t: "अभी कार्ट खाली है",
+      cart_empty_s: "दुकान से कुछ अत्तर जोड़िए — हम आपके चयन को एक साफ WhatsApp मैसेज में बंडल कर देंगे।",
+      wish_empty_t: "विशलिस्ट खाली है",
+      wish_empty_s: "किसी अत्तर पर छोटे दिल को टैप करके यहां सेव करें।",
+      ci_remove: "हटाएं",
+      ci_move_to_cart: "कार्ट में लें",
+      df_total: "कुल",
+      df_note: "शुद्ध अत्तर, कटे कांच की 10ml शीशी, कॉर्क ढक्कन, मुलायम कपड़े की पोटली, और हाथ से लिखा नोट शामिल। ₹2,000+ पर डिलीवरी मुफ्त।",
+      btn_send_wa: "WhatsApp से ऑर्डर करें",
+
+      toast_added: "कार्ट में जोड़ा गया",
+      toast_wished: "विशलिस्ट में सेव किया",
+      toast_moved: "कार्ट में ले आए",
+
+      wa_greeting: "नमस्ते साहिल सुगंध! मैं ये ऑर्डर करना चाहती/चाहता हूं:",
+      wa_qty: "मात्रा",
+      wa_total: "कुल",
+      wa_close: "कृपया उपलब्धता और शिपिंग की जानकारी भेजिए। धन्यवाद!"
+    }
+  };
+
+  // ===== Products =====
+  const IMGS = {
+    pink:   'https://images.pexels.com/photos/1190829/pexels-photo-1190829.jpeg?w=700&q=80&auto=compress&cs=tinysrgb',
+    cork:   'https://images.pexels.com/photos/932577/pexels-photo-932577.jpeg?w=700&q=80&auto=compress&cs=tinysrgb',
+    ridged: 'https://images.pexels.com/photos/4110341/pexels-photo-4110341.jpeg?w=700&q=80&auto=compress&cs=tinysrgb',
+    amber:  'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=700&q=80&auto=format&fit=crop'
+  };
+
+  const PRODUCTS = [
+    { id: 'a1',  cat: 'flower',   img: IMGS.pink,   price: 1800, mrp: 2400,
+      name_en: 'Gulab',       sub_en: 'First Rose of Kannauj',     name_hi: 'गुलाब',     sub_hi: 'कन्नौज का पहला फूल',
+      tag_en: 'Signature', tag_hi: 'सिग्नेचर', tagGold: true },
+    { id: 'a2',  cat: 'earth',    img: IMGS.cork,   price:  650, mrp:  900,
+      name_en: 'Mitti',       sub_en: 'The First Rain',            name_hi: 'मिट्टी',    sub_hi: 'पहली बारिश',
+      tag_en: 'Iconic', tag_hi: 'पहचान', tagRose: true },
+    { id: 'a3',  cat: 'flower',   img: IMGS.ridged, price: 2200, mrp: 2900,
+      name_en: 'Mogra',       sub_en: 'Summer Jasmine',            name_hi: 'मोगरा',     sub_hi: 'गर्मियों की चमेली' },
+    { id: 'a4',  cat: 'wood',     img: IMGS.amber,  price: 3500, mrp: 4500,
+      name_en: 'Chandan',     sub_en: 'Mysore Sandalwood',         name_hi: 'चंदन',      sub_hi: 'मैसूर का चंदन' },
+    { id: 'a5',  cat: 'wood',     img: IMGS.amber,  price: 8500, mrp:11000,
+      name_en: 'Oudh-e-Khaas', sub_en: 'Aged Oudh, 12 Years',      name_hi: 'ऊद-ए-खास',  sub_hi: '12 साल पुराना ऊद',
+      tag_en: 'Rare', tag_hi: 'दुर्लभ', tagGold: true },
+    { id: 'a6',  cat: 'flower',   img: IMGS.pink,   price: 1400, mrp: 1800,
+      name_en: 'Champa',      sub_en: 'Frangipani Bloom',          name_hi: 'चंपा',      sub_hi: 'चंपा का फूल' },
+    { id: 'a7',  cat: 'earth',    img: IMGS.cork,   price:  850, mrp: 1100,
+      name_en: 'Khus',        sub_en: 'Monsoon Vetiver',           name_hi: 'खस',        sub_hi: 'मानसून वेटिवर' },
+    { id: 'a8',  cat: 'spice',    img: IMGS.amber,  price: 4800, mrp: 6200,
+      name_en: 'Saffron-e-Kashmir', sub_en: 'Cardinal Saffron',    name_hi: 'केसर-ए-कश्मीर', sub_hi: 'कश्मीर का केसर',
+      tag_en: 'Premium', tag_hi: 'प्रीमियम' },
+    { id: 'a9',  cat: 'spice',    img: IMGS.ridged, price: 1200, mrp: 1500,
+      name_en: 'Kewda',       sub_en: 'Wild Screw Pine',           name_hi: 'केवड़ा',     sub_hi: 'जंगली केवड़ा' },
+    { id: 'a10', cat: 'flower',   img: IMGS.pink,   price: 1900, mrp: 2400,
+      name_en: 'Bela',        sub_en: 'Royal Jasmine',             name_hi: 'बेला',      sub_hi: 'राजसी चमेली' },
+    { id: 'a11', cat: 'heritage', img: IMGS.cork,   price: 1600, mrp: 2100,
+      name_en: 'Hina',        sub_en: 'Heritage Blend',            name_hi: 'हिना',      sub_hi: 'विरासत मिश्रण',
+      tag_en: 'Heritage', tag_hi: 'विरासत' },
+    { id: 'a12', cat: 'heritage', img: IMGS.ridged, price: 2400, mrp: 3000,
+      name_en: 'Mehndi',      sub_en: 'Henna Floral',              name_hi: 'मेहंदी',    sub_hi: 'हिना का फूल' }
+  ];
+
+  const STORE = {
+    cart: {}, wishlist: [], lang: 'en',
+    init() {
+      try {
+        this.cart = JSON.parse(localStorage.getItem('sahil_cart') || '{}');
+        this.wishlist = JSON.parse(localStorage.getItem('sahil_wishlist') || '[]');
+        this.lang = localStorage.getItem('sahil_lang') || 'en';
+      } catch (e) { this.cart = {}; this.wishlist = []; this.lang = 'en'; }
+    },
+    save() {
+      try {
+        localStorage.setItem('sahil_cart', JSON.stringify(this.cart));
+        localStorage.setItem('sahil_wishlist', JSON.stringify(this.wishlist));
+        localStorage.setItem('sahil_lang', this.lang);
+      } catch (e) {}
+    }
+  };
+
+  const fmt = n => '₹' + n.toLocaleString('en-IN');
+  const t = key => (T[STORE.lang] && T[STORE.lang][key]) || (T.en[key] || key);
+  let currentFilter = 'all';
+  let currentTab = 'cart';
+
+  function applyLang() {
+    const lang = STORE.lang;
+    document.getElementById('htmlRoot').setAttribute('lang', lang);
+    const marquee = document.getElementById('marquee');
+    const items = T[lang].marquee;
+    marquee.innerHTML = items.concat(items).map(s => `<span>${s}</span>`).join('');
+    document.querySelectorAll('.lang-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === lang);
+    });
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      if (T[lang][key] !== undefined) el.textContent = T[lang][key];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      const key = el.dataset.i18nHtml;
+      if (T[lang][key] !== undefined) el.innerHTML = T[lang][key];
+    });
+    renderProducts();
+    renderDrawer();
+  }
+
+  function renderProducts() {
+    const grid = document.getElementById('prodGrid');
+    if (!grid) return;
+    const items = currentFilter === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.cat === currentFilter);
+    const lang = STORE.lang;
+    grid.innerHTML = items.map(p => {
+      const inWish = STORE.wishlist.includes(p.id);
+      const inCart = !!STORE.cart[p.id];
+      const name = p['name_' + lang] || p.name_en;
+      const sub = p['sub_' + lang] || p.sub_en;
+      const tag = p['tag_' + lang] || p.tag_en;
+      const tagClass = p.tagGold ? 'gold' : (p.tagRose ? 'rose' : '');
+      const addLabel = inCart ? (lang === 'hi' ? 'जोड़ा गया · ✓' : 'Added · ✓') : (lang === 'hi' ? '+ कार्ट में लें' : '+ Add to cart');
+      const sizeLabel = '10ml';
+      return `
+        <div class="prod-card">
+          <div class="prod-image">
+            <img src="${p.img}" alt="${name}" loading="lazy" onerror="this.style.display='none'" />
+            ${tag ? `<span class="prod-tag ${tagClass}">${tag}</span>` : ''}
+            <button class="prod-wish ${inWish ? 'active' : ''}" data-id="${p.id}" aria-label="Save">
+              <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+            </button>
+            <button class="prod-quick-add ${inCart ? 'added' : ''}" data-id="${p.id}">${addLabel}</button>
+          </div>
+          <div class="prod-body">
+            <div class="prod-brand">${lang === 'hi' ? 'साहिल सुगंध' : 'Sahil Sugandh'}</div>
+            <div class="prod-name">${name}</div>
+            <div class="prod-subtitle">${sub}</div>
+            <div class="prod-price-row">
+              <div class="prod-price">${fmt(p.price)}</div>
+              <div class="prod-mrp">${fmt(p.mrp)}</div>
+              <div class="prod-size">${sizeLabel}</div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function updateCounts() {
+    const cartTotal = Object.values(STORE.cart).reduce((a, b) => a + b, 0);
+    const wishTotal = STORE.wishlist.length;
+    const cc = document.getElementById('cartCount');
+    const wc = document.getElementById('wishCount');
+    if (cc) { cc.textContent = cartTotal; cc.classList.toggle('show', cartTotal > 0); }
+    if (wc) { wc.textContent = wishTotal; wc.classList.toggle('show', wishTotal > 0); }
+    document.getElementById('cartTabCount').textContent = cartTotal;
+    document.getElementById('wishTabCount').textContent = wishTotal;
+  }
+
+  function pulseBtn(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('pulse');
+    void el.offsetWidth;
+    el.classList.add('pulse');
+  }
+
+  function addToCart(id) {
+    STORE.cart[id] = (STORE.cart[id] || 0) + 1;
+    STORE.save();
+    updateCounts();
+    const p = PRODUCTS.find(x => x.id === id);
+    const name = p['name_' + STORE.lang] || p.name_en;
+    showToast(`<strong>${name}</strong> · ${t('toast_added')}`);
+    pulseBtn('cartBtn');
+    renderProducts();
+    renderDrawer();
+  }
+  function removeFromCart(id) {
+    delete STORE.cart[id]; STORE.save(); updateCounts(); renderProducts(); renderDrawer();
+  }
+  function changeQty(id, delta) {
+    const newQty = (STORE.cart[id] || 0) + delta;
+    if (newQty <= 0) delete STORE.cart[id]; else STORE.cart[id] = newQty;
+    STORE.save(); updateCounts(); renderProducts(); renderDrawer();
+  }
+  function toggleWishlist(id) {
+    const i = STORE.wishlist.indexOf(id);
+    if (i === -1) {
+      STORE.wishlist.push(id);
+      const p = PRODUCTS.find(x => x.id === id);
+      const name = p['name_' + STORE.lang] || p.name_en;
+      showToast(`<strong>${name}</strong> · ${t('toast_wished')}`);
+      pulseBtn('wishBtn');
+    } else STORE.wishlist.splice(i, 1);
+    STORE.save(); updateCounts(); renderProducts(); renderDrawer();
+  }
+  function moveWishToCart(id) {
+    STORE.cart[id] = (STORE.cart[id] || 0) + 1;
+    const i = STORE.wishlist.indexOf(id);
+    if (i > -1) STORE.wishlist.splice(i, 1);
+    STORE.save(); updateCounts();
+    showToast(t('toast_moved'));
+    pulseBtn('cartBtn');
+    renderProducts(); renderDrawer();
+  }
+  function showToast(html) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toastText').innerHTML = html;
+    toast.classList.add('show');
+    clearTimeout(window._tt);
+    window._tt = setTimeout(() => toast.classList.remove('show'), 2800);
+  }
+
+  function renderDrawer() {
+    const content = document.getElementById('drawerContent');
+    const footer = document.getElementById('drawerFooter');
+    if (!content) return;
+    const lang = STORE.lang;
+
+    if (currentTab === 'cart') {
+      const ids = Object.keys(STORE.cart);
+      if (ids.length === 0) {
+        content.innerHTML = `
+          <div class="drawer-empty">
+            <div class="drawer-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2l1.5 4.5h13L19 18a2 2 0 01-2 1.5H9.5A2 2 0 017.5 18L6 2zM6 2H3"/><circle cx="10" cy="22" r="1"/><circle cx="18" cy="22" r="1"/></svg></div>
+            <div class="et">${t('cart_empty_t')}</div>
+            <div class="es">${t('cart_empty_s')}</div>
+          </div>`;
+        footer.style.display = 'none'; footer.innerHTML = '';
+        return;
+      }
+      content.innerHTML = ids.map(id => {
+        const p = PRODUCTS.find(x => x.id === id);
+        const name = p['name_' + lang] || p.name_en;
+        const qty = STORE.cart[id];
+        return `
+          <div class="cart-item">
+            <div class="ci-image"><img src="${p.img}" alt="" onerror="this.style.display='none'" /></div>
+            <div class="ci-body">
+              <div class="ci-brand">${lang === 'hi' ? 'साहिल सुगंध' : 'Sahil Sugandh'} · 10ml</div>
+              <div class="ci-name">${name}</div>
+              <div class="ci-price">${fmt(p.price * qty)}</div>
+              <div class="ci-controls">
+                <button class="qty-btn qty-minus" data-id="${p.id}" aria-label="-"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg></button>
+                <span class="qty-num">${qty}</span>
+                <button class="qty-btn qty-plus" data-id="${p.id}" aria-label="+"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></button>
+                <button class="ci-remove" data-id="${p.id}">${t('ci_remove')}</button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+      const total = ids.reduce((sum, id) => sum + PRODUCTS.find(x => x.id === id).price * STORE.cart[id], 0);
+      footer.style.display = 'block';
+      footer.innerHTML = `
+        <div class="df-total">
+          <div class="lbl">${t('df_total')}</div>
+          <div class="amt">${fmt(total)}</div>
+        </div>
+        <div class="df-note">${t('df_note')}</div>
+        <button class="btn-wa" id="orderBtn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
+          ${t('btn_send_wa')}
+        </button>`;
+      const ob = document.getElementById('orderBtn');
+      if (ob) ob.onclick = orderViaWhatsApp;
+    } else {
+      if (STORE.wishlist.length === 0) {
+        content.innerHTML = `
+          <div class="drawer-empty">
+            <div class="drawer-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+            <div class="et">${t('wish_empty_t')}</div>
+            <div class="es">${t('wish_empty_s')}</div>
+          </div>`;
+        footer.style.display = 'none'; footer.innerHTML = '';
+        return;
+      }
+      content.innerHTML = STORE.wishlist.map(id => {
+        const p = PRODUCTS.find(x => x.id === id);
+        const name = p['name_' + lang] || p.name_en;
+        return `
+          <div class="cart-item">
+            <div class="ci-image"><img src="${p.img}" alt="" onerror="this.style.display='none'" /></div>
+            <div class="ci-body">
+              <div class="ci-brand">${lang === 'hi' ? 'साहिल सुगंध' : 'Sahil Sugandh'} · 10ml</div>
+              <div class="ci-name">${name}</div>
+              <div class="ci-price">${fmt(p.price)}</div>
+              <div class="ci-controls">
+                <button class="ci-wish-add wish-to-cart" data-id="${p.id}">${t('ci_move_to_cart')}</button>
+                <button class="ci-remove wish-remove" data-id="${p.id}">${t('ci_remove')}</button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+      footer.style.display = 'none'; footer.innerHTML = '';
+    }
+  }
+
+  function openDrawer(tab) {
+    currentTab = tab || 'cart';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
+    renderDrawer();
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('drawerOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDrawer() {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawerOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function orderViaWhatsApp() {
+    const ids = Object.keys(STORE.cart);
+    if (!ids.length) return;
+    const lang = STORE.lang;
+    let msg = t('wa_greeting') + '\n\n';
+    let total = 0;
+    ids.forEach((p_id, i) => {
+      const p = PRODUCTS.find(x => x.id === p_id);
+      const name = p['name_' + lang] || p.name_en;
+      const qty = STORE.cart[p_id];
+      const lt = p.price * qty;
+      total += lt;
+      msg += `${i + 1}. ${name} (10ml)\n   ${t('wa_qty')}: ${qty} × ${fmt(p.price)} = ${fmt(lt)}\n\n`;
+    });
+    msg += `*${t('wa_total')}: ${fmt(total)}*\n\n${t('wa_close')}`;
+    window.open('https://wa.me/919838535257?text=' + encodeURIComponent(msg), '_blank');
+  }
+
+  // Header scroll
+  const header = document.getElementById('header');
+  window.addEventListener('scroll', () => {
+    header.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  // Reveal
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+  document.querySelectorAll('.reveal, .reveal-stagger').forEach(el => revealObserver.observe(el));
+
+  // Init
+  STORE.init();
+  applyLang();
+  updateCounts();
+
+  // Lang toggle
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      if (lang === STORE.lang) return;
+      STORE.lang = lang;
+      STORE.save();
+      applyLang();
+    });
+  });
+
+  // Event delegation
+  document.addEventListener('click', (e) => {
+    const wishBtn = e.target.closest('.prod-wish');
+    if (wishBtn) {
+      wishBtn.classList.add('animating');
+      setTimeout(() => wishBtn.classList.remove('animating'), 500);
+      toggleWishlist(wishBtn.dataset.id);
+      return;
+    }
+    const addBtn = e.target.closest('.prod-quick-add');
+    if (addBtn) { addToCart(addBtn.dataset.id); return; }
+    const qtyPlus = e.target.closest('.qty-plus');
+    if (qtyPlus) { changeQty(qtyPlus.dataset.id, +1); return; }
+    const qtyMinus = e.target.closest('.qty-minus');
+    if (qtyMinus) { changeQty(qtyMinus.dataset.id, -1); return; }
+    const wishToCart = e.target.closest('.wish-to-cart');
+    if (wishToCart) { moveWishToCart(wishToCart.dataset.id); return; }
+    const ciRemove = e.target.closest('.ci-remove');
+    if (ciRemove) {
+      if (ciRemove.classList.contains('wish-remove')) toggleWishlist(ciRemove.dataset.id);
+      else removeFromCart(ciRemove.dataset.id);
+      return;
+    }
+    const filterBtn = e.target.closest('.filter-btn');
+    if (filterBtn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      filterBtn.classList.add('active');
+      currentFilter = filterBtn.dataset.filter;
+      renderProducts();
+      return;
+    }
+    const tabBtn = e.target.closest('.tab-btn');
+    if (tabBtn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      tabBtn.classList.add('active');
+      currentTab = tabBtn.dataset.tab;
+      renderDrawer();
+      return;
+    }
+  });
+
+  document.getElementById('cartBtn').onclick = () => openDrawer('cart');
+  document.getElementById('wishBtn').onclick = () => openDrawer('wishlist');
+  document.getElementById('drawerClose').onclick = closeDrawer;
+  document.getElementById('drawerOverlay').onclick = closeDrawer;
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+</script>
+
+</body>
+</html>
