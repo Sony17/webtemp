@@ -20,7 +20,8 @@
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{font-family:var(--sans);color:var(--ink);background:var(--white);font-weight:300;line-height:1.8;-webkit-font-smoothing:antialiased}
+body{font-family:var(--sans);color:var(--ink);background:var(--white);font-weight:300;line-height:1.8;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+html{max-width:100%}
 img{display:block;max-width:100%}
 a{text-decoration:none;color:inherit}
 h1,h2,h3,h4{font-family:var(--serif);font-weight:500;line-height:1.08;letter-spacing:.4px;color:var(--rose-deep)}
@@ -129,8 +130,8 @@ section{padding:116px 0}
 .show-card .info .desc{font-size:13.5px;color:var(--muted);min-height:40px}
 .show-card .info .foot{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
 .show-card .price{font-family:var(--serif);font-size:24px;color:var(--rose-deep);font-weight:600}
-.show-card .add{font-size:11px;letter-spacing:1px;text-transform:uppercase;border:1px solid var(--rose-deep);border-radius:0;background:none;color:var(--rose-deep);padding:9px 16px;cursor:pointer;transition:.3s var(--ease)}
-.show-card .add:hover{background:var(--gold);border-color:var(--gold);color:#fff}
+.show-card .add{font-size:22px;width:44px;height:44px;flex:none;border-radius:50%;border:1px solid var(--rose-deep);background:none;color:var(--rose-deep);cursor:pointer;transition:.3s var(--ease);line-height:1;display:flex;align-items:center;justify-content:center}
+.show-card .add:hover{background:var(--gold);border-color:var(--gold);color:#fff;transform:scale(1.08)}
 
 .shop{background:var(--blush)}
 .prod-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
@@ -294,7 +295,15 @@ footer{background:#fff;padding:74px 0 30px;border-top:3px solid;border-image:var
   .nav-links li{text-align:center;padding:14px 0}
   .menu-btn{display:block}
   .hero-grid,.gift-grid{grid-template-columns:1fr;gap:42px}
-  .hero{padding:120px 0 70px;min-height:auto}
+  .hero{padding:118px 0 64px;min-height:auto}
+  .hero-copy{max-width:none}
+  .hero-copy h1{font-size:clamp(34px,8vw,64px)}
+  .hero-copy p{max-width:none}
+  /* dim the drifting layer and lay a full-width scrim so text stays readable */
+  .hero #pcontainer{opacity:.5}
+  .hero::after{background:linear-gradient(180deg,rgba(255,253,251,.55),rgba(255,253,251,.82) 70%)}
+  .hero::before{inset:96px 16px 22px}
+  .news{background-attachment:scroll}
   section{padding:80px 0}
 }
 @media(max-width:560px){
@@ -302,8 +311,20 @@ footer{background:#fff;padding:74px 0 30px;border-top:3px solid;border-image:var
   .show-grid,.prod-grid,.cats,.occ-grid{grid-template-columns:1fr 1fr;gap:14px}
   .why-grid{grid-template-columns:1fr}
   .foot-grid{grid-template-columns:1fr}
+  .hero{padding:108px 0 56px}
+  .hero-copy h1{font-size:clamp(30px,9.2vw,46px)}
+  .hero-copy p{font-size:15px;margin:20px 0 30px}
+  .hero #pcontainer{top:78px;opacity:.4}
+  .hero::before{inset:82px 12px 18px}
   .hero-actions{flex-direction:column}.hero-actions .btn{text-align:center}
-  .hero-stats{gap:22px}
+  .hero-stats{gap:18px;flex-wrap:wrap}
+  .hero-stats div b{font-size:24px}
+  .marquee div{font-size:11px;letter-spacing:2px}
+  .marquee span{margin:0 18px}
+  .sw-gallery{grid-template-columns:repeat(2,1fr);gap:24px 14px}
+  .sw-fig:nth-child(n+6){display:none}
+  .news form{flex-direction:column}
+  .news input{min-width:0}
 }
 </style>
 </head>
@@ -553,7 +574,7 @@ v4.forEach(p=>sg.insertAdjacentHTML('beforeend',`
     <div class="info">
       <div class="scent">${p.scent}</div><h3>${p.name}</h3>
       <div class="desc">${p.desc}</div>
-      <div class="foot"><span class="price">${p.price}</span><button class="add" onclick="addBag('${p.name}')">Add to bag</button></div>
+      <div class="foot"><span class="price">${p.price}</span><button class="add" onclick="addBag('${p.name}')" aria-label="Add ${p.name} to bag">+</button></div>
     </div>
   </div>`));
 
