@@ -18,9 +18,18 @@ const RESERVED_SUBDOMAINS = new Set([
   "cdn",
 ]);
 
+// External custom domains mapped to a tenant subdomain. Apex and any www.
+// variant resolve to the same tenant.
+const CUSTOM_DOMAINS: Record<string, string> = {
+  "saiwalldecor.com": "sai",
+};
+
 function extractSubdomain(host: string | null): string | null {
   if (!host) return null;
   const hostname = host.split(":")[0].toLowerCase();
+
+  const stripped = hostname.startsWith("www.") ? hostname.slice(4) : hostname;
+  if (CUSTOM_DOMAINS[stripped]) return CUSTOM_DOMAINS[stripped];
 
   for (const root of ROOT_DOMAINS) {
     if (hostname === root) return null;
