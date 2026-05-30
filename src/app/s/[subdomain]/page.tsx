@@ -15,9 +15,7 @@ export async function generateMetadata({
   if (!deployment) return { title: "Not found" };
   return {
     title: deployment.brandName,
-    description:
-      deployment.tagline ??
-      `${deployment.brandName} — a website powered by Open Idea EcoSyz.`,
+    description: deployment.tagline ?? deployment.brandName,
     icons: { icon: "/favicon.svg" },
   };
 }

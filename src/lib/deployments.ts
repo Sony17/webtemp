@@ -49,6 +49,25 @@ const COMMITTED_ROOTS: Array<{ root: string; label: string }> = [
   { root: path.join(process.cwd(), "public"), label: "public" },
 ];
 
+type TenantMeta = {
+  brandName?: string;
+  tagline?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+};
+
+async function readTenantMeta(dir: string): Promise<TenantMeta> {
+  try {
+    const buf = await fs.readFile(path.join(dir, "tenant.json"), "utf-8");
+    const parsed = JSON.parse(buf);
+    return parsed && typeof parsed === "object" ? (parsed as TenantMeta) : {};
+  } catch {
+    return {};
+  }
+}
+
 async function discoverCommittedTenants(): Promise<Deployment[]> {
   const out: Deployment[] = [];
   const seen = new Set<string>();
@@ -66,19 +85,26 @@ async function discoverCommittedTenants(): Promise<Deployment[]> {
       const sub = slugifySubdomain(ent.name);
       if (!sub || sub.length < 3 || RESERVED.has(sub) || seen.has(sub)) continue;
 
+      const dir = path.join(root, ent.name);
       try {
-        await fs.access(path.join(root, ent.name, "index.html"));
+        await fs.access(path.join(dir, "index.html"));
       } catch {
         continue;
       }
 
+      const meta = await readTenantMeta(dir);
       seen.add(sub);
       out.push({
         id: `committed-${label}-${sub}`,
         subdomain: sub,
         type: "uploaded",
         templateSlug: "committed",
-        brandName: sub,
+        brandName: meta.brandName?.trim() || sub,
+        tagline: meta.tagline?.trim() || undefined,
+        phone: meta.phone?.trim() || undefined,
+        email: meta.email?.trim() || undefined,
+        address: meta.address?.trim() || undefined,
+        city: meta.city?.trim() || undefined,
         entryFile: "index.html",
         deployedAt: 0,
       });
