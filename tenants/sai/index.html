@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23131a2b%22%2F%3E%3Ctext%20x%3D%2232%22%20y%3D%2244%22%20font-family%3D%22Georgia%2Cserif%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22%23b88746%22%3ES%3C%2Ftext%3E%3C%2Fsvg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root {
     --bg: #ffffff;
@@ -29,7 +29,7 @@
   html { scroll-behavior: smooth; }
   body {
     margin: 0;
-    font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    font-family: 'Inter', 'Noto Sans Devanagari', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     color: var(--ink);
     background: var(--bg);
     line-height: 1.6;
@@ -55,6 +55,15 @@
   .nav .cta { display: inline-block; background: var(--ink); color: #fff; padding: 8px 16px; border-radius: 999px; font-weight: 600; }
   .nav .cta:hover { background: var(--gold-deep); color: #fff; }
   .menu-btn { display: none; background: none; border: 0; font-size: 1.5rem; cursor: pointer; color: var(--ink); }
+  .lang-toggle { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 1px solid var(--line); color: var(--ink-soft); border-radius: 999px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; margin-left: 18px; font-family: inherit; letter-spacing: 0.04em; transition: all 0.2s; text-transform: uppercase; }
+  .lang-toggle:hover { border-color: var(--ink); color: var(--ink); }
+  .lang-toggle .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  body.lang-hi { font-family: 'Noto Sans Devanagari', 'Inter', sans-serif; }
+  body.lang-hi h1, body.lang-hi h2 { font-family: 'Noto Sans Devanagari', 'Playfair Display', serif; letter-spacing: 0; }
+  body.lang-hi h1 em { font-style: normal; }
+  body.lang-hi .brand i { font-style: normal; }
+  body.lang-hi .review-text { font-style: normal; }
+  body.lang-hi .stat .num { font-family: 'Noto Sans Devanagari', 'Playfair Display', serif; }
 
   /* Hero */
   .hero { position: relative; min-height: 88vh; display: flex; align-items: center; overflow: hidden; background: linear-gradient(180deg, #0e1320 0%, #1b2238 100%); color: #fff; }
@@ -295,12 +304,13 @@
   <div class="topbar-inner">
     <a href="#top" class="brand"><span><i>Sai Wall</i></span> Decor</a>
     <nav class="nav">
-      <a href="#about">About</a>
-      <a href="#products">Products</a>
-      <a href="#gallery">Gallery</a>
-      <a href="#reviews">Reviews</a>
-      <a href="#visit">Visit</a>
-      <a class="cta" href="tel:09760017505">Call Now</a>
+      <a href="#about" data-hi="हमारे बारे में">About</a>
+      <a href="#products" data-hi="उत्पाद">Products</a>
+      <a href="#gallery" data-hi="गैलरी">Gallery</a>
+      <a href="#reviews" data-hi="समीक्षाएं">Reviews</a>
+      <a href="#visit" data-hi="संपर्क">Visit</a>
+      <a class="cta" href="tel:09760017505" data-hi="अभी कॉल करें">Call Now</a>
+      <button type="button" class="lang-toggle" id="lang-toggle" aria-label="Switch language"><span class="dot"></span><span id="lang-toggle-label">हिं</span></button>
     </nav>
   </div>
 </header>
@@ -312,17 +322,17 @@
   </video>
   <div class="hero-overlay"></div>
   <div class="hero-content">
-    <span class="eyebrow">Wallpapers &middot; WPC Louvers &middot; PVC Panels &middot; Window Blinds &middot; Luxury Sofas</span>
-    <h1>Sai Wall Decor<br/>wallpaper &middot; WPC louvers &middot; <em>blinds &amp; sofas</em></h1>
-    <p class="tagline">Transforming homes across Firozabad with premium wall decor, custom window treatments and handcrafted furniture. Visit our showroom on Buddha Ashram Road.</p>
+    <span class="eyebrow" data-hi="वॉलपेपर · WPC लूवर · PVC पैनल · विंडो ब्लाइंड्स · लग्ज़री सोफा">Wallpapers &middot; WPC Louvers &middot; PVC Panels &middot; Window Blinds &middot; Luxury Sofas</span>
+    <h1 data-hi-html="साईं वॉल डेकोर<br/>वॉलपेपर · WPC लूवर · <em>ब्लाइंड्स और सोफा</em>">Sai Wall Decor<br/>wallpaper &middot; WPC louvers &middot; <em>blinds &amp; sofas</em></h1>
+    <p class="tagline" data-hi="फिरोजाबाद में प्रीमियम वॉल डेकोर, कस्टम विंडो ट्रीटमेंट और हस्तनिर्मित फर्नीचर से घरों को बदल रहे हैं। बुद्धा आश्रम रोड पर हमारे शोरूम पधारें।">Transforming homes across Firozabad with premium wall decor, custom window treatments and handcrafted furniture. Visit our showroom on Buddha Ashram Road.</p>
     <div class="hero-meta">
-      <span class="pill"><span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>&nbsp; 4.8 on Google</span>
-      <span class="pill">Open 9 AM Mon&ndash;Sat</span>
-      <span class="pill">Delivery available</span>
+      <span class="pill"><span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>&nbsp; <span data-hi="गूगल पर 4.8">4.8 on Google</span></span>
+      <span class="pill" data-hi="सोम–शनि सुबह 9 बजे से खुला">Open 9 AM Mon&ndash;Sat</span>
+      <span class="pill" data-hi="डिलीवरी उपलब्ध">Delivery available</span>
     </div>
     <div class="btn-row">
-      <a class="btn btn-primary" href="tel:09760017505">&#128222; Call 097600 17505</a>
-      <a class="btn btn-ghost" href="https://maps.google.com/?cid=4738395756158602651" target="_blank" rel="noopener">&#128205; Get Directions</a>
+      <a class="btn btn-primary" href="tel:09760017505" data-hi-html="&#128222; कॉल करें 097600 17505">&#128222; Call 097600 17505</a>
+      <a class="btn btn-ghost" href="https://maps.google.com/?cid=4738395756158602651" target="_blank" rel="noopener" data-hi-html="&#128205; रास्ता देखें">&#128205; Get Directions</a>
     </div>
   </div>
 </section>
@@ -332,22 +342,22 @@
   <div class="container">
     <div class="about-grid">
       <div class="about-text">
-        <span class="eyebrow" style="color: var(--gold);">About the showroom</span>
-        <h2>Five product lines.<br/>One trusted local showroom.</h2>
-        <p>For years, we've been Firozabad's go-to destination for premium interior decor &mdash; from statement 3D wallpapers and elegant window blinds to bespoke luxury sofas, durable PVC panels, and modern WPC louvers.</p>
-        <p>Every product is hand-picked and many are made to order, finished and fitted by craftspeople who care about the small things &mdash; the seam, the shade, the way light falls on a panel at the end of the day.</p>
+        <span class="eyebrow" style="color: var(--gold);" data-hi="शोरूम के बारे में">About the showroom</span>
+        <h2 data-hi-html="पांच उत्पाद श्रेणियाँ।<br/>एक भरोसेमंद स्थानीय शोरूम।">Five product lines.<br/>One trusted local showroom.</h2>
+        <p data-hi="वर्षों से, हम फिरोजाबाद के प्रीमियम इंटीरियर डेकोर का पसंदीदा ठिकाना हैं — स्टेटमेंट 3D वॉलपेपर और एलीगेंट विंडो ब्लाइंड्स से लेकर कस्टम लग्ज़री सोफा, मज़बूत PVC पैनल और आधुनिक WPC लूवर तक।">For years, we've been Firozabad's go-to destination for premium interior decor &mdash; from statement 3D wallpapers and elegant window blinds to bespoke luxury sofas, durable PVC panels, and modern WPC louvers.</p>
+        <p data-hi="हर उत्पाद हाथ से चुना जाता है और कई ऑर्डर पर बनते हैं, ऐसे कारीगरों द्वारा फिनिश और फिट किए जाते हैं जो छोटी बातों का ध्यान रखते हैं — सीम, शेड, और दिन के अंत में पैनल पर पड़ने वाली रोशनी।">Every product is hand-picked and many are made to order, finished and fitted by craftspeople who care about the small things &mdash; the seam, the shade, the way light falls on a panel at the end of the day.</p>
         <div class="stat-row">
           <div class="stat">
             <div class="num">4.8&#9733;</div>
-            <div class="lbl">Google rating</div>
+            <div class="lbl" data-hi="गूगल रेटिंग">Google rating</div>
           </div>
           <div class="stat">
             <div class="num">5</div>
-            <div class="lbl">Product categories</div>
+            <div class="lbl" data-hi="उत्पाद श्रेणियाँ">Product categories</div>
           </div>
           <div class="stat">
-            <div class="num">Local</div>
-            <div class="lbl">Delivery &amp; install</div>
+            <div class="num" data-hi="स्थानीय">Local</div>
+            <div class="lbl" data-hi="डिलीवरी और इंस्टॉल">Delivery &amp; install</div>
           </div>
         </div>
       </div>
@@ -364,9 +374,9 @@
 <section id="products" class="block services">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">What we offer</span>
-      <h2>Everything to dress a home, in one place.</h2>
-      <p>From floor-to-ceiling wall panels to the sofa you'll spend Sunday afternoons on, our showroom carries the full range &mdash; with custom sizes and finishes available on request.</p>
+      <span class="eyebrow" data-hi="हम क्या प्रदान करते हैं">What we offer</span>
+      <h2 data-hi="घर सजाने के लिए सब कुछ, एक ही जगह।">Everything to dress a home, in one place.</h2>
+      <p data-hi="फर्श से छत तक के वॉल पैनल से लेकर रविवार दोपहर बिताने वाले सोफे तक, हमारे शोरूम में पूरी रेंज उपलब्ध है — कस्टम साइज़ और फिनिश रिक्वेस्ट पर उपलब्ध।">From floor-to-ceiling wall panels to the sofa you'll spend Sunday afternoons on, our showroom carries the full range &mdash; with custom sizes and finishes available on request.</p>
     </div>
     <div class="product-grid">
       <article class="card">
@@ -374,9 +384,9 @@
           <img loading="lazy" src="/demo-wallpaper/images/img1.jpeg" alt="Luxury 3D floral wallpaper installed by Sai Wall Decor showroom" />
         </div>
         <div class="card-body">
-          <span class="card-tag">Wall Decor</span>
-          <h3>Premium 3D Wallpapers</h3>
-          <p>Floral, geometric and abstract 3D prints. Custom-sized rolls and fitted panels for living rooms, bedrooms and entryways.</p>
+          <span class="card-tag" data-hi="वॉल डेकोर">Wall Decor</span>
+          <h3 data-hi="प्रीमियम 3D वॉलपेपर">Premium 3D Wallpapers</h3>
+          <p data-hi="फूल, ज्यामितीय और एब्स्ट्रैक्ट 3D प्रिंट्स। लिविंग रूम, बेडरूम और एंट्रीवे के लिए कस्टम साइज़ रोल और फिट पैनल।">Floral, geometric and abstract 3D prints. Custom-sized rolls and fitted panels for living rooms, bedrooms and entryways.</p>
         </div>
       </article>
       <article class="card">
@@ -384,9 +394,9 @@
           <img loading="lazy" src="/demo-wallpaper/images/img2.jpeg" alt="Printed Krishna roller blind in pooja room" />
         </div>
         <div class="card-body">
-          <span class="card-tag">Window Treatments</span>
-          <h3>Window Blinds &amp; Printed Shades</h3>
-          <p>Roller, zebra and vertical blinds &mdash; including custom religious and photo-print blinds for pooja rooms and bedrooms.</p>
+          <span class="card-tag" data-hi="विंडो ट्रीटमेंट">Window Treatments</span>
+          <h3 data-hi="विंडो ब्लाइंड्स और प्रिंटेड शेड्स">Window Blinds &amp; Printed Shades</h3>
+          <p data-hi="रोलर, ज़ीब्रा और वर्टिकल ब्लाइंड्स — पूजा कक्ष और बेडरूम के लिए कस्टम धार्मिक और फोटो-प्रिंट ब्लाइंड्स सहित।">Roller, zebra and vertical blinds &mdash; including custom religious and photo-print blinds for pooja rooms and bedrooms.</p>
         </div>
       </article>
       <article class="card">
@@ -394,9 +404,9 @@
           <img loading="lazy" src="/demo-wallpaper/images/img4.jpeg" alt="Navy and gold 3D floral wall panel" />
         </div>
         <div class="card-body">
-          <span class="card-tag">Wall Cladding</span>
-          <h3>PVC Wall Panels &amp; Frames</h3>
-          <p>Durable, easy-clean PVC panels in matte, gloss and textured finishes &mdash; perfect for feature walls, ceilings and bathrooms.</p>
+          <span class="card-tag" data-hi="वॉल क्लैडिंग">Wall Cladding</span>
+          <h3 data-hi="PVC वॉल पैनल और फ्रेम">PVC Wall Panels &amp; Frames</h3>
+          <p data-hi="मैट, ग्लॉस और टेक्सचर्ड फिनिश में मज़बूत, आसान सफाई वाले PVC पैनल — फीचर वॉल, छत और बाथरूम के लिए परफेक्ट।">Durable, easy-clean PVC panels in matte, gloss and textured finishes &mdash; perfect for feature walls, ceilings and bathrooms.</p>
         </div>
       </article>
       <article class="card">
@@ -404,9 +414,9 @@
           <img loading="lazy" src="https://images.unsplash.com/photo-1615873968403-89e068629265?auto=format&fit=crop&w=900&q=70" alt="WPC louver wall" />
         </div>
         <div class="card-body">
-          <span class="card-tag">Modern Cladding</span>
-          <h3>WPC Louvers</h3>
-          <p>Wood-Plastic-Composite louver panels for that warm, slatted-wood look. Resistant to termites, moisture and warping.</p>
+          <span class="card-tag" data-hi="मॉडर्न क्लैडिंग">Modern Cladding</span>
+          <h3 data-hi="WPC लूवर">WPC Louvers</h3>
+          <p data-hi="उस गर्म, स्लैटेड-वुड लुक के लिए वुड-प्लास्टिक-कंपोजिट लूवर पैनल। दीमक, नमी और मुड़ने से सुरक्षित।">Wood-Plastic-Composite louver panels for that warm, slatted-wood look. Resistant to termites, moisture and warping.</p>
         </div>
       </article>
       <article class="card">
@@ -414,9 +424,9 @@
           <img loading="lazy" src="/demo-wallpaper/images/img3.jpeg" alt="Green velvet luxury sofa with cushions" />
         </div>
         <div class="card-body">
-          <span class="card-tag">Furniture</span>
-          <h3>Luxury Sofas &amp; Seating</h3>
-          <p>Made-to-order velvet, leatherette and fabric sofas &mdash; 3, 5, 7 and L-shape configurations with custom cushion options.</p>
+          <span class="card-tag" data-hi="फर्नीचर">Furniture</span>
+          <h3 data-hi="लग्ज़री सोफा और सीटिंग">Luxury Sofas &amp; Seating</h3>
+          <p data-hi="ऑर्डर पर बने वेलवेट, लेदरेट और फैब्रिक सोफा — 3, 5, 7 और L-शेप कॉन्फ़िगरेशन कस्टम कुशन विकल्पों के साथ।">Made-to-order velvet, leatherette and fabric sofas &mdash; 3, 5, 7 and L-shape configurations with custom cushion options.</p>
         </div>
       </article>
       <article class="card">
@@ -424,9 +434,9 @@
           <img loading="lazy" src="https://images.unsplash.com/photo-1558882224-dda166733046?auto=format&fit=crop&w=900&q=70" alt="Curtains and drapes" />
         </div>
         <div class="card-body">
-          <span class="card-tag">Soft Furnishings</span>
-          <h3>Curtains &amp; Fabric</h3>
-          <p>Coordinating curtains, sheers and upholstery fabric to finish the room. Stitching and fitting available.</p>
+          <span class="card-tag" data-hi="सॉफ्ट फर्निशिंग">Soft Furnishings</span>
+          <h3 data-hi="पर्दे और फैब्रिक">Curtains &amp; Fabric</h3>
+          <p data-hi="कमरे को पूरा करने के लिए मैचिंग पर्दे, शीयर और अपहोल्स्ट्री फैब्रिक। सिलाई और फिटिंग उपलब्ध।">Coordinating curtains, sheers and upholstery fabric to finish the room. Stitching and fitting available.</p>
         </div>
       </article>
     </div>
@@ -437,9 +447,9 @@
 <section id="gallery" class="block">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Recent work</span>
-      <h2>See our installations &amp; products.</h2>
-      <p>A look at recent projects from the showroom and our customers' homes. Tap any tile to play with sound.</p>
+      <span class="eyebrow" data-hi="हाल का काम">Recent work</span>
+      <h2 data-hi="हमारी इंस्टॉलेशन और उत्पाद देखें।">See our installations &amp; products.</h2>
+      <p data-hi="शोरूम और हमारे ग्राहकों के घरों से हाल के प्रोजेक्ट्स की झलक। साउंड के साथ चलाने के लिए किसी भी टाइल पर टैप करें।">A look at recent projects from the showroom and our customers' homes. Tap any tile to play with sound.</p>
     </div>
     <div class="gallery-grid">
       <div class="vid-card"><video src="/demo-wallpaper/videos/v1.mp4" muted loop playsinline preload="metadata"></video></div>
@@ -455,48 +465,48 @@
 <section id="reviews" class="block reviews">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">What customers say</span>
-      <h2>Rated 4.8 on Google.</h2>
-      <p>Real reviews from real customers on Google Maps.</p>
+      <span class="eyebrow" data-hi="ग्राहक क्या कहते हैं">What customers say</span>
+      <h2 data-hi="गूगल पर 4.8 रेटिंग।">Rated 4.8 on Google.</h2>
+      <p data-hi="गूगल मैप्स पर असली ग्राहकों की असली समीक्षाएं।">Real reviews from real customers on Google Maps.</p>
     </div>
     <div class="review-grid">
       <article class="review-card">
         <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-        <p class="review-text">"Nice work and nice sarve."</p>
+        <p class="review-text" data-hi="“अच्छा काम और अच्छी सर्विस।”">"Nice work and nice sarve."</p>
         <div class="review-meta">
           <div class="avatar">AK</div>
           <div>
             <div class="who">Ab Kumar</div>
-            <div class="when">Verified Google review</div>
+            <div class="when" data-hi="वेरिफाइड गूगल रिव्यू">Verified Google review</div>
           </div>
         </div>
       </article>
       <article class="review-card">
         <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-        <p class="review-text">"Great selection of wallpapers and blinds. Very helpful staff and quality finishing."</p>
+        <p class="review-text" data-hi="“वॉलपेपर और ब्लाइंड्स का बेहतरीन चयन। बहुत मददगार स्टाफ और गुणवत्तापूर्ण फिनिशिंग।”">"Great selection of wallpapers and blinds. Very helpful staff and quality finishing."</p>
         <div class="review-meta">
           <div class="avatar">JM</div>
           <div>
             <div class="who">Jai Mahakaal</div>
-            <div class="when">Verified Google review</div>
+            <div class="when" data-hi="वेरिफाइड गूगल रिव्यू">Verified Google review</div>
           </div>
         </div>
       </article>
       <article class="review-card">
         <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-        <p class="review-text">"Best place in Firozabad for wall panels and sofas. Recommended."</p>
+        <p class="review-text" data-hi="“वॉल पैनल और सोफे के लिए फिरोजाबाद का सबसे अच्छा स्थान। अनुशंसित।”">"Best place in Firozabad for wall panels and sofas. Recommended."</p>
         <div class="review-meta">
           <div class="avatar">KS</div>
           <div>
             <div class="who">Kumarsain</div>
-            <div class="when">Verified Google review</div>
+            <div class="when" data-hi="वेरिफाइड गूगल रिव्यू">Verified Google review</div>
           </div>
         </div>
       </article>
     </div>
     <div class="reviews-foot">
-      <span>Rated 4.8 / 5 by customers on Google.</span>
-      <a class="btn btn-ghost" href="https://maps.google.com/?cid=4738395756158602651" target="_blank" rel="noopener">Read all reviews &rarr;</a>
+      <span data-hi="ग्राहकों द्वारा गूगल पर 4.8 / 5 रेटिंग।">Rated 4.8 / 5 by customers on Google.</span>
+      <a class="btn btn-ghost" href="https://maps.google.com/?cid=4738395756158602651" target="_blank" rel="noopener" data-hi="सभी समीक्षाएं पढ़ें →">Read all reviews &rarr;</a>
     </div>
   </div>
 </section>
@@ -505,9 +515,9 @@
 <section id="visit" class="block">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Visit the showroom</span>
-      <h2>Come see it in person.</h2>
-      <p>We're on Buddha Ashram Road, near Kotla Chungi &mdash; easy parking outside, AC showroom.</p>
+      <span class="eyebrow" data-hi="शोरूम पधारें">Visit the showroom</span>
+      <h2 data-hi="खुद आकर देखें।">Come see it in person.</h2>
+      <p data-hi="हम बुद्धा आश्रम रोड पर, कोटला चुंगी के पास हैं — बाहर आसान पार्किंग, AC शोरूम।">We're on Buddha Ashram Road, near Kotla Chungi &mdash; easy parking outside, AC showroom.</p>
     </div>
     <div class="visit-grid">
       <div>
@@ -515,37 +525,37 @@
           <div class="info-row">
             <div class="info-icon">&#128205;</div>
             <div>
-              <div class="info-label">Address</div>
-              <div class="info-val">Buddha Ashram Road, Tapa Kala,<br/>Kotla Chungi, Firozabad,<br/>Uttar Pradesh 283203</div>
+              <div class="info-label" data-hi="पता">Address</div>
+              <div class="info-val" data-hi-html="बुद्धा आश्रम रोड, टपा कला,<br/>कोटला चुंगी, फिरोजाबाद,<br/>उत्तर प्रदेश 283203">Buddha Ashram Road, Tapa Kala,<br/>Kotla Chungi, Firozabad,<br/>Uttar Pradesh 283203</div>
             </div>
           </div>
           <div class="info-row">
             <div class="info-icon">&#128222;</div>
             <div>
-              <div class="info-label">Phone</div>
+              <div class="info-label" data-hi="फोन">Phone</div>
               <div class="info-val"><a href="tel:09760017505">097600 17505</a></div>
             </div>
           </div>
           <div class="info-row">
             <div class="info-icon">&#128340;</div>
             <div style="flex:1">
-              <div class="info-label">Hours</div>
+              <div class="info-label" data-hi="समय">Hours</div>
               <table class="hours-table">
-                <tr><td>Monday</td><td>9:00 AM &ndash; 9:00 PM</td></tr>
-                <tr><td>Tuesday</td><td>9:00 AM &ndash; 9:00 PM</td></tr>
-                <tr><td>Wednesday</td><td>9:00 AM &ndash; 9:00 PM</td></tr>
-                <tr><td>Thursday</td><td>9:00 AM &ndash; 9:00 PM</td></tr>
-                <tr><td>Friday</td><td>9:00 AM &ndash; 9:00 PM</td></tr>
-                <tr><td>Saturday</td><td>9:00 AM &ndash; 9:00 PM</td></tr>
-                <tr><td>Sunday</td><td>Closed</td></tr>
+                <tr><td data-hi="सोमवार">Monday</td><td data-hi="सुबह 9:00 – रात 9:00">9:00 AM &ndash; 9:00 PM</td></tr>
+                <tr><td data-hi="मंगलवार">Tuesday</td><td data-hi="सुबह 9:00 – रात 9:00">9:00 AM &ndash; 9:00 PM</td></tr>
+                <tr><td data-hi="बुधवार">Wednesday</td><td data-hi="सुबह 9:00 – रात 9:00">9:00 AM &ndash; 9:00 PM</td></tr>
+                <tr><td data-hi="गुरुवार">Thursday</td><td data-hi="सुबह 9:00 – रात 9:00">9:00 AM &ndash; 9:00 PM</td></tr>
+                <tr><td data-hi="शुक्रवार">Friday</td><td data-hi="सुबह 9:00 – रात 9:00">9:00 AM &ndash; 9:00 PM</td></tr>
+                <tr><td data-hi="शनिवार">Saturday</td><td data-hi="सुबह 9:00 – रात 9:00">9:00 AM &ndash; 9:00 PM</td></tr>
+                <tr><td data-hi="रविवार">Sunday</td><td data-hi="बंद">Closed</td></tr>
               </table>
             </div>
           </div>
           <div class="info-row">
             <div class="info-icon">&#128736;</div>
             <div>
-              <div class="info-label">Services</div>
-              <div class="info-val">Free site measurement &middot; Home delivery &middot; On-site installation</div>
+              <div class="info-label" data-hi="सेवाएं">Services</div>
+              <div class="info-val" data-hi="मुफ्त साइट मापन · होम डिलीवरी · ऑन-साइट इंस्टॉलेशन">Free site measurement &middot; Home delivery &middot; On-site installation</div>
             </div>
           </div>
         </div>
@@ -569,46 +579,46 @@
   <div class="container">
     <div class="contact-grid">
       <div>
-        <span class="eyebrow" style="color: var(--gold);">Get in touch</span>
-        <h2>Send us a message.</h2>
-        <p>Tell us about your space &mdash; we'll suggest products that fit your budget and style. For a faster response, call or WhatsApp <a href="tel:09760017505" style="color:var(--gold-deep);font-weight:600;">097600 17505</a>.</p>
+        <span class="eyebrow" style="color: var(--gold);" data-hi="संपर्क करें">Get in touch</span>
+        <h2 data-hi="हमें संदेश भेजें।">Send us a message.</h2>
+        <p data-hi-html="अपनी जगह के बारे में बताएं — हम आपके बजट और स्टाइल के अनुसार उत्पाद सुझाएंगे। तेज़ जवाब के लिए <a href=&quot;tel:09760017505&quot; style=&quot;color:var(--gold-deep);font-weight:600;&quot;>097600 17505</a> पर कॉल या WhatsApp करें।">Tell us about your space &mdash; we'll suggest products that fit your budget and style. For a faster response, call or WhatsApp <a href="tel:09760017505" style="color:var(--gold-deep);font-weight:600;">097600 17505</a>.</p>
         <div style="margin-top: 24px;">
           <div class="btn-row">
-            <a class="btn btn-dark" href="tel:09760017505">&#128222; Call</a>
-            <a class="btn btn-outline" href="https://wa.me/919760017505" target="_blank" rel="noopener">&#128172; WhatsApp</a>
-            <a class="btn btn-outline" href="https://maps.google.com/?cid=4738395756158602651" target="_blank" rel="noopener">&#128205; Directions</a>
+            <a class="btn btn-dark" href="tel:09760017505" data-hi-html="&#128222; कॉल">&#128222; Call</a>
+            <a class="btn btn-outline" href="https://wa.me/919760017505" target="_blank" rel="noopener" data-hi-html="&#128172; WhatsApp">&#128172; WhatsApp</a>
+            <a class="btn btn-outline" href="https://maps.google.com/?cid=4738395756158602651" target="_blank" rel="noopener" data-hi-html="&#128205; रास्ता">&#128205; Directions</a>
           </div>
         </div>
       </div>
       <form class="form" id="contact-form" onsubmit="return submitForm(event)">
         <div class="form-row">
           <div>
-            <label for="f-name">Your name</label>
-            <input id="f-name" name="name" type="text" required placeholder="e.g. Ramesh Kumar" />
+            <label for="f-name" data-hi="आपका नाम">Your name</label>
+            <input id="f-name" name="name" type="text" required placeholder="e.g. Ramesh Kumar" data-hi-placeholder="उदा. रमेश कुमार" />
           </div>
           <div>
-            <label for="f-phone">Phone</label>
-            <input id="f-phone" name="phone" type="tel" required placeholder="+91 XXXXX XXXXX" />
+            <label for="f-phone" data-hi="फोन">Phone</label>
+            <input id="f-phone" name="phone" type="tel" required placeholder="+91 XXXXX XXXXX" data-hi-placeholder="+91 XXXXX XXXXX" />
           </div>
         </div>
         <div>
-          <label for="f-interest">I'm interested in</label>
+          <label for="f-interest" data-hi="मेरी रुचि है">I'm interested in</label>
           <select id="f-interest" name="interest">
-            <option>Wallpaper</option>
-            <option>Window Blinds</option>
-            <option>PVC Panels</option>
-            <option>WPC Louvers</option>
-            <option>Luxury Sofa</option>
-            <option>Multiple products / Whole room</option>
+            <option data-hi="वॉलपेपर">Wallpaper</option>
+            <option data-hi="विंडो ब्लाइंड्स">Window Blinds</option>
+            <option data-hi="PVC पैनल">PVC Panels</option>
+            <option data-hi="WPC लूवर">WPC Louvers</option>
+            <option data-hi="लग्ज़री सोफा">Luxury Sofa</option>
+            <option data-hi="कई उत्पाद / पूरा कमरा">Multiple products / Whole room</option>
           </select>
         </div>
         <div>
-          <label for="f-msg">Message</label>
-          <textarea id="f-msg" name="message" required placeholder="Room size, style preference, budget, or any questions..."></textarea>
+          <label for="f-msg" data-hi="संदेश">Message</label>
+          <textarea id="f-msg" name="message" required placeholder="Room size, style preference, budget, or any questions..." data-hi-placeholder="कमरे का आकार, स्टाइल, बजट या कोई प्रश्न..."></textarea>
         </div>
         <div>
-          <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Send enquiry</button>
-          <div class="form-note">We typically reply within a few hours during business hours.</div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;" data-hi="पूछताछ भेजें">Send enquiry</button>
+          <div class="form-note" data-hi="हम आमतौर पर व्यावसायिक घंटों में कुछ ही घंटों में जवाब देते हैं।">We typically reply within a few hours during business hours.</div>
           <div id="form-status"></div>
         </div>
       </form>
@@ -622,7 +632,7 @@
     <div class="foot-grid">
       <div>
         <div class="foot-brand"><span><i>Sai Wall</i></span> Decor</div>
-        <p style="color: rgba(255,255,255,0.6); font-size: 0.92rem; margin: 0;">Premium wallpapers, window blinds, PVC panels, WPC louvers and luxury sofas &mdash; serving Firozabad and surrounding areas.</p>
+        <p style="color: rgba(255,255,255,0.6); font-size: 0.92rem; margin: 0;" data-hi="प्रीमियम वॉलपेपर, विंडो ब्लाइंड्स, PVC पैनल, WPC लूवर और लग्ज़री सोफा — फिरोजाबाद और आसपास के क्षेत्रों में सेवा।">Premium wallpapers, window blinds, PVC panels, WPC louvers and luxury sofas &mdash; serving Firozabad and surrounding areas.</p>
         <div class="socials" aria-label="Follow us">
           <a class="wa" href="https://wa.me/919760017505" target="_blank" rel="noopener" aria-label="WhatsApp">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Zm-7.08 15.4h-.01a8.3 8.3 0 0 1-4.24-1.16l-.3-.18-2.49.65.66-2.43-.2-.31a8.32 8.32 0 1 1 6.58 3.43Zm4.79-6.22c-.26-.13-1.55-.77-1.79-.86-.24-.09-.42-.13-.6.13s-.69.86-.85 1.04c-.16.18-.31.2-.57.07-.26-.13-1.1-.41-2.1-1.3-.78-.7-1.3-1.55-1.45-1.81-.15-.26-.02-.4.11-.53.12-.12.26-.31.39-.46.13-.16.17-.27.26-.44.09-.18.04-.33-.02-.46-.07-.13-.6-1.43-.82-1.96-.22-.52-.44-.45-.6-.46h-.51c-.18 0-.46.06-.7.32-.24.26-.92.9-.92 2.2 0 1.3.94 2.55 1.07 2.73.13.18 1.85 2.83 4.49 3.97.63.27 1.12.43 1.51.55.63.2 1.21.17 1.66.1.51-.08 1.55-.63 1.77-1.24.22-.61.22-1.13.16-1.24-.07-.11-.24-.18-.5-.31Z"/></svg>
@@ -642,27 +652,27 @@
         </div>
       </div>
       <div>
-        <h4>Visit</h4>
-        <a href="https://maps.google.com/?cid=4738395756158602651" target="_blank" rel="noopener">Buddha Ashram Road,<br/>Kotla Chungi, Firozabad,<br/>Uttar Pradesh 283203</a>
+        <h4 data-hi="संपर्क">Visit</h4>
+        <a href="https://maps.google.com/?cid=4738395756158602651" target="_blank" rel="noopener" data-hi-html="बुद्धा आश्रम रोड,<br/>कोटला चुंगी, फिरोजाबाद,<br/>उत्तर प्रदेश 283203">Buddha Ashram Road,<br/>Kotla Chungi, Firozabad,<br/>Uttar Pradesh 283203</a>
       </div>
       <div>
-        <h4>Contact &amp; Enquiries</h4>
+        <h4 data-hi="संपर्क और पूछताछ">Contact &amp; Enquiries</h4>
         <a href="tel:09760017505">&#128222; 097600 17505</a>
-        <a href="https://wa.me/919760017505?text=Hi%2C%20I%20have%20a%20query%20about%20your%20products." target="_blank" rel="noopener">&#128172; WhatsApp Chat</a>
-        <a href="#contact">&#9993;&#65039; Send Enquiry</a>
-        <a href="https://maps.google.com/?cid=4738395756158602651" target="_blank" rel="noopener">&#128205; Google Maps</a>
+        <a href="https://wa.me/919760017505?text=Hi%2C%20I%20have%20a%20query%20about%20your%20products." target="_blank" rel="noopener" data-hi-html="&#128172; WhatsApp चैट">&#128172; WhatsApp Chat</a>
+        <a href="#contact" data-hi-html="&#9993;&#65039; पूछताछ भेजें">&#9993;&#65039; Send Enquiry</a>
+        <a href="https://maps.google.com/?cid=4738395756158602651" target="_blank" rel="noopener" data-hi-html="&#128205; गूगल मैप्स">&#128205; Google Maps</a>
       </div>
       <div>
-        <h4>Explore</h4>
-        <a href="#about">About</a>
-        <a href="#products">Products</a>
-        <a href="#gallery">Gallery</a>
-        <a href="#reviews">Reviews</a>
+        <h4 data-hi="खोजें">Explore</h4>
+        <a href="#about" data-hi="हमारे बारे में">About</a>
+        <a href="#products" data-hi="उत्पाद">Products</a>
+        <a href="#gallery" data-hi="गैलरी">Gallery</a>
+        <a href="#reviews" data-hi="समीक्षाएं">Reviews</a>
       </div>
     </div>
     <div class="foot-copy">
-      <span>&copy; <span id="yr">2026</span> Sai Wall Decor. All rights reserved.</span>
-      <span>Firozabad, Uttar Pradesh &middot; India</span>
+      <span data-hi-html="&copy; <span id=&quot;yr&quot;>2026</span> साईं वॉल डेकोर। सर्वाधिकार सुरक्षित।">&copy; <span id="yr">2026</span> Sai Wall Decor. All rights reserved.</span>
+      <span data-hi="फिरोजाबाद, उत्तर प्रदेश · भारत">Firozabad, Uttar Pradesh &middot; India</span>
     </div>
   </div>
 </footer>
@@ -670,7 +680,7 @@
 <!-- Floating WhatsApp action button -->
 <a class="fab-wa" href="https://wa.me/919760017505?text=Hi%2C%20I%20have%20a%20query%20about%20your%20products." target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Zm-7.08 15.4h-.01a8.3 8.3 0 0 1-4.24-1.16l-.3-.18-2.49.65.66-2.43-.2-.31a8.32 8.32 0 1 1 6.58 3.43Zm4.79-6.22c-.26-.13-1.55-.77-1.79-.86-.24-.09-.42-.13-.6.13s-.69.86-.85 1.04c-.16.18-.31.2-.57.07-.26-.13-1.1-.41-2.1-1.3-.78-.7-1.3-1.55-1.45-1.81-.15-.26-.02-.4.11-.53.12-.12.26-.31.39-.46.13-.16.17-.27.26-.44.09-.18.04-.33-.02-.46-.07-.13-.6-1.43-.82-1.96-.22-.52-.44-.45-.6-.46h-.51c-.18 0-.46.06-.7.32-.24.26-.92.9-.92 2.2 0 1.3.94 2.55 1.07 2.73.13.18 1.85 2.83 4.49 3.97.63.27 1.12.43 1.51.55.63.2 1.21.17 1.66.1.51-.08 1.55-.63 1.77-1.24.22-.61.22-1.13.16-1.24-.07-.11-.24-.18-.5-.31Z"/></svg>
-  <span class="fab-tip">Chat with us</span>
+  <span class="fab-tip" data-hi="हमसे चैट करें">Chat with us</span>
 </a>
 
 <script>
@@ -742,6 +752,62 @@
     window.open(wa, '_blank', 'noopener');
     return false;
   }
+
+  // Language toggle: swap data-hi / data-hi-html / data-hi-placeholder
+  (function () {
+    var STORAGE_KEY = 'sai-lang';
+    var btn = document.getElementById('lang-toggle');
+    var btnLabel = document.getElementById('lang-toggle-label');
+    if (!btn || !btnLabel) return;
+
+    var textEls = document.querySelectorAll('[data-hi]');
+    var htmlEls = document.querySelectorAll('[data-hi-html]');
+    var phEls = document.querySelectorAll('[data-hi-placeholder]');
+
+    // Cache the original English so we can restore.
+    textEls.forEach(function (el) {
+      if (el.tagName === 'OPTION') el.dataset.en = el.text;
+      else el.dataset.en = el.textContent;
+    });
+    htmlEls.forEach(function (el) { el.dataset.enHtml = el.innerHTML; });
+    phEls.forEach(function (el) { el.dataset.enPlaceholder = el.placeholder || ''; });
+
+    function setYear() {
+      var yr = document.getElementById('yr');
+      if (yr) yr.textContent = new Date().getFullYear();
+    }
+
+    function applyLang(lang) {
+      var hi = lang === 'hi';
+      document.body.classList.toggle('lang-hi', hi);
+      document.documentElement.lang = hi ? 'hi' : 'en';
+
+      textEls.forEach(function (el) {
+        var v = hi ? el.getAttribute('data-hi') : el.dataset.en;
+        if (el.tagName === 'OPTION') el.text = v;
+        else el.textContent = v;
+      });
+      htmlEls.forEach(function (el) {
+        el.innerHTML = hi ? el.getAttribute('data-hi-html') : el.dataset.enHtml;
+      });
+      phEls.forEach(function (el) {
+        el.placeholder = hi ? el.getAttribute('data-hi-placeholder') : el.dataset.enPlaceholder;
+      });
+
+      btnLabel.textContent = hi ? 'EN' : 'हिं';
+      setYear();
+    }
+
+    var saved = null;
+    try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    applyLang(saved === 'hi' ? 'hi' : 'en');
+
+    btn.addEventListener('click', function () {
+      var next = document.body.classList.contains('lang-hi') ? 'en' : 'hi';
+      try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
+      applyLang(next);
+    });
+  })();
 </script>
 
 </body>
