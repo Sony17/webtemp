@@ -18,6 +18,7 @@ export async function generateMetadata({
     description:
       deployment.tagline ??
       `${deployment.brandName} — a website powered by Open Idea EcoSyz.`,
+    icons: { icon: "/favicon.svg" },
   };
 }
 
