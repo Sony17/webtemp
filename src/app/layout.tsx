@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import WhatsAppContact from "@/components/WhatsAppContact";
@@ -18,11 +19,19 @@ export const metadata: Metadata = {
   description: "Pre-built websites for 50+ Indian business categories. Pick a template, customize, launch.",
 };
 
-export default function RootLayout({
+// Tenant subdomains where the platform's own WhatsApp widget should not appear,
+// because they have their own branded contact button inside the tenant iframe.
+const HIDE_WHATSAPP_SUBDOMAINS = new Set(["candle-sample"]);
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const host = (await headers()).get("host") ?? "";
+  const subdomain = host.split(":")[0].split(".")[0].toLowerCase();
+  const showWhatsApp = !HIDE_WHATSAPP_SUBDOMAINS.has(subdomain);
+
   return (
     <html
       lang="en"
@@ -30,7 +39,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         {children}
-        <WhatsAppContact />
+        {showWhatsApp && <WhatsAppContact />}
       </body>
     </html>
   );
