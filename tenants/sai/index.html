@@ -207,11 +207,11 @@
   @media (max-width: 600px) { .lookbook-grid { grid-template-columns: 1fr 1fr; gap: 10px; } .filter-btn { padding: 6px 12px; font-size: 0.72rem; letter-spacing: 0.04em; } .lookbook-filters { gap: 6px; margin-bottom: 24px; } }
 
   /* Chatbot widget */
-  .chat-fab { position: fixed; right: 24px; bottom: 96px; z-index: 70; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: #fff; box-shadow: 0 10px 24px rgba(140,99,38,0.4); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 0; transition: transform 0.2s, box-shadow 0.2s; }
+  .chat-fab { position: fixed; right: 24px; bottom: 24px; z-index: 70; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: #fff; box-shadow: 0 10px 24px rgba(140,99,38,0.4); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 0; transition: transform 0.2s, box-shadow 0.2s; }
   .chat-fab:hover { transform: scale(1.06); box-shadow: 0 14px 30px rgba(140,99,38,0.5); }
   .chat-fab svg { width: 26px; height: 26px; fill: currentColor; }
   .chat-fab .chat-dot { position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border-radius: 50%; background: #ff4757; border: 2px solid #fff; }
-  .chat-panel { position: fixed; right: 24px; bottom: 168px; z-index: 71; width: 360px; max-width: calc(100vw - 32px); height: 520px; max-height: calc(100vh - 200px); background: #fff; border-radius: 18px; box-shadow: 0 18px 50px rgba(20,24,32,0.25); border: 1px solid rgba(184,135,70,0.4); display: none; flex-direction: column; overflow: hidden; }
+  .chat-panel { position: fixed; right: 24px; bottom: 96px; z-index: 71; width: 360px; max-width: calc(100vw - 32px); height: 520px; max-height: calc(100vh - 140px); background: #fff; border-radius: 18px; box-shadow: 0 18px 50px rgba(20,24,32,0.25); border: 1px solid rgba(184,135,70,0.4); display: none; flex-direction: column; overflow: hidden; }
   .chat-panel.open { display: flex; animation: chatPop 0.22s ease; }
   @keyframes chatPop { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
   .chat-head { background: linear-gradient(135deg, var(--navy), #1f2942); color: #fff; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -234,8 +234,8 @@
   .chat-back { background: transparent; border: 1px solid rgba(184,135,70,0.4); color: var(--ink-soft); padding: 9px 13px; border-radius: 10px; font-family: inherit; font-size: 0.85rem; cursor: pointer; transition: all 0.15s; }
   .chat-back:hover { border-color: var(--gold); color: var(--ink); }
   @media (max-width: 900px) {
-    .chat-fab { right: 16px; bottom: 156px; }
-    .chat-panel { right: 8px; left: 8px; bottom: 220px; width: auto; max-width: none; height: calc(100vh - 320px); }
+    .chat-fab { right: 16px; bottom: 92px; }
+    .chat-panel { right: 8px; left: 8px; bottom: 156px; width: auto; max-width: none; height: calc(100vh - 200px); }
   }
 
   /* FAQ accordion */
@@ -401,7 +401,6 @@
     .foot-grid { grid-template-columns: 1fr 1fr; }
     section.block { padding: 64px 0; }
     body { padding-bottom: 76px; }
-    .fab-wa { bottom: 88px !important; }
     .mobile-nav {
       display: flex;
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
@@ -939,11 +938,6 @@
   </a>
 </nav>
 
-<!-- Floating WhatsApp action button -->
-<a class="fab-wa" href="https://wa.me/919760017505?text=Hi%2C%20I%20have%20a%20query%20about%20your%20products." target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
-  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Zm-7.08 15.4h-.01a8.3 8.3 0 0 1-4.24-1.16l-.3-.18-2.49.65.66-2.43-.2-.31a8.32 8.32 0 1 1 6.58 3.43Zm4.79-6.22c-.26-.13-1.55-.77-1.79-.86-.24-.09-.42-.13-.6.13s-.69.86-.85 1.04c-.16.18-.31.2-.57.07-.26-.13-1.1-.41-2.1-1.3-.78-.7-1.3-1.55-1.45-1.81-.15-.26-.02-.4.11-.53.12-.12.26-.31.39-.46.13-.16.17-.27.26-.44.09-.18.04-.33-.02-.46-.07-.13-.6-1.43-.82-1.96-.22-.52-.44-.45-.6-.46h-.51c-.18 0-.46.06-.7.32-.24.26-.92.9-.92 2.2 0 1.3.94 2.55 1.07 2.73.13.18 1.85 2.83 4.49 3.97.63.27 1.12.43 1.51.55.63.2 1.21.17 1.66.1.51-.08 1.55-.63 1.77-1.24.22-.61.22-1.13.16-1.24-.07-.11-.24-.18-.5-.31Z"/></svg>
-  <span class="fab-tip" data-hi="हमसे चैट करें">Chat with us</span>
-</a>
 
 <script>
   // Year

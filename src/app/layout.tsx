@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 
 // Tenant subdomains where the platform's own WhatsApp widget should not appear,
 // because they have their own branded contact button inside the tenant iframe.
-const HIDE_WHATSAPP_SUBDOMAINS = new Set(["candle-sample"]);
+const HIDE_WHATSAPP_SUBDOMAINS = new Set(["candle-sample", "sai"]);
 
 export default async function RootLayout({
   children,
