@@ -173,23 +173,36 @@
   @media (max-width: 900px) { .pgs-grid { grid-template-columns: 1fr 1fr; gap: 16px; } }
   @media (max-width: 600px) { .pgs-grid { grid-template-columns: 1fr; } }
 
-  /* Paginated gallery */
+  /* Paginated gallery — large tiles */
   .pgallery { background: var(--bg); }
-  .pgallery-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; min-height: 280px; }
-  .pgallery-tile { position: relative; aspect-ratio: 3/4; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); border: 1.5px solid rgba(184,135,70,0.3); background: #eee; transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease; cursor: pointer; }
-  .pgallery-tile:hover { transform: translateY(-3px); border-color: var(--gold); box-shadow: 0 10px 28px rgba(140,99,38,0.2); }
-  .pgallery-tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
-  .pgallery-tile:hover img { transform: scale(1.06); }
-  .pgallery-pager { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 32px; flex-wrap: wrap; }
-  .pgallery-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 999px; background: var(--gold); color: #fff; font-family: inherit; font-weight: 600; font-size: 0.9rem; border: 0; cursor: pointer; transition: background 0.15s, opacity 0.15s; }
+  .pgallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; min-height: 320px; }
+  .pgallery-tile { position: relative; aspect-ratio: 4/5; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(20,24,32,0.08), 0 2px 6px rgba(20,24,32,0.04); border: 2px solid rgba(184,135,70,0.35); background: #eee; transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease; cursor: zoom-in; margin: 0; }
+  .pgallery-tile:hover { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 18px 44px rgba(140,99,38,0.25); }
+  .pgallery-tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s ease; }
+  .pgallery-tile:hover img { transform: scale(1.08); }
+  .pgallery-tile::after { content: ""; position: absolute; inset: auto 0 0 0; height: 60px; background: linear-gradient(180deg, transparent 0%, rgba(20,24,32,0.55) 100%); opacity: 0; transition: opacity 0.25s ease; pointer-events: none; }
+  .pgallery-tile:hover::after { opacity: 1; }
+  .pgallery-tile .zoom-hint { position: absolute; right: 14px; bottom: 14px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.92); color: var(--ink); display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(8px); transition: opacity 0.25s, transform 0.25s; pointer-events: none; }
+  .pgallery-tile:hover .zoom-hint { opacity: 1; transform: translateY(0); }
+  .pgallery-tile .zoom-hint svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+  .pgallery-pager { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 36px; flex-wrap: wrap; }
+  .pgallery-btn { display: inline-flex; align-items: center; gap: 6px; padding: 11px 22px; border-radius: 999px; background: var(--gold); color: #fff; font-family: inherit; font-weight: 600; font-size: 0.92rem; border: 0; cursor: pointer; transition: background 0.15s, opacity 0.15s; box-shadow: 0 4px 14px rgba(140,99,38,0.3); }
   .pgallery-btn:hover:not(:disabled) { background: var(--gold-deep); }
-  .pgallery-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .pgallery-info { color: var(--ink-soft); font-size: 0.92rem; font-weight: 600; padding: 0 8px; min-width: 110px; text-align: center; letter-spacing: 0.02em; }
-  .pgallery-lightbox { position: fixed; inset: 0; background: rgba(10,10,15,0.92); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
+  .pgallery-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+  .pgallery-info { color: var(--ink-soft); font-size: 0.94rem; font-weight: 600; padding: 0 12px; min-width: 120px; text-align: center; letter-spacing: 0.02em; }
+  .pgallery-lightbox { position: fixed; inset: 0; background: rgba(10,10,15,0.94); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
   .pgallery-lightbox.open { display: flex; animation: chatPop 0.2s ease; }
-  .pgallery-lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); border: 2px solid var(--gold); }
-  @media (max-width: 900px) { .pgallery-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
-  @media (max-width: 480px) { .pgallery-grid { grid-template-columns: 1fr 1fr; } }
+  .pgallery-lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.7); border: 2px solid var(--gold); }
+  .pgallery-lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px); transition: background 0.15s, border-color 0.15s; }
+  .pgallery-lightbox-nav:hover { background: rgba(184,135,70,0.4); border-color: var(--gold); }
+  .pgallery-lightbox-nav svg { width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .pgallery-lightbox-prev { left: 28px; }
+  .pgallery-lightbox-next { right: 28px; }
+  .pgallery-lightbox-close { position: absolute; top: 22px; right: 22px; width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px); font-size: 1.4rem; line-height: 1; }
+  .pgallery-lightbox-close:hover { background: rgba(184,135,70,0.4); }
+  .pgallery-lightbox-counter { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.75); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; }
+  @media (max-width: 900px) { .pgallery-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; } .pgallery-lightbox-nav { width: 44px; height: 44px; } .pgallery-lightbox-prev { left: 12px; } .pgallery-lightbox-next { right: 12px; } }
+  @media (max-width: 480px) { .pgallery-grid { grid-template-columns: 1fr; gap: 14px; } .pgallery-tile { aspect-ratio: 3/4; } }
 
   /* Filterable lookbook (image gallery) */
   .lookbook { background: var(--bg); }
@@ -593,12 +606,12 @@
     <div class="section-head" style="max-width: 720px; margin-left: auto; margin-right: auto; text-align: center;">
       <span class="eyebrow" data-hi="हमारा काम">Our work</span>
       <h2 data-hi="प्रोजेक्ट फोटो गैलरी।" style="margin-left: auto; margin-right: auto;">Project photo gallery.</h2>
-      <p data-hi="हाल के इंस्टॉलेशन और प्रेरणा। एक बार में 5 तस्वीरें — और देखने के लिए नीचे पेज बदलें।">Recent installations and design inspiration. Five photos per page — use the controls below to see more.</p>
+      <p data-hi="हाल के इंस्टॉलेशन और प्रेरणा। बड़ी तस्वीरें देखने के लिए किसी भी टाइल पर टैप करें।">Recent installations and design inspiration. Tap any tile to view it full-size, then swipe through with the arrow controls.</p>
     </div>
     <div class="pgallery-grid" id="pgallery-grid" aria-live="polite"></div>
     <div class="pgallery-pager">
       <button type="button" class="pgallery-btn" id="pgallery-prev" data-hi="← पिछला">&larr; Previous</button>
-      <span class="pgallery-info" id="pgallery-info">Page 1 / 17</span>
+      <span class="pgallery-info" id="pgallery-info">Page 1 / 14</span>
       <button type="button" class="pgallery-btn" id="pgallery-next" data-hi="अगला →">Next &rarr;</button>
     </div>
   </div>
@@ -858,7 +871,11 @@
 
 <!-- Gallery lightbox -->
 <div class="pgallery-lightbox" id="pgallery-lightbox" role="dialog" aria-label="Gallery photo">
+  <button type="button" class="pgallery-lightbox-close" id="pgallery-lightbox-close" aria-label="Close">&times;</button>
+  <button type="button" class="pgallery-lightbox-nav pgallery-lightbox-prev" id="pgallery-lightbox-prev" aria-label="Previous photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
   <img id="pgallery-lightbox-img" alt="" />
+  <button type="button" class="pgallery-lightbox-nav pgallery-lightbox-next" id="pgallery-lightbox-next" aria-label="Next photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+  <div class="pgallery-lightbox-counter" id="pgallery-lightbox-counter">1 / 81</div>
 </div>
 
 <!-- Sai chatbot widget -->
@@ -919,7 +936,7 @@
   // Year
   document.getElementById('yr').textContent = new Date().getFullYear();
 
-  // Paginated photo gallery
+  // Paginated photo gallery with prev/next lightbox
   (function () {
     var grid = document.getElementById('pgallery-grid');
     var info = document.getElementById('pgallery-info');
@@ -927,18 +944,40 @@
     var next = document.getElementById('pgallery-next');
     var lb = document.getElementById('pgallery-lightbox');
     var lbImg = document.getElementById('pgallery-lightbox-img');
+    var lbClose = document.getElementById('pgallery-lightbox-close');
+    var lbPrev = document.getElementById('pgallery-lightbox-prev');
+    var lbNext = document.getElementById('pgallery-lightbox-next');
+    var lbCounter = document.getElementById('pgallery-lightbox-counter');
     if (!grid || !prev || !next) return;
 
     var TOTAL = 81;
-    var PER_PAGE = 5;
+    var PER_PAGE = 6;
     var pages = Math.ceil(TOTAL / PER_PAGE);
     var page = 0;
+    var lbIndex = 1; // 1-based index of currently shown lightbox image
 
     function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function srcOf(i) { return '/demo-wallpaper/images/gallery/g' + pad(i) + '.jpg'; }
     function isHi() { return document.body.classList.contains('lang-hi'); }
     function label() {
       var p = page + 1;
       return isHi() ? ('पेज ' + p + ' / ' + pages) : ('Page ' + p + ' / ' + pages);
+    }
+
+    function openLb(i) {
+      lbIndex = i;
+      lbImg.src = srcOf(i);
+      lbImg.alt = 'Sai Wall Decor project ' + i;
+      lbCounter.textContent = i + ' / ' + TOTAL;
+      lb.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLb() { lb.classList.remove('open'); document.body.style.overflow = ''; }
+    function showRel(delta) {
+      var n = lbIndex + delta;
+      if (n < 1) n = TOTAL;
+      if (n > TOTAL) n = 1;
+      openLb(n);
     }
 
     function render() {
@@ -948,17 +987,18 @@
       for (var i = start; i <= end; i++) {
         var fig = document.createElement('figure');
         fig.className = 'pgallery-tile';
-        var src = '/demo-wallpaper/images/gallery/g' + pad(i) + '.jpg';
         var img = document.createElement('img');
         img.loading = 'lazy';
-        img.src = src;
+        img.src = srcOf(i);
         img.alt = 'Sai Wall Decor project ' + i;
         fig.appendChild(img);
-        (function (s, a) {
-          fig.addEventListener('click', function () {
-            lbImg.src = s; lbImg.alt = a; lb.classList.add('open');
-          });
-        })(src, img.alt);
+        var hint = document.createElement('span');
+        hint.className = 'zoom-hint';
+        hint.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg>';
+        fig.appendChild(hint);
+        (function (idx) {
+          fig.addEventListener('click', function () { openLb(idx); });
+        })(i);
         grid.appendChild(fig);
       }
       info.textContent = label();
@@ -972,13 +1012,20 @@
     next.addEventListener('click', function () {
       if (page < pages - 1) { page++; render(); grid.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     });
-    lb.addEventListener('click', function () { lb.classList.remove('open'); });
+    lbClose.addEventListener('click', closeLb);
+    lbPrev.addEventListener('click', function (e) { e.stopPropagation(); showRel(-1); });
+    lbNext.addEventListener('click', function (e) { e.stopPropagation(); showRel(1); });
+    lb.addEventListener('click', function (e) {
+      if (e.target === lb) closeLb();
+    });
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') lb.classList.remove('open');
+      if (!lb.classList.contains('open')) return;
+      if (e.key === 'Escape') closeLb();
+      else if (e.key === 'ArrowLeft') showRel(-1);
+      else if (e.key === 'ArrowRight') showRel(1);
     });
 
     render();
-    // Refresh label when language changes
     var btn = document.getElementById('lang-toggle');
     if (btn) btn.addEventListener('click', function () { setTimeout(function () { info.textContent = label(); }, 50); });
   })();
