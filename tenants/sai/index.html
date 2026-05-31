@@ -228,8 +228,8 @@
   .chat-opt { background: #fff; border: 1px solid rgba(184,135,70,0.4); color: var(--ink); padding: 9px 13px; border-radius: 12px; font-family: inherit; font-size: 0.88rem; cursor: pointer; text-align: left; transition: all 0.15s; }
   .chat-opt:hover { border-color: var(--gold); background: rgba(184,135,70,0.07); }
   .chat-foot { padding: 12px 16px; border-top: 1px solid rgba(184,135,70,0.25); display: flex; gap: 8px; }
-  .chat-wa-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: #25d366; color: #fff; padding: 10px 14px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; }
-  .chat-wa-btn:hover { background: #1ebe5a; color: #fff; }
+  .chat-wa-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--gold); color: #fff; padding: 10px 14px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; box-shadow: 0 4px 14px rgba(140,99,38,0.3); }
+  .chat-wa-btn:hover { background: var(--gold-deep); color: #fff; }
   .chat-wa-btn svg { width: 16px; height: 16px; fill: currentColor; }
   .chat-back { background: transparent; border: 1px solid rgba(184,135,70,0.4); color: var(--ink-soft); padding: 9px 13px; border-radius: 10px; font-family: inherit; font-size: 0.85rem; cursor: pointer; transition: all 0.15s; }
   .chat-back:hover { border-color: var(--gold); color: var(--ink); }
@@ -446,6 +446,7 @@
       <a href="#products" data-hi="उत्पाद">Products</a>
       <a href="#photos" data-hi="गैलरी">Gallery</a>
       <a href="#reviews" data-hi="समीक्षाएं">Reviews</a>
+      <a href="#faq" data-hi="सवाल-जवाब">FAQ</a>
       <a href="#visit" data-hi="संपर्क">Visit</a>
       <a class="cta" href="tel:09760017505" data-hi="अभी कॉल करें">Call Now</a>
       <button type="button" class="lang-toggle" id="lang-toggle" aria-label="Switch language"><span class="dot"></span><span id="lang-toggle-label">हिं</span></button>
@@ -678,6 +679,43 @@
   </div>
 </section>
 
+<!-- FAQ — collapsible accordion -->
+<section id="faq" class="block faq">
+  <div class="container">
+    <div class="section-head" style="max-width: 720px; margin-left: auto; margin-right: auto; text-align: center;">
+      <span class="eyebrow" data-hi="आपके सवाल">Questions</span>
+      <h2 data-hi="अक्सर पूछे जाने वाले सवाल।" style="margin-left: auto; margin-right: auto;">Frequently asked questions.</h2>
+      <p data-hi="किसी भी सवाल पर टैप करके जवाब देखें।">Tap a question to expand the answer.</p>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary data-hi="इंस्टॉलेशन में कितना समय लगता है?">How long does installation take?</summary>
+        <div class="faq-a" data-hi="अधिकतर वॉलपेपर वाले कमरे 4–8 घंटे में फिट हो जाते हैं। WPC लूवर वॉल और PVC पैनल आमतौर पर 1–2 दिन लेते हैं, क्षेत्र के अनुसार। हम सारा सामान और टूल्स लाते हैं — कोई गंदगी नहीं छोड़ते।">Most wallpaper rooms are installed in 4–8 hours. WPC louver walls and PVC panels typically take 1–2 days depending on area. We bring all materials and tools — no mess left behind.</div>
+      </details>
+      <details class="faq-item">
+        <summary data-hi="क्या आप फ्री साइट विज़िट करते हैं?">Do you do free site visits?</summary>
+        <div class="faq-a" data-hi="हाँ। फिरोजाबाद और आसपास के लिए हमारी टीम बिना किसी शुल्क के मापन, शेड सैंपलिंग और प्रोडक्ट सुझाव के लिए आ सकती है। शेड्यूल करने के लिए 097600 17505 पर WhatsApp करें।">Yes. For Firozabad and nearby areas, our team can come measure, sample shades, and recommend products at no charge. WhatsApp 097600 17505 to schedule.</div>
+      </details>
+      <details class="faq-item">
+        <summary data-hi="वॉलपेपर और पैनल पर वारंटी क्या है?">What's the warranty on wallpapers and panels?</summary>
+        <div class="faq-a" data-hi="ब्रांड के अनुसार वॉलपेपर पर 5–8 साल की रंग और छिलने की वारंटी होती है। PVC और WPC पैनल पर मुड़ने और नमी से होने वाले नुकसान के खिलाफ 10+ साल की वारंटी मिलती है।">Wallpapers carry a 5–8 year colour and peel warranty depending on brand. PVC and WPC panels are warranted for 10+ years against warping and moisture damage.</div>
+      </details>
+      <details class="faq-item">
+        <summary data-hi="क्या कस्टम प्रिंट या साइज़ मिल सकते हैं?">Can I get custom prints or sizes?</summary>
+        <div class="faq-a" data-hi="बिल्कुल। हम कस्टम-प्रिंट ब्लाइंड्स (फोटो, धार्मिक छवियाँ), कस्टम-साइज़ वॉलपेपर रोल, और आपकी पसंद के फैब्रिक व रंग में बनाए गए सोफा बनाते हैं।">Absolutely. We do custom-print blinds (photos, religious imagery), custom-size wallpaper rolls, and made-to-order sofas in fabric and colour of your choice.</div>
+      </details>
+      <details class="faq-item">
+        <summary data-hi="कीमत क्या है?">What's the price range?</summary>
+        <div class="faq-a" data-hi="वॉलपेपर ₹40/वर्ग फुट से (कस्टम UV प्रिंट ₹70/वर्ग फुट)। ज़ीब्रा ब्लाइंड्स ₹200/वर्ग फुट। 3D PVC टाइल ₹200/पीस। 17mm WPC पैनल ₹400/पीस। चारकोल पैनल ₹550/पीस। सोफा कस्टम कोटेशन पर।">Wallpaper from ₹40/sq ft (custom UV print ₹70/sq ft). Zebra blinds ₹200/sq ft. 3D PVC tile ₹200/pc. 17mm WPC panel ₹400/pc. Charcoal panel ₹550/pc. Sofas are custom-quoted.</div>
+      </details>
+      <details class="faq-item">
+        <summary data-hi="क्या आप फिरोजाबाद के बाहर डिलीवरी करते हैं?">Do you deliver outside Firozabad?</summary>
+        <div class="faq-a" data-hi="हाँ — हम पूरे उत्तर प्रदेश में डिलीवरी करते हैं और बड़े ऑर्डर के लिए पड़ोसी राज्यों में भी ट्रांसपोर्ट का इंतज़ाम करते हैं।">Yes — we deliver across Uttar Pradesh and arrange transport to neighbouring states for larger orders.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
 <!-- Visit / Location -->
 <section id="visit" class="block">
   <div class="container">
@@ -833,6 +871,7 @@
         <a href="#products" data-hi="उत्पाद">Products</a>
         <a href="#photos" data-hi="गैलरी">Gallery</a>
         <a href="#reviews" data-hi="समीक्षाएं">Reviews</a>
+        <a href="#faq" data-hi="सवाल-जवाब">FAQ</a>
       </div>
     </div>
     <div class="foot-copy">
