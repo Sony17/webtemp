@@ -173,6 +173,24 @@
   @media (max-width: 900px) { .pgs-grid { grid-template-columns: 1fr 1fr; gap: 16px; } }
   @media (max-width: 600px) { .pgs-grid { grid-template-columns: 1fr; } }
 
+  /* Paginated gallery */
+  .pgallery { background: var(--bg); }
+  .pgallery-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; min-height: 280px; }
+  .pgallery-tile { position: relative; aspect-ratio: 3/4; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); border: 1.5px solid rgba(184,135,70,0.3); background: #eee; transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease; cursor: pointer; }
+  .pgallery-tile:hover { transform: translateY(-3px); border-color: var(--gold); box-shadow: 0 10px 28px rgba(140,99,38,0.2); }
+  .pgallery-tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+  .pgallery-tile:hover img { transform: scale(1.06); }
+  .pgallery-pager { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 32px; flex-wrap: wrap; }
+  .pgallery-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 999px; background: var(--gold); color: #fff; font-family: inherit; font-weight: 600; font-size: 0.9rem; border: 0; cursor: pointer; transition: background 0.15s, opacity 0.15s; }
+  .pgallery-btn:hover:not(:disabled) { background: var(--gold-deep); }
+  .pgallery-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .pgallery-info { color: var(--ink-soft); font-size: 0.92rem; font-weight: 600; padding: 0 8px; min-width: 110px; text-align: center; letter-spacing: 0.02em; }
+  .pgallery-lightbox { position: fixed; inset: 0; background: rgba(10,10,15,0.92); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
+  .pgallery-lightbox.open { display: flex; animation: chatPop 0.2s ease; }
+  .pgallery-lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); border: 2px solid var(--gold); }
+  @media (max-width: 900px) { .pgallery-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+  @media (max-width: 480px) { .pgallery-grid { grid-template-columns: 1fr 1fr; } }
+
   /* Filterable lookbook (image gallery) */
   .lookbook { background: var(--bg); }
   .lookbook-filters { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 36px; }
@@ -426,7 +444,7 @@
     <nav class="nav">
       <a href="#about" data-hi="हमारे बारे में">About</a>
       <a href="#products" data-hi="उत्पाद">Products</a>
-      <a href="#gallery" data-hi="गैलरी">Gallery</a>
+      <a href="#photos" data-hi="गैलरी">Gallery</a>
       <a href="#reviews" data-hi="समीक्षाएं">Reviews</a>
       <a href="#visit" data-hi="संपर्क">Visit</a>
       <a class="cta" href="tel:09760017505" data-hi="अभी कॉल करें">Call Now</a>
@@ -589,6 +607,23 @@
       <div class="vid-card"><video src="/demo-wallpaper/videos/v1.mp4" muted loop playsinline preload="metadata"></video></div>
       <div class="vid-card"><video src="/demo-wallpaper/videos/v2.mp4" muted loop playsinline preload="metadata"></video></div>
       <div class="vid-card"><video src="/demo-wallpaper/videos/v3.mp4" muted loop playsinline preload="metadata"></video></div>
+    </div>
+  </div>
+</section>
+
+<!-- Paginated photo gallery -->
+<section id="photos" class="block pgallery">
+  <div class="container">
+    <div class="section-head" style="max-width: 720px; margin-left: auto; margin-right: auto; text-align: center;">
+      <span class="eyebrow" data-hi="हमारा काम">Our work</span>
+      <h2 data-hi="प्रोजेक्ट फोटो गैलरी।" style="margin-left: auto; margin-right: auto;">Project photo gallery.</h2>
+      <p data-hi="हाल के इंस्टॉलेशन और प्रेरणा। एक बार में 5 तस्वीरें — और देखने के लिए नीचे पेज बदलें।">Recent installations and design inspiration. Five photos per page — use the controls below to see more.</p>
+    </div>
+    <div class="pgallery-grid" id="pgallery-grid" aria-live="polite"></div>
+    <div class="pgallery-pager">
+      <button type="button" class="pgallery-btn" id="pgallery-prev" data-hi="← पिछला">&larr; Previous</button>
+      <span class="pgallery-info" id="pgallery-info">Page 1 / 17</span>
+      <button type="button" class="pgallery-btn" id="pgallery-next" data-hi="अगला →">Next &rarr;</button>
     </div>
   </div>
 </section>
@@ -796,7 +831,7 @@
         <h4 data-hi="खोजें">Explore</h4>
         <a href="#about" data-hi="हमारे बारे में">About</a>
         <a href="#products" data-hi="उत्पाद">Products</a>
-        <a href="#gallery" data-hi="गैलरी">Gallery</a>
+        <a href="#photos" data-hi="गैलरी">Gallery</a>
         <a href="#reviews" data-hi="समीक्षाएं">Reviews</a>
       </div>
     </div>
@@ -806,6 +841,11 @@
     </div>
   </div>
 </footer>
+
+<!-- Gallery lightbox -->
+<div class="pgallery-lightbox" id="pgallery-lightbox" role="dialog" aria-label="Gallery photo">
+  <img id="pgallery-lightbox-img" alt="" />
+</div>
 
 <!-- Sai chatbot widget -->
 <button type="button" class="chat-fab" id="chat-fab" aria-label="Open Sai Wall Decor chat">
@@ -846,7 +886,7 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
     <span data-hi="उत्पाद">Products</span>
   </a>
-  <a href="#gallery">
+  <a href="#photos">
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 17l-5-5-10 9"/></svg>
     <span data-hi="गैलरी">Gallery</span>
   </a>
@@ -869,6 +909,70 @@
 <script>
   // Year
   document.getElementById('yr').textContent = new Date().getFullYear();
+
+  // Paginated photo gallery
+  (function () {
+    var grid = document.getElementById('pgallery-grid');
+    var info = document.getElementById('pgallery-info');
+    var prev = document.getElementById('pgallery-prev');
+    var next = document.getElementById('pgallery-next');
+    var lb = document.getElementById('pgallery-lightbox');
+    var lbImg = document.getElementById('pgallery-lightbox-img');
+    if (!grid || !prev || !next) return;
+
+    var TOTAL = 81;
+    var PER_PAGE = 5;
+    var pages = Math.ceil(TOTAL / PER_PAGE);
+    var page = 0;
+
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function isHi() { return document.body.classList.contains('lang-hi'); }
+    function label() {
+      var p = page + 1;
+      return isHi() ? ('पेज ' + p + ' / ' + pages) : ('Page ' + p + ' / ' + pages);
+    }
+
+    function render() {
+      grid.innerHTML = '';
+      var start = page * PER_PAGE + 1;
+      var end = Math.min(start + PER_PAGE - 1, TOTAL);
+      for (var i = start; i <= end; i++) {
+        var fig = document.createElement('figure');
+        fig.className = 'pgallery-tile';
+        var src = '/demo-wallpaper/images/gallery/g' + pad(i) + '.jpg';
+        var img = document.createElement('img');
+        img.loading = 'lazy';
+        img.src = src;
+        img.alt = 'Sai Wall Decor project ' + i;
+        fig.appendChild(img);
+        (function (s, a) {
+          fig.addEventListener('click', function () {
+            lbImg.src = s; lbImg.alt = a; lb.classList.add('open');
+          });
+        })(src, img.alt);
+        grid.appendChild(fig);
+      }
+      info.textContent = label();
+      prev.disabled = page === 0;
+      next.disabled = page >= pages - 1;
+    }
+
+    prev.addEventListener('click', function () {
+      if (page > 0) { page--; render(); grid.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+    next.addEventListener('click', function () {
+      if (page < pages - 1) { page++; render(); grid.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+    lb.addEventListener('click', function () { lb.classList.remove('open'); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') lb.classList.remove('open');
+    });
+
+    render();
+    // Refresh label when language changes
+    var btn = document.getElementById('lang-toggle');
+    if (btn) btn.addEventListener('click', function () { setTimeout(function () { info.textContent = label(); }, 50); });
+  })();
 
   // Sai Wall Decor chatbot
   (function () {
