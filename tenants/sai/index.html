@@ -151,6 +151,28 @@
   .card-body p { font-size: 0.95rem; margin: 0; }
   .card-tag { display: inline-block; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold-deep); margin-bottom: 8px; font-weight: 600; }
 
+  /* Products & Services — unified filterable grid */
+  .pgs { background: var(--panel); }
+  .pgs-filters { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 36px; }
+  .pgs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .pgs-card { background: #fff; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.25s ease; display: flex; flex-direction: column; border: 1px solid rgba(184,135,70,0.22); }
+  .pgs-card:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(140,99,38,0.18); border-color: var(--gold); }
+  .pgs-card.hidden { display: none; }
+  .pgs-img { aspect-ratio: 4/3; background: #eee; overflow: hidden; position: relative; }
+  .pgs-img img, .pgs-img video { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+  .pgs-card:hover .pgs-img img { transform: scale(1.05); }
+  .pgs-body { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .pgs-cat { display: inline-block; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold-deep); font-weight: 600; }
+  .pgs-card h3 { margin: 0; font-size: 1.1rem; color: var(--ink); }
+  .pgs-price { display: flex; align-items: baseline; gap: 5px; margin-top: 4px; padding-bottom: 14px; border-bottom: 1px dashed rgba(184,135,70,0.4); }
+  .pgs-price-num { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; color: var(--gold-deep); }
+  .pgs-price-unit { font-size: 0.85rem; color: var(--ink-soft); font-weight: 500; }
+  .pgs-cta { margin-top: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 16px; border-radius: 10px; background: var(--gold); color: #fff; font-weight: 600; font-size: 0.92rem; transition: background 0.15s, transform 0.15s; }
+  .pgs-cta:hover { background: var(--gold-deep); transform: translateY(-1px); }
+  .pgs-cta svg { width: 16px; height: 16px; fill: currentColor; }
+  @media (max-width: 900px) { .pgs-grid { grid-template-columns: 1fr 1fr; gap: 16px; } }
+  @media (max-width: 600px) { .pgs-grid { grid-template-columns: 1fr; } }
+
   /* Filterable lookbook (image gallery) */
   .lookbook { background: var(--bg); }
   .lookbook-filters { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 36px; }
@@ -165,6 +187,38 @@
   .look-card.hidden { display: none; }
   .look-card .tag { position: absolute; bottom: 12px; left: 12px; padding: 5px 12px; border-radius: 999px; background: rgba(20,24,32,0.78); color: #fff; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; backdrop-filter: blur(6px); }
   @media (max-width: 600px) { .lookbook-grid { grid-template-columns: 1fr 1fr; gap: 10px; } .filter-btn { padding: 6px 12px; font-size: 0.72rem; letter-spacing: 0.04em; } .lookbook-filters { gap: 6px; margin-bottom: 24px; } }
+
+  /* Chatbot widget */
+  .chat-fab { position: fixed; right: 24px; bottom: 96px; z-index: 70; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: #fff; box-shadow: 0 10px 24px rgba(140,99,38,0.4); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 0; transition: transform 0.2s, box-shadow 0.2s; }
+  .chat-fab:hover { transform: scale(1.06); box-shadow: 0 14px 30px rgba(140,99,38,0.5); }
+  .chat-fab svg { width: 26px; height: 26px; fill: currentColor; }
+  .chat-fab .chat-dot { position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border-radius: 50%; background: #ff4757; border: 2px solid #fff; }
+  .chat-panel { position: fixed; right: 24px; bottom: 168px; z-index: 71; width: 360px; max-width: calc(100vw - 32px); height: 520px; max-height: calc(100vh - 200px); background: #fff; border-radius: 18px; box-shadow: 0 18px 50px rgba(20,24,32,0.25); border: 1px solid rgba(184,135,70,0.4); display: none; flex-direction: column; overflow: hidden; }
+  .chat-panel.open { display: flex; animation: chatPop 0.22s ease; }
+  @keyframes chatPop { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .chat-head { background: linear-gradient(135deg, var(--navy), #1f2942); color: #fff; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .chat-head .chat-title { display: flex; align-items: center; gap: 12px; }
+  .chat-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold-deep)); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 700; font-style: italic; }
+  .chat-name { font-weight: 700; font-size: 0.98rem; }
+  .chat-sub { font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-top: 1px; }
+  .chat-close { background: rgba(255,255,255,0.1); border: 0; color: #fff; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 1.2rem; line-height: 1; }
+  .chat-body { flex: 1; overflow-y: auto; padding: 18px 18px 8px; background: var(--bg); display: flex; flex-direction: column; gap: 10px; }
+  .chat-msg { max-width: 86%; padding: 10px 14px; border-radius: 14px; font-size: 0.92rem; line-height: 1.45; }
+  .chat-msg.bot { background: #fff; color: var(--ink); border: 1px solid rgba(184,135,70,0.25); border-bottom-left-radius: 4px; align-self: flex-start; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .chat-msg.user { background: var(--gold); color: #fff; border-bottom-right-radius: 4px; align-self: flex-end; font-weight: 500; }
+  .chat-options { display: flex; flex-direction: column; gap: 7px; padding: 4px 14px 0; }
+  .chat-opt { background: #fff; border: 1px solid rgba(184,135,70,0.4); color: var(--ink); padding: 9px 13px; border-radius: 12px; font-family: inherit; font-size: 0.88rem; cursor: pointer; text-align: left; transition: all 0.15s; }
+  .chat-opt:hover { border-color: var(--gold); background: rgba(184,135,70,0.07); }
+  .chat-foot { padding: 12px 16px; border-top: 1px solid rgba(184,135,70,0.25); display: flex; gap: 8px; }
+  .chat-wa-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: #25d366; color: #fff; padding: 10px 14px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; }
+  .chat-wa-btn:hover { background: #1ebe5a; color: #fff; }
+  .chat-wa-btn svg { width: 16px; height: 16px; fill: currentColor; }
+  .chat-back { background: transparent; border: 1px solid rgba(184,135,70,0.4); color: var(--ink-soft); padding: 9px 13px; border-radius: 10px; font-family: inherit; font-size: 0.85rem; cursor: pointer; transition: all 0.15s; }
+  .chat-back:hover { border-color: var(--gold); color: var(--ink); }
+  @media (max-width: 900px) {
+    .chat-fab { right: 16px; bottom: 156px; }
+    .chat-panel { right: 8px; left: 8px; bottom: 220px; width: auto; max-width: none; height: calc(100vh - 320px); }
+  }
 
   /* FAQ accordion */
   .faq { background: var(--panel); }
@@ -372,9 +426,8 @@
     <nav class="nav">
       <a href="#about" data-hi="हमारे बारे में">About</a>
       <a href="#products" data-hi="उत्पाद">Products</a>
-      <a href="#lookbook" data-hi="लुकबुक">Lookbook</a>
+      <a href="#gallery" data-hi="गैलरी">Gallery</a>
       <a href="#reviews" data-hi="समीक्षाएं">Reviews</a>
-      <a href="#faq" data-hi="सवाल-जवाब">FAQ</a>
       <a href="#visit" data-hi="संपर्क">Visit</a>
       <a class="cta" href="tel:09760017505" data-hi="अभी कॉल करें">Call Now</a>
       <button type="button" class="lang-toggle" id="lang-toggle" aria-label="Switch language"><span class="dot"></span><span id="lang-toggle-label">हिं</span></button>
@@ -437,88 +490,15 @@
   </div>
 </section>
 
-<!-- Products / Services -->
-<section id="products" class="block services">
-  <div class="container">
-    <div class="section-head">
-      <span class="eyebrow" data-hi="हम क्या प्रदान करते हैं">What we offer</span>
-      <h2 data-hi="घर सजाने के लिए सब कुछ, एक ही जगह।">Everything to dress a home, in one place.</h2>
-      <p data-hi="फर्श से छत तक के वॉल पैनल से लेकर रविवार दोपहर बिताने वाले सोफे तक, हमारे शोरूम में पूरी रेंज उपलब्ध है — कस्टम साइज़ और फिनिश रिक्वेस्ट पर उपलब्ध।">From floor-to-ceiling wall panels to the sofa you'll spend Sunday afternoons on, our showroom carries the full range &mdash; with custom sizes and finishes available on request.</p>
-    </div>
-    <div class="product-grid">
-      <article class="card">
-        <div class="card-img">
-          <img loading="lazy" src="/demo-wallpaper/images/img1.jpeg" alt="Luxury 3D floral wallpaper installed by Sai Wall Decor showroom" />
-        </div>
-        <div class="card-body">
-          <span class="card-tag" data-hi="वॉल डेकोर">Wall Decor</span>
-          <h3 data-hi="प्रीमियम 3D वॉलपेपर">Premium 3D Wallpapers</h3>
-          <p data-hi="फूल, ज्यामितीय और एब्स्ट्रैक्ट 3D प्रिंट्स। लिविंग रूम, बेडरूम और एंट्रीवे के लिए कस्टम साइज़ रोल और फिट पैनल।">Floral, geometric and abstract 3D prints. Custom-sized rolls and fitted panels for living rooms, bedrooms and entryways.</p>
-        </div>
-      </article>
-      <article class="card">
-        <div class="card-img">
-          <img loading="lazy" src="/demo-wallpaper/images/img2.jpeg" alt="Printed Krishna roller blind in pooja room" />
-        </div>
-        <div class="card-body">
-          <span class="card-tag" data-hi="विंडो ट्रीटमेंट">Window Treatments</span>
-          <h3 data-hi="विंडो ब्लाइंड्स और प्रिंटेड शेड्स">Window Blinds &amp; Printed Shades</h3>
-          <p data-hi="रोलर, ज़ीब्रा और वर्टिकल ब्लाइंड्स — पूजा कक्ष और बेडरूम के लिए कस्टम धार्मिक और फोटो-प्रिंट ब्लाइंड्स सहित।">Roller, zebra and vertical blinds &mdash; including custom religious and photo-print blinds for pooja rooms and bedrooms.</p>
-        </div>
-      </article>
-      <article class="card">
-        <div class="card-img">
-          <img loading="lazy" src="/demo-wallpaper/images/img4.jpeg" alt="Navy and gold 3D floral wall panel" />
-        </div>
-        <div class="card-body">
-          <span class="card-tag" data-hi="वॉल क्लैडिंग">Wall Cladding</span>
-          <h3 data-hi="PVC वॉल पैनल और फ्रेम">PVC Wall Panels &amp; Frames</h3>
-          <p data-hi="मैट, ग्लॉस और टेक्सचर्ड फिनिश में मज़बूत, आसान सफाई वाले PVC पैनल — फीचर वॉल, छत और बाथरूम के लिए परफेक्ट।">Durable, easy-clean PVC panels in matte, gloss and textured finishes &mdash; perfect for feature walls, ceilings and bathrooms.</p>
-        </div>
-      </article>
-      <article class="card">
-        <div class="card-img">
-          <img loading="lazy" src="https://images.unsplash.com/photo-1615873968403-89e068629265?auto=format&fit=crop&w=900&q=70" alt="WPC louver wall" />
-        </div>
-        <div class="card-body">
-          <span class="card-tag" data-hi="मॉडर्न क्लैडिंग">Modern Cladding</span>
-          <h3 data-hi="WPC लूवर">WPC Louvers</h3>
-          <p data-hi="उस गर्म, स्लैटेड-वुड लुक के लिए वुड-प्लास्टिक-कंपोजिट लूवर पैनल। दीमक, नमी और मुड़ने से सुरक्षित।">Wood-Plastic-Composite louver panels for that warm, slatted-wood look. Resistant to termites, moisture and warping.</p>
-        </div>
-      </article>
-      <article class="card">
-        <div class="card-img">
-          <img loading="lazy" src="/demo-wallpaper/images/img3.jpeg" alt="Green velvet luxury sofa with cushions" />
-        </div>
-        <div class="card-body">
-          <span class="card-tag" data-hi="फर्नीचर">Furniture</span>
-          <h3 data-hi="लग्ज़री सोफा और सीटिंग">Luxury Sofas &amp; Seating</h3>
-          <p data-hi="ऑर्डर पर बने वेलवेट, लेदरेट और फैब्रिक सोफा — 3, 5, 7 और L-शेप कॉन्फ़िगरेशन कस्टम कुशन विकल्पों के साथ।">Made-to-order velvet, leatherette and fabric sofas &mdash; 3, 5, 7 and L-shape configurations with custom cushion options.</p>
-        </div>
-      </article>
-      <article class="card">
-        <div class="card-img">
-          <img loading="lazy" src="https://images.unsplash.com/photo-1558882224-dda166733046?auto=format&fit=crop&w=900&q=70" alt="Curtains and drapes" />
-        </div>
-        <div class="card-body">
-          <span class="card-tag" data-hi="सॉफ्ट फर्निशिंग">Soft Furnishings</span>
-          <h3 data-hi="पर्दे और फैब्रिक">Curtains &amp; Fabric</h3>
-          <p data-hi="कमरे को पूरा करने के लिए मैचिंग पर्दे, शीयर और अपहोल्स्ट्री फैब्रिक। सिलाई और फिटिंग उपलब्ध।">Coordinating curtains, sheers and upholstery fabric to finish the room. Stitching and fitting available.</p>
-        </div>
-      </article>
-    </div>
-  </div>
-</section>
-
-<!-- Filterable lookbook -->
-<section id="lookbook" class="block lookbook">
+<!-- Products & Services — unified filterable -->
+<section id="products" class="block pgs">
   <div class="container">
     <div class="section-head" style="max-width: 720px; margin-left: auto; margin-right: auto; text-align: center;">
-      <span class="eyebrow" data-hi="लुकबुक">Lookbook</span>
-      <h2 data-hi="कैटेगरी से स्टाइल खोजें।" style="margin-left: auto; margin-right: auto;">Browse styles by category.</h2>
-      <p data-hi="वॉलपेपर, WPC लूवर, PVC पैनल, ब्लाइंड्स या सोफा — किसी एक प्रोडक्ट लाइन को फ़िल्टर करके देखें कि क्या-क्या संभव है।">Filter by product line — wallpapers, panels, louvers, blinds, or sofas — to see what's possible.</p>
+      <span class="eyebrow" data-hi="हमारे उत्पाद और सेवाएं">Products &amp; Services</span>
+      <h2 data-hi="हमारी पूरी रेंज और कीमतें।" style="margin-left: auto; margin-right: auto;">Our full range — with starting prices.</h2>
+      <p data-hi="किसी भी कैटेगरी से फ़िल्टर करें। हर आइटम पर WhatsApp टैप करें — हम तुरंत कोटेशन भेज देंगे।">Filter by category. Tap WhatsApp on any item and we'll send a quote within minutes.</p>
     </div>
-    <div class="lookbook-filters" role="tablist" aria-label="Filter gallery by category">
+    <div class="pgs-filters" role="tablist" aria-label="Filter products by category">
       <button type="button" class="filter-btn active" data-filter="all" data-hi="सब">All</button>
       <button type="button" class="filter-btn" data-filter="wallpapers" data-hi="वॉलपेपर">Wallpapers</button>
       <button type="button" class="filter-btn" data-filter="wpc-louvers" data-hi="WPC लूवर">WPC Louvers</button>
@@ -526,55 +506,70 @@
       <button type="button" class="filter-btn" data-filter="blinds" data-hi="विंडो ब्लाइंड्स">Window Blinds</button>
       <button type="button" class="filter-btn" data-filter="sofas" data-hi="लग्ज़री सोफा">Luxury Sofas</button>
     </div>
-    <div class="lookbook-grid">
-      <figure class="look-card" data-cat="wallpapers">
-        <img loading="lazy" src="/demo-wallpaper/images/img1.jpeg" alt="Luxury 3D floral wallpaper" />
-        <span class="tag" data-hi="वॉलपेपर">Wallpapers</span>
-      </figure>
-      <figure class="look-card" data-cat="wallpapers">
-        <img loading="lazy" src="/demo-wallpaper/images/img4.jpeg" alt="Navy and gold 3D floral wall panel" />
-        <span class="tag" data-hi="वॉलपेपर">Wallpapers</span>
-      </figure>
-      <figure class="look-card" data-cat="wallpapers">
-        <img loading="lazy" src="https://images.unsplash.com/photo-1615874959474-d609969a20ed?auto=format&fit=crop&w=900&q=70" alt="Textured wallpaper feature wall" />
-        <span class="tag" data-hi="वॉलपेपर">Wallpapers</span>
-      </figure>
-      <figure class="look-card" data-cat="wpc-louvers">
-        <img loading="lazy" src="https://images.unsplash.com/photo-1615873968403-89e068629265?auto=format&fit=crop&w=900&q=70" alt="WPC louver feature wall" />
-        <span class="tag" data-hi="WPC लूवर">WPC Louvers</span>
-      </figure>
-      <figure class="look-card" data-cat="wpc-louvers">
-        <img loading="lazy" src="https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=900&q=70" alt="Wood-tone WPC slatted wall" />
-        <span class="tag" data-hi="WPC लूवर">WPC Louvers</span>
-      </figure>
-      <figure class="look-card" data-cat="pvc-panels">
-        <img loading="lazy" src="https://images.unsplash.com/photo-1631889993959-41b4e9c6e3c5?auto=format&fit=crop&w=900&q=70" alt="3D PVC panel pattern" />
-        <span class="tag" data-hi="PVC पैनल">PVC Panels</span>
-      </figure>
-      <figure class="look-card" data-cat="pvc-panels">
-        <img loading="lazy" src="/demo-wallpaper/images/img4.jpeg" alt="3D PVC wall panel — navy gold" />
-        <span class="tag" data-hi="PVC पैनल">PVC Panels</span>
-      </figure>
-      <figure class="look-card" data-cat="blinds">
-        <img loading="lazy" src="/demo-wallpaper/images/img2.jpeg" alt="Printed Krishna roller blind" />
-        <span class="tag" data-hi="विंडो ब्लाइंड्स">Window Blinds</span>
-      </figure>
-      <figure class="look-card" data-cat="blinds">
-        <img loading="lazy" src="https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=900&q=70" alt="Wooden window blinds" />
-        <span class="tag" data-hi="विंडो ब्लाइंड्स">Window Blinds</span>
-      </figure>
-      <figure class="look-card" data-cat="blinds">
-        <img loading="lazy" src="https://images.unsplash.com/photo-1558882224-dda166733046?auto=format&fit=crop&w=900&q=70" alt="Curtains and drapes" />
-        <span class="tag" data-hi="विंडो ब्लाइंड्स">Window Blinds</span>
-      </figure>
-      <figure class="look-card" data-cat="sofas">
-        <img loading="lazy" src="/demo-wallpaper/images/img3.jpeg" alt="Green velvet luxury sofa" />
-        <span class="tag" data-hi="लग्ज़री सोफा">Luxury Sofas</span>
-      </figure>
-      <figure class="look-card" data-cat="sofas">
-        <img loading="lazy" src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=70" alt="Cream sectional sofa in modern living room" />
-        <span class="tag" data-hi="लग्ज़री सोफा">Luxury Sofas</span>
-      </figure>
+    <div class="pgs-grid">
+      <article class="pgs-card" data-cat="wallpapers">
+        <div class="pgs-img"><img loading="lazy" src="/demo-wallpaper/images/img1.jpeg" alt="Premium 3D floral wallpaper" /></div>
+        <div class="pgs-body">
+          <span class="pgs-cat" data-hi="वॉलपेपर">Wallpapers</span>
+          <h3 data-hi="प्रीमियम 3D वॉलपेपर">Premium 3D Wallpaper</h3>
+          <div class="pgs-price"><span class="pgs-price-num">₹40</span><span class="pgs-price-unit" data-hi="/वर्ग फुट से (न्यूनतम)">/sq ft onwards</span></div>
+          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%20Premium%203D%20Wallpaper" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Zm-7.08 15.4h-.01a8.3 8.3 0 0 1-4.24-1.16l-.3-.18-2.49.65.66-2.43-.2-.31a8.32 8.32 0 1 1 6.58 3.43Zm4.79-6.22c-.26-.13-1.55-.77-1.79-.86-.24-.09-.42-.13-.6.13s-.69.86-.85 1.04c-.16.18-.31.2-.57.07-.26-.13-1.1-.41-2.1-1.3-.78-.7-1.3-1.55-1.45-1.81-.15-.26-.02-.4.11-.53.12-.12.26-.31.39-.46.13-.16.17-.27.26-.44.09-.18.04-.33-.02-.46-.07-.13-.6-1.43-.82-1.96-.22-.52-.44-.45-.6-.46h-.51c-.18 0-.46.06-.7.32-.24.26-.92.9-.92 2.2 0 1.3.94 2.55 1.07 2.73.13.18 1.85 2.83 4.49 3.97.63.27 1.12.43 1.51.55.63.2 1.21.17 1.66.1.51-.08 1.55-.63 1.77-1.24.22-.61.22-1.13.16-1.24-.07-.11-.24-.18-.5-.31Z"/></svg> Get quote</a>
+        </div>
+      </article>
+      <article class="pgs-card" data-cat="wallpapers">
+        <div class="pgs-img"><img loading="lazy" src="/demo-wallpaper/images/img4.jpeg" alt="Custom UV-print wallpaper" /></div>
+        <div class="pgs-body">
+          <span class="pgs-cat" data-hi="वॉलपेपर">Wallpapers</span>
+          <h3 data-hi="कस्टम UV प्रिंट वॉलपेपर">Custom UV Print Wallpaper</h3>
+          <div class="pgs-price"><span class="pgs-price-num">₹70</span><span class="pgs-price-unit" data-hi="/वर्ग फुट">/sq ft</span></div>
+          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%20Custom%20UV%20Print%20Wallpaper" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Zm-7.08 15.4h-.01a8.3 8.3 0 0 1-4.24-1.16l-.3-.18-2.49.65.66-2.43-.2-.31a8.32 8.32 0 1 1 6.58 3.43Z"/></svg> Get quote</a>
+        </div>
+      </article>
+      <article class="pgs-card" data-cat="wpc-louvers">
+        <div class="pgs-img"><video src="/demo-wallpaper/videos/sai1.mp4" muted loop playsinline preload="metadata" autoplay></video></div>
+        <div class="pgs-body">
+          <span class="pgs-cat" data-hi="WPC लूवर">WPC Louvers</span>
+          <h3 data-hi="17mm WPC वॉल पैनल">17mm WPC Wall Panel</h3>
+          <div class="pgs-price"><span class="pgs-price-num">₹400</span><span class="pgs-price-unit" data-hi="/पीस">/piece</span></div>
+          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%2017mm%20WPC%20Wall%20Panel" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
+        </div>
+      </article>
+      <article class="pgs-card" data-cat="wpc-louvers">
+        <div class="pgs-img"><video src="/demo-wallpaper/videos/sai2.mp4" muted loop playsinline preload="metadata" autoplay></video></div>
+        <div class="pgs-body">
+          <span class="pgs-cat" data-hi="WPC लूवर">WPC Louvers</span>
+          <h3 data-hi="चारकोल पैनल">Charcoal Panel</h3>
+          <div class="pgs-price"><span class="pgs-price-num">₹550</span><span class="pgs-price-unit" data-hi="/पीस">/piece</span></div>
+          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%20Charcoal%20Panel" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
+        </div>
+      </article>
+      <article class="pgs-card" data-cat="pvc-panels">
+        <div class="pgs-img"><video src="/demo-wallpaper/videos/sai3.mp4" muted loop playsinline preload="metadata" autoplay></video></div>
+        <div class="pgs-body">
+          <span class="pgs-cat" data-hi="PVC पैनल">PVC Panels</span>
+          <h3 data-hi="3D PVC टाइल">3D PVC Tile</h3>
+          <div class="pgs-price"><span class="pgs-price-num">₹200</span><span class="pgs-price-unit" data-hi="/पीस">/piece</span></div>
+          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%203D%20PVC%20Tile" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
+        </div>
+      </article>
+      <article class="pgs-card" data-cat="blinds">
+        <div class="pgs-img"><img loading="lazy" src="/demo-wallpaper/images/img2.jpeg" alt="Zebra blinds — custom print" /></div>
+        <div class="pgs-body">
+          <span class="pgs-cat" data-hi="विंडो ब्लाइंड्स">Window Blinds</span>
+          <h3 data-hi="ज़ीब्रा ब्लाइंड्स">Zebra Blinds</h3>
+          <div class="pgs-price"><span class="pgs-price-num">₹200</span><span class="pgs-price-unit" data-hi="/वर्ग फुट">/sq ft</span></div>
+          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%20Zebra%20Blinds" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
+        </div>
+      </article>
+      <article class="pgs-card" data-cat="sofas">
+        <div class="pgs-img"><img loading="lazy" src="/demo-wallpaper/images/img3.jpeg" alt="Luxury made-to-order sofa" /></div>
+        <div class="pgs-body">
+          <span class="pgs-cat" data-hi="लग्ज़री सोफा">Luxury Sofas</span>
+          <h3 data-hi="कस्टम लग्ज़री सोफा">Luxury Sofa (Made to Order)</h3>
+          <div class="pgs-price"><span class="pgs-price-num" data-hi="कस्टम">Custom</span><span class="pgs-price-unit" data-hi="फैब्रिक, आकार, कुशन">fabric, size, cushions</span></div>
+          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%20a%20custom%20Luxury%20Sofa" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
+        </div>
+      </article>
     </div>
   </div>
 </section>
@@ -588,11 +583,12 @@
       <p data-hi="हाल के प्रोजेक्ट्स की वीडियो झलक। साउंड के साथ चलाने के लिए किसी भी टाइल पर टैप करें।">Short clips from recent projects and the showroom floor. Tap any tile to play with sound.</p>
     </div>
     <div class="gallery-grid">
+      <div class="vid-card"><video src="/demo-wallpaper/videos/sai1.mp4" muted loop playsinline preload="metadata"></video></div>
+      <div class="vid-card"><video src="/demo-wallpaper/videos/sai2.mp4" muted loop playsinline preload="metadata"></video></div>
+      <div class="vid-card"><video src="/demo-wallpaper/videos/sai3.mp4" muted loop playsinline preload="metadata"></video></div>
       <div class="vid-card"><video src="/demo-wallpaper/videos/v1.mp4" muted loop playsinline preload="metadata"></video></div>
       <div class="vid-card"><video src="/demo-wallpaper/videos/v2.mp4" muted loop playsinline preload="metadata"></video></div>
       <div class="vid-card"><video src="/demo-wallpaper/videos/v3.mp4" muted loop playsinline preload="metadata"></video></div>
-      <div class="vid-card"><video src="/demo-wallpaper/videos/v4.mp4" muted loop playsinline preload="metadata"></video></div>
-      <div class="vid-card"><video src="/demo-wallpaper/videos/v5.mp4" muted loop playsinline preload="metadata"></video></div>
     </div>
   </div>
 </section>
@@ -643,43 +639,6 @@
     <div class="reviews-foot">
       <span data-hi="ग्राहकों द्वारा गूगल पर 4.8 / 5 रेटिंग।">Rated 4.8 / 5 by customers on Google.</span>
       <a class="btn btn-ghost" href="https://maps.google.com/?cid=4738395756158602651" target="_blank" rel="noopener" data-hi="सभी समीक्षाएं पढ़ें →">Read all reviews &rarr;</a>
-    </div>
-  </div>
-</section>
-
-<!-- FAQ -->
-<section id="faq" class="block faq">
-  <div class="container">
-    <div class="section-head" style="max-width: 720px; margin-left: auto; margin-right: auto; text-align: center;">
-      <span class="eyebrow" data-hi="आपके सवाल">Questions</span>
-      <h2 data-hi="अक्सर पूछे जाने वाले सवाल।" style="margin-left: auto; margin-right: auto;">Frequently asked questions.</h2>
-      <p data-hi="अपने प्रोजेक्ट के बारे में सोच रहे हैं? यहाँ ग्राहकों से सबसे ज़्यादा पूछे गए सवाल हैं।">Thinking about a project? Here are the questions our customers ask most often.</p>
-    </div>
-    <div class="faq-list">
-      <details class="faq-item">
-        <summary data-hi="इंस्टॉलेशन में कितना समय लगता है?">How long does installation take?</summary>
-        <div class="faq-a" data-hi="अधिकतर वॉलपेपर वाले कमरे 4–8 घंटे में फिट हो जाते हैं। WPC लूवर वॉल और PVC पैनल आमतौर पर 1–2 दिन लेते हैं, क्षेत्र के अनुसार। हम सारा सामान और टूल्स लाते हैं — कोई गंदगी नहीं छोड़ते।">Most wallpaper rooms are installed in 4–8 hours. WPC louver walls and PVC panels typically take 1–2 days depending on area. We bring all materials and tools — no mess left behind.</div>
-      </details>
-      <details class="faq-item">
-        <summary data-hi="क्या आप फ्री साइट विज़िट करते हैं?">Do you do free site visits?</summary>
-        <div class="faq-a" data-hi="हाँ। फिरोजाबाद और आसपास के लिए हमारी टीम बिना किसी शुल्क के मापन, शेड सैंपलिंग और प्रोडक्ट सुझाव के लिए आ सकती है। शेड्यूल करने के लिए 097600 17505 पर WhatsApp करें।">Yes. For Firozabad and nearby areas, our team can come measure, sample shades, and recommend products at no charge. WhatsApp 097600 17505 to schedule.</div>
-      </details>
-      <details class="faq-item">
-        <summary data-hi="वॉलपेपर और पैनल पर वारंटी क्या है?">What's the warranty on wallpapers and panels?</summary>
-        <div class="faq-a" data-hi="ब्रांड के अनुसार वॉलपेपर पर 5–8 साल की रंग और छिलने की वारंटी होती है। PVC और WPC पैनल पर मुड़ने और नमी से होने वाले नुकसान के खिलाफ 10+ साल की वारंटी मिलती है।">Wallpapers carry a 5–8 year colour and peel warranty depending on brand. PVC and WPC panels are warranted for 10+ years against warping and moisture damage.</div>
-      </details>
-      <details class="faq-item">
-        <summary data-hi="क्या कस्टम प्रिंट या साइज़ मिल सकते हैं?">Can I get custom prints or sizes?</summary>
-        <div class="faq-a" data-hi="बिल्कुल। हम कस्टम-प्रिंट ब्लाइंड्स (फोटो, धार्मिक छवियाँ), कस्टम-साइज़ वॉलपेपर रोल, और आपकी पसंद के फैब्रिक व रंग में बनाए गए सोफा बनाते हैं।">Absolutely. We do custom-print blinds (photos, religious imagery), custom-size wallpaper rolls, and made-to-order sofas in fabric and colour of your choice.</div>
-      </details>
-      <details class="faq-item">
-        <summary data-hi="कीमत कैसी रहती है?">What's the typical price range?</summary>
-        <div class="faq-a" data-hi="मटीरियल के अनुसार कीमत अलग होती है — वॉलपेपर ₹35/वर्ग फुट से शुरू, PVC पैनल ₹60/वर्ग फुट से, कस्टम सोफा ₹25,000 से। सटीक कोटेशन के लिए कॉल करें या शोरूम पधारें।">Prices vary by material — wallpapers start around ₹35/sq ft, PVC panels from ₹60/sq ft, custom sofas from ₹25,000. Call or visit the showroom for an exact quote.</div>
-      </details>
-      <details class="faq-item">
-        <summary data-hi="क्या आप फिरोजाबाद के बाहर डिलीवरी करते हैं?">Do you deliver outside Firozabad?</summary>
-        <div class="faq-a" data-hi="हाँ — हम पूरे उत्तर प्रदेश में डिलीवरी करते हैं और बड़े ऑर्डर के लिए पड़ोसी राज्यों में भी ट्रांसपोर्ट का इंतज़ाम करते हैं।">Yes — we deliver across Uttar Pradesh and arrange transport to neighbouring states for larger orders.</div>
-      </details>
     </div>
   </div>
 </section>
@@ -837,8 +796,7 @@
         <h4 data-hi="खोजें">Explore</h4>
         <a href="#about" data-hi="हमारे बारे में">About</a>
         <a href="#products" data-hi="उत्पाद">Products</a>
-        <a href="#lookbook" data-hi="लुकबुक">Lookbook</a>
-        <a href="#faq" data-hi="सवाल-जवाब">FAQ</a>
+        <a href="#gallery" data-hi="गैलरी">Gallery</a>
         <a href="#reviews" data-hi="समीक्षाएं">Reviews</a>
       </div>
     </div>
@@ -848,6 +806,35 @@
     </div>
   </div>
 </footer>
+
+<!-- Sai chatbot widget -->
+<button type="button" class="chat-fab" id="chat-fab" aria-label="Open Sai Wall Decor chat">
+  <span class="chat-dot"></span>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+</button>
+<aside class="chat-panel" id="chat-panel" role="dialog" aria-label="Sai Wall Decor assistant">
+  <div class="chat-head">
+    <div class="chat-title">
+      <div class="chat-avatar">S</div>
+      <div>
+        <div class="chat-name" data-hi="साईं वॉल डेकोर सहायक">Sai Wall Decor Assistant</div>
+        <div class="chat-sub" data-hi="आमतौर पर मिनटों में जवाब">Usually replies in minutes</div>
+      </div>
+    </div>
+    <button type="button" class="chat-close" id="chat-close" aria-label="Close chat">&times;</button>
+  </div>
+  <div class="chat-body" id="chat-body">
+    <div class="chat-msg bot" data-hi="नमस्ते! साईं वॉल डेकोर में आपका स्वागत है। मैं वॉलपेपर, पैनल, ब्लाइंड्स और सोफा के बारे में सवालों के जवाब दे सकता हूँ। कोई सवाल चुनें:">Hi! Welcome to Sai Wall Decor. I can answer questions about wallpapers, panels, blinds, and sofas. Pick a question:</div>
+  </div>
+  <div class="chat-options" id="chat-options"></div>
+  <div class="chat-foot">
+    <button type="button" class="chat-back" id="chat-back" style="display: none;" data-hi="← सवाल देखें">&larr; Questions</button>
+    <a class="chat-wa-btn" href="https://wa.me/919760017505?text=Hi%2C%20I%20have%20a%20question%20about%20your%20products." target="_blank" rel="noopener" data-hi="WhatsApp पर बात करें">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Zm-7.08 15.4h-.01a8.3 8.3 0 0 1-4.24-1.16l-.3-.18-2.49.65.66-2.43-.2-.31a8.32 8.32 0 1 1 6.58 3.43Z"/></svg>
+      Chat on WhatsApp
+    </a>
+  </div>
+</aside>
 
 <!-- Mobile bottom navigation (app-style tab bar) -->
 <nav class="mobile-nav" aria-label="Mobile navigation">
@@ -859,13 +846,13 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
     <span data-hi="उत्पाद">Products</span>
   </a>
-  <a href="#lookbook">
+  <a href="#gallery">
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 17l-5-5-10 9"/></svg>
-    <span data-hi="लुकबुक">Lookbook</span>
+    <span data-hi="गैलरी">Gallery</span>
   </a>
-  <a href="#faq">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5"/><circle cx="12" cy="18" r=".5"/></svg>
-    <span data-hi="सवाल">FAQ</span>
+  <a href="#visit">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    <span data-hi="संपर्क">Visit</span>
   </a>
   <a href="tel:09760017505" class="is-cta">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
@@ -883,10 +870,78 @@
   // Year
   document.getElementById('yr').textContent = new Date().getFullYear();
 
-  // Lookbook filter chips
+  // Sai Wall Decor chatbot
+  (function () {
+    var fab = document.getElementById('chat-fab');
+    var panel = document.getElementById('chat-panel');
+    var closeBtn = document.getElementById('chat-close');
+    var body = document.getElementById('chat-body');
+    var options = document.getElementById('chat-options');
+    var backBtn = document.getElementById('chat-back');
+    if (!fab || !panel || !options) return;
+
+    var faqsEn = [
+      { q: "How long does installation take?", a: "Most wallpaper rooms install in 4–8 hours. WPC louver walls and PVC panels take 1–2 days depending on area. We bring all materials and tools — nothing left for you to clean up." },
+      { q: "Do you do free site visits?", a: "Yes. In Firozabad and nearby, our team comes free of charge to measure, sample shades and suggest products. WhatsApp 097600 17505 to schedule." },
+      { q: "What is the warranty?", a: "Wallpapers carry 5–8 year colour/peel warranty depending on brand. PVC and WPC panels have 10+ years against warping and moisture damage." },
+      { q: "Can I get custom prints or sizes?", a: "Absolutely. We do custom-print blinds (photos, religious imagery), custom-size wallpaper rolls, and made-to-order sofas in your choice of fabric and colour." },
+      { q: "What is the price range?", a: "Wallpaper from ₹40/sq ft (custom UV print ₹70/sq ft). Zebra blinds ₹200/sq ft. 3D PVC tile ₹200/pc. 17mm WPC panel ₹400/pc. Charcoal panel ₹550/pc. Sofas are custom-quoted." },
+      { q: "Do you deliver outside Firozabad?", a: "Yes — across Uttar Pradesh, and we arrange transport to neighbouring states for larger orders." },
+      { q: "Where is the showroom?", a: "Buddha Ashram Road, Tapa Kala, Kotla Chungi, Firozabad, Uttar Pradesh 283203. Open 9 AM – 9 PM Mon–Sat. Closed Sunday." }
+    ];
+    var faqsHi = [
+      { q: "इंस्टॉलेशन में कितना समय लगता है?", a: "अधिकतर वॉलपेपर वाले कमरे 4–8 घंटे में फिट हो जाते हैं। WPC लूवर वॉल और PVC पैनल 1–2 दिन लेते हैं। हम सारा सामान और टूल्स लाते हैं — आपको साफ़ करने के लिए कुछ नहीं छोड़ते।" },
+      { q: "क्या आप फ्री साइट विज़िट करते हैं?", a: "हाँ। फिरोजाबाद और आसपास हमारी टीम बिना शुल्क मापन, शेड सैंपलिंग और प्रोडक्ट सुझाव के लिए आती है। शेड्यूल के लिए 097600 17505 पर WhatsApp करें।" },
+      { q: "वारंटी क्या है?", a: "ब्रांड के अनुसार वॉलपेपर पर 5–8 साल की रंग/छिलने की वारंटी। PVC और WPC पैनल पर मुड़ने और नमी से 10+ साल की वारंटी।" },
+      { q: "क्या कस्टम प्रिंट या साइज़ मिलेंगे?", a: "बिल्कुल। कस्टम-प्रिंट ब्लाइंड्स (फोटो, धार्मिक छवियाँ), कस्टम-साइज़ वॉलपेपर रोल, और आपकी पसंद के फैब्रिक व रंग में सोफा।" },
+      { q: "कीमत क्या है?", a: "वॉलपेपर ₹40/वर्ग फुट से (कस्टम UV प्रिंट ₹70/वर्ग फुट)। ज़ीब्रा ब्लाइंड्स ₹200/वर्ग फुट। 3D PVC टाइल ₹200/पीस। 17mm WPC पैनल ₹400/पीस। चारकोल पैनल ₹550/पीस। सोफा कस्टम कोटेशन पर।" },
+      { q: "क्या फिरोजाबाद के बाहर डिलीवरी करते हैं?", a: "हाँ — पूरे उत्तर प्रदेश में, और बड़े ऑर्डर के लिए पड़ोसी राज्यों में भी।" },
+      { q: "शोरूम कहाँ है?", a: "बुद्धा आश्रम रोड, टपा कला, कोटला चुंगी, फिरोजाबाद, उत्तर प्रदेश 283203। सोम–शनि सुबह 9 – रात 9 खुला। रविवार बंद।" }
+    ];
+
+    function isHi() { return document.body.classList.contains('lang-hi'); }
+    function currentFaqs() { return isHi() ? faqsHi : faqsEn; }
+
+    function showOptions() {
+      backBtn.style.display = 'none';
+      options.innerHTML = '';
+      currentFaqs().forEach(function (f, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chat-opt';
+        b.textContent = f.q;
+        b.addEventListener('click', function () { showAnswer(i); });
+        options.appendChild(b);
+      });
+    }
+
+    function showAnswer(i) {
+      var f = currentFaqs()[i];
+      var userMsg = document.createElement('div');
+      userMsg.className = 'chat-msg user';
+      userMsg.textContent = f.q;
+      body.appendChild(userMsg);
+      var botMsg = document.createElement('div');
+      botMsg.className = 'chat-msg bot';
+      botMsg.textContent = f.a;
+      body.appendChild(botMsg);
+      body.scrollTop = body.scrollHeight;
+      options.innerHTML = '';
+      backBtn.style.display = '';
+    }
+
+    fab.addEventListener('click', function () {
+      panel.classList.toggle('open');
+      if (panel.classList.contains('open') && !options.children.length) showOptions();
+    });
+    closeBtn.addEventListener('click', function () { panel.classList.remove('open'); });
+    backBtn.addEventListener('click', showOptions);
+  })();
+
+  // Products & Services filter chips
   (function () {
     var btns = document.querySelectorAll('.filter-btn');
-    var cards = document.querySelectorAll('.look-card');
+    var cards = document.querySelectorAll('[data-cat]');
     if (!btns.length || !cards.length) return;
     btns.forEach(function (btn) {
       btn.addEventListener('click', function () {
