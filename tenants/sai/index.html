@@ -173,23 +173,31 @@
   @media (max-width: 900px) { .pgs-grid { grid-template-columns: 1fr 1fr; gap: 16px; } }
   @media (max-width: 600px) { .pgs-grid { grid-template-columns: 1fr; } }
 
-  /* Paginated gallery — large tiles */
+  /* Photo slider gallery */
   .pgallery { background: var(--bg); }
-  .pgallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; min-height: 320px; }
-  .pgallery-tile { position: relative; aspect-ratio: 4/5; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(20,24,32,0.08), 0 2px 6px rgba(20,24,32,0.04); border: 2px solid rgba(184,135,70,0.35); background: #eee; transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease; cursor: zoom-in; margin: 0; }
-  .pgallery-tile:hover { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 18px 44px rgba(140,99,38,0.25); }
-  .pgallery-tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s ease; }
-  .pgallery-tile:hover img { transform: scale(1.08); }
-  .pgallery-tile::after { content: ""; position: absolute; inset: auto 0 0 0; height: 60px; background: linear-gradient(180deg, transparent 0%, rgba(20,24,32,0.55) 100%); opacity: 0; transition: opacity 0.25s ease; pointer-events: none; }
-  .pgallery-tile:hover::after { opacity: 1; }
-  .pgallery-tile .zoom-hint { position: absolute; right: 14px; bottom: 14px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.92); color: var(--ink); display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(8px); transition: opacity 0.25s, transform 0.25s; pointer-events: none; }
-  .pgallery-tile:hover .zoom-hint { opacity: 1; transform: translateY(0); }
-  .pgallery-tile .zoom-hint svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; }
-  .pgallery-pager { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 36px; flex-wrap: wrap; }
-  .pgallery-btn { display: inline-flex; align-items: center; gap: 6px; padding: 11px 22px; border-radius: 999px; background: var(--gold); color: #fff; font-family: inherit; font-weight: 600; font-size: 0.92rem; border: 0; cursor: pointer; transition: background 0.15s, opacity 0.15s; box-shadow: 0 4px 14px rgba(140,99,38,0.3); }
-  .pgallery-btn:hover:not(:disabled) { background: var(--gold-deep); }
-  .pgallery-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
-  .pgallery-info { color: var(--ink-soft); font-size: 0.94rem; font-weight: 600; padding: 0 12px; min-width: 120px; text-align: center; letter-spacing: 0.02em; }
+  .pgallery-viewport { position: relative; padding: 0 56px; }
+  .pgallery-window { overflow: hidden; border-radius: 18px; }
+  .pgallery-track { display: flex; gap: 18px; transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1); will-change: transform; }
+  .pgallery-slide { flex: 0 0 calc((100% - 36px) / 3); aspect-ratio: 4/5; position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(20,24,32,0.08), 0 2px 6px rgba(20,24,32,0.04); border: 2px solid rgba(184,135,70,0.35); background: #eee; transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease; cursor: zoom-in; margin: 0; }
+  .pgallery-slide:hover { border-color: var(--gold); box-shadow: 0 14px 36px rgba(140,99,38,0.22); transform: translateY(-3px); }
+  .pgallery-slide img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s ease; }
+  .pgallery-slide:hover img { transform: scale(1.06); }
+  .pgallery-slide::after { content: ""; position: absolute; inset: auto 0 0 0; height: 60px; background: linear-gradient(180deg, transparent 0%, rgba(20,24,32,0.55) 100%); opacity: 0; transition: opacity 0.25s ease; pointer-events: none; }
+  .pgallery-slide:hover::after { opacity: 1; }
+  .pgallery-slide .zoom-hint { position: absolute; right: 12px; bottom: 12px; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.92); color: var(--ink); display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(8px); transition: opacity 0.25s, transform 0.25s; pointer-events: none; }
+  .pgallery-slide:hover .zoom-hint { opacity: 1; transform: translateY(0); }
+  .pgallery-slide .zoom-hint svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+  .pgallery-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; background: var(--gold); color: #fff; border: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(140,99,38,0.4); z-index: 5; transition: background 0.15s, transform 0.15s, opacity 0.15s; }
+  .pgallery-arrow:hover:not(:disabled) { background: var(--gold-deep); transform: translateY(-50%) scale(1.06); }
+  .pgallery-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+  .pgallery-arrow svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .pgallery-prev { left: 0; }
+  .pgallery-next { right: 0; }
+  .pgallery-dots { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 28px; flex-wrap: wrap; max-width: 720px; margin-left: auto; margin-right: auto; }
+  .pgallery-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(184,135,70,0.3); border: 0; cursor: pointer; padding: 0; transition: background 0.15s, transform 0.15s; }
+  .pgallery-dot:hover { background: rgba(184,135,70,0.6); }
+  .pgallery-dot.active { background: var(--gold); transform: scale(1.4); }
+  .pgallery-info { text-align: center; margin-top: 14px; color: var(--ink-soft); font-size: 0.88rem; font-weight: 600; letter-spacing: 0.04em; }
   .pgallery-lightbox { position: fixed; inset: 0; background: rgba(10,10,15,0.94); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
   .pgallery-lightbox.open { display: flex; animation: chatPop 0.2s ease; }
   .pgallery-lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.7); border: 2px solid var(--gold); }
@@ -201,8 +209,21 @@
   .pgallery-lightbox-close { position: absolute; top: 22px; right: 22px; width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px); font-size: 1.4rem; line-height: 1; }
   .pgallery-lightbox-close:hover { background: rgba(184,135,70,0.4); }
   .pgallery-lightbox-counter { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.75); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; }
-  @media (max-width: 900px) { .pgallery-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; } .pgallery-lightbox-nav { width: 44px; height: 44px; } .pgallery-lightbox-prev { left: 12px; } .pgallery-lightbox-next { right: 12px; } }
-  @media (max-width: 480px) { .pgallery-grid { grid-template-columns: 1fr; gap: 14px; } .pgallery-tile { aspect-ratio: 3/4; } }
+  @media (max-width: 900px) {
+    .pgallery-viewport { padding: 0 44px; }
+    .pgallery-slide { flex: 0 0 calc((100% - 18px) / 2); }
+    .pgallery-lightbox-nav { width: 44px; height: 44px; }
+    .pgallery-lightbox-prev { left: 12px; }
+    .pgallery-lightbox-next { right: 12px; }
+  }
+  @media (max-width: 600px) {
+    .pgallery-viewport { padding: 0 12px; }
+    .pgallery-slide { flex: 0 0 100%; aspect-ratio: 3/4; }
+    .pgallery-arrow { width: 38px; height: 38px; }
+    .pgallery-arrow svg { width: 18px; height: 18px; }
+    .pgallery-prev { left: -6px; }
+    .pgallery-next { right: -6px; }
+  }
 
   /* Filterable lookbook (image gallery) */
   .lookbook { background: var(--bg); }
@@ -600,20 +621,23 @@
   </div>
 </section>
 
-<!-- Paginated photo gallery -->
+<!-- Photo slider gallery -->
 <section id="photos" class="block pgallery">
   <div class="container">
     <div class="section-head" style="max-width: 720px; margin-left: auto; margin-right: auto; text-align: center;">
       <span class="eyebrow" data-hi="हमारा काम">Our work</span>
       <h2 data-hi="प्रोजेक्ट फोटो गैलरी।" style="margin-left: auto; margin-right: auto;">Project photo gallery.</h2>
-      <p data-hi="हाल के इंस्टॉलेशन और प्रेरणा। बड़ी तस्वीरें देखने के लिए किसी भी टाइल पर टैप करें।">Recent installations and design inspiration. Tap any tile to view it full-size, then swipe through with the arrow controls.</p>
+      <p data-hi="हाल के इंस्टॉलेशन और प्रेरणा। तीर पर टैप करें या स्वाइप करके स्क्रॉल करें। पूरी तस्वीर देखने के लिए किसी भी इमेज पर टैप करें।">Recent installations and design inspiration. Tap the arrows or swipe to scroll through. Tap any photo to view it full-size.</p>
     </div>
-    <div class="pgallery-grid" id="pgallery-grid" aria-live="polite"></div>
-    <div class="pgallery-pager">
-      <button type="button" class="pgallery-btn" id="pgallery-prev" data-hi="← पिछला">&larr; Previous</button>
-      <span class="pgallery-info" id="pgallery-info">Page 1 / 14</span>
-      <button type="button" class="pgallery-btn" id="pgallery-next" data-hi="अगला →">Next &rarr;</button>
+    <div class="pgallery-viewport">
+      <button type="button" class="pgallery-arrow pgallery-prev" id="pgallery-prev" aria-label="Previous slide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="pgallery-window">
+        <div class="pgallery-track" id="pgallery-track" aria-live="polite"></div>
+      </div>
+      <button type="button" class="pgallery-arrow pgallery-next" id="pgallery-next" aria-label="Next slide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
     </div>
+    <div class="pgallery-dots" id="pgallery-dots" role="tablist" aria-label="Gallery pages"></div>
+    <div class="pgallery-info" id="pgallery-info">1 – 3 of 81</div>
   </div>
 </section>
 
@@ -936,34 +960,127 @@
   // Year
   document.getElementById('yr').textContent = new Date().getFullYear();
 
-  // Paginated photo gallery with prev/next lightbox
+  // Photo slider gallery
   (function () {
-    var grid = document.getElementById('pgallery-grid');
+    var track = document.getElementById('pgallery-track');
     var info = document.getElementById('pgallery-info');
     var prev = document.getElementById('pgallery-prev');
     var next = document.getElementById('pgallery-next');
+    var dots = document.getElementById('pgallery-dots');
     var lb = document.getElementById('pgallery-lightbox');
     var lbImg = document.getElementById('pgallery-lightbox-img');
     var lbClose = document.getElementById('pgallery-lightbox-close');
     var lbPrev = document.getElementById('pgallery-lightbox-prev');
     var lbNext = document.getElementById('pgallery-lightbox-next');
     var lbCounter = document.getElementById('pgallery-lightbox-counter');
-    if (!grid || !prev || !next) return;
+    if (!track || !prev || !next) return;
 
     var TOTAL = 81;
-    var PER_PAGE = 6;
-    var pages = Math.ceil(TOTAL / PER_PAGE);
-    var page = 0;
-    var lbIndex = 1; // 1-based index of currently shown lightbox image
+    var pos = 0;          // current first-visible slide (0-indexed)
+    var lbIndex = 1;
 
     function pad(n) { return n < 10 ? '0' + n : '' + n; }
     function srcOf(i) { return '/demo-wallpaper/images/gallery/g' + pad(i) + '.jpg'; }
     function isHi() { return document.body.classList.contains('lang-hi'); }
-    function label() {
-      var p = page + 1;
-      return isHi() ? ('पेज ' + p + ' / ' + pages) : ('Page ' + p + ' / ' + pages);
+    function visibleCount() {
+      var w = window.innerWidth;
+      if (w <= 600) return 1;
+      if (w <= 900) return 2;
+      return 3;
     }
 
+    // Build slides once
+    for (var i = 1; i <= TOTAL; i++) {
+      (function (idx) {
+        var fig = document.createElement('figure');
+        fig.className = 'pgallery-slide';
+        var img = document.createElement('img');
+        img.loading = 'lazy';
+        img.src = srcOf(idx);
+        img.alt = 'Sai Wall Decor project ' + idx;
+        fig.appendChild(img);
+        var hint = document.createElement('span');
+        hint.className = 'zoom-hint';
+        hint.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg>';
+        fig.appendChild(hint);
+        fig.addEventListener('click', function () { openLb(idx); });
+        track.appendChild(fig);
+      })(i);
+    }
+
+    // Build dots (one per "page")
+    function buildDots() {
+      dots.innerHTML = '';
+      var v = visibleCount();
+      var pages = Math.ceil(TOTAL / v);
+      for (var p = 0; p < pages; p++) {
+        (function (page) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'pgallery-dot';
+          b.setAttribute('aria-label', 'Go to slide ' + (page * v + 1));
+          b.addEventListener('click', function () { goTo(page * v); });
+          dots.appendChild(b);
+        })(p);
+      }
+    }
+
+    function clamp(n) {
+      var v = visibleCount();
+      var max = Math.max(0, TOTAL - v);
+      if (n < 0) return 0;
+      if (n > max) return max;
+      return n;
+    }
+
+    function goTo(n) {
+      pos = clamp(n);
+      update();
+    }
+
+    function update() {
+      var v = visibleCount();
+      var slide = track.querySelector('.pgallery-slide');
+      if (!slide) return;
+      var slideW = slide.getBoundingClientRect().width;
+      var gap = 18;
+      var offset = pos * (slideW + gap);
+      track.style.transform = 'translateX(-' + offset + 'px)';
+
+      var max = TOTAL - v;
+      prev.disabled = pos === 0;
+      next.disabled = pos >= max;
+
+      var startN = pos + 1;
+      var endN = Math.min(pos + v, TOTAL);
+      info.textContent = (isHi() ? '' : '') + startN + ' – ' + endN + (isHi() ? ' / ' : ' of ') + TOTAL;
+
+      // Active dot
+      var activePage = Math.floor(pos / v);
+      var dotList = dots.querySelectorAll('.pgallery-dot');
+      dotList.forEach(function (d, idx) { d.classList.toggle('active', idx === activePage); });
+    }
+
+    prev.addEventListener('click', function () { goTo(pos - visibleCount()); });
+    next.addEventListener('click', function () { goTo(pos + visibleCount()); });
+    window.addEventListener('resize', function () { buildDots(); update(); });
+
+    // Touch / swipe
+    var touchStartX = 0, touchDeltaX = 0;
+    track.addEventListener('touchstart', function (e) {
+      touchStartX = e.touches[0].clientX; touchDeltaX = 0;
+    }, { passive: true });
+    track.addEventListener('touchmove', function (e) {
+      touchDeltaX = e.touches[0].clientX - touchStartX;
+    }, { passive: true });
+    track.addEventListener('touchend', function () {
+      if (Math.abs(touchDeltaX) > 40) {
+        if (touchDeltaX < 0) goTo(pos + visibleCount());
+        else goTo(pos - visibleCount());
+      }
+    });
+
+    // Lightbox
     function openLb(i) {
       lbIndex = i;
       lbImg.src = srcOf(i);
@@ -979,45 +1096,10 @@
       if (n > TOTAL) n = 1;
       openLb(n);
     }
-
-    function render() {
-      grid.innerHTML = '';
-      var start = page * PER_PAGE + 1;
-      var end = Math.min(start + PER_PAGE - 1, TOTAL);
-      for (var i = start; i <= end; i++) {
-        var fig = document.createElement('figure');
-        fig.className = 'pgallery-tile';
-        var img = document.createElement('img');
-        img.loading = 'lazy';
-        img.src = srcOf(i);
-        img.alt = 'Sai Wall Decor project ' + i;
-        fig.appendChild(img);
-        var hint = document.createElement('span');
-        hint.className = 'zoom-hint';
-        hint.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg>';
-        fig.appendChild(hint);
-        (function (idx) {
-          fig.addEventListener('click', function () { openLb(idx); });
-        })(i);
-        grid.appendChild(fig);
-      }
-      info.textContent = label();
-      prev.disabled = page === 0;
-      next.disabled = page >= pages - 1;
-    }
-
-    prev.addEventListener('click', function () {
-      if (page > 0) { page--; render(); grid.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-    });
-    next.addEventListener('click', function () {
-      if (page < pages - 1) { page++; render(); grid.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-    });
     lbClose.addEventListener('click', closeLb);
     lbPrev.addEventListener('click', function (e) { e.stopPropagation(); showRel(-1); });
     lbNext.addEventListener('click', function (e) { e.stopPropagation(); showRel(1); });
-    lb.addEventListener('click', function (e) {
-      if (e.target === lb) closeLb();
-    });
+    lb.addEventListener('click', function (e) { if (e.target === lb) closeLb(); });
     document.addEventListener('keydown', function (e) {
       if (!lb.classList.contains('open')) return;
       if (e.key === 'Escape') closeLb();
@@ -1025,9 +1107,12 @@
       else if (e.key === 'ArrowRight') showRel(1);
     });
 
-    render();
+    buildDots();
+    // Defer the first update so slide widths are correct
+    requestAnimationFrame(update);
+
     var btn = document.getElementById('lang-toggle');
-    if (btn) btn.addEventListener('click', function () { setTimeout(function () { info.textContent = label(); }, 50); });
+    if (btn) btn.addEventListener('click', function () { setTimeout(update, 50); });
   })();
 
   // Sai Wall Decor chatbot
