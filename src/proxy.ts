@@ -24,7 +24,7 @@ const CUSTOM_DOMAINS: Record<string, string> = {
   "saiwalldecor.com": "sai",
 };
 
-function extractSubdomain(host: string | null): string | null {
+export function extractSubdomain(host: string | null): string | null {
   if (!host) return null;
   const hostname = host.split(":")[0].toLowerCase();
 

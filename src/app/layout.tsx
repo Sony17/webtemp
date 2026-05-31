@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import WhatsAppContact from "@/components/WhatsAppContact";
+import { extractSubdomain } from "@/proxy";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +30,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const host = (await headers()).get("host") ?? "";
-  const subdomain = host.split(":")[0].split(".")[0].toLowerCase();
+  // Use the proxy's resolver so custom domains (saiwalldecor.com → sai) match.
+  const tenant = extractSubdomain(host);
+  const subdomain = tenant ?? host.split(":")[0].split(".")[0].toLowerCase();
   const showWhatsApp = !HIDE_WHATSAPP_SUBDOMAINS.has(subdomain);
 
   return (
