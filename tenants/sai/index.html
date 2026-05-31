@@ -27,6 +27,7 @@
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
+  section[id] { scroll-margin-top: 80px; }
   body {
     margin: 0;
     font-family: 'Inter', 'Noto Sans Devanagari', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
@@ -45,18 +46,26 @@
 
   .container { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
 
-  /* Top bar */
-  .topbar { position: sticky; top: 0; z-index: 50; background: rgba(245,235,220,0.92); backdrop-filter: saturate(150%) blur(10px); border-bottom: 1px solid var(--line); }
+  /* Top bar — overlays hero (transparent) until user scrolls past it (solid) */
+  .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: transparent; border-bottom: 1px solid transparent; transition: background 0.3s ease, border-color 0.3s ease; }
+  .topbar.solid { background: rgba(245,235,220,0.94); backdrop-filter: saturate(150%) blur(10px); border-bottom-color: var(--line); }
   .topbar-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; max-width: var(--maxw); margin: 0 auto; }
-  .brand { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.01em; }
+  .brand { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.01em; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,0.35); transition: color 0.3s ease, text-shadow 0.3s ease; }
   .brand span { color: var(--gold); }
-  .nav a { color: var(--ink-soft); font-size: 0.95rem; margin-left: 24px; font-weight: 500; transition: color 0.15s; }
-  .nav a:hover { color: var(--ink); }
-  .nav .cta { display: inline-block; background: var(--ink); color: #fff; padding: 8px 16px; border-radius: 999px; font-weight: 600; }
+  .topbar.solid .brand { color: var(--ink); text-shadow: none; }
+  .nav a { color: rgba(255,255,255,0.88); font-size: 0.95rem; margin-left: 24px; font-weight: 500; transition: color 0.15s; text-shadow: 0 1px 6px rgba(0,0,0,0.3); }
+  .nav a:hover { color: #fff; }
+  .topbar.solid .nav a { color: var(--ink-soft); text-shadow: none; }
+  .topbar.solid .nav a:hover { color: var(--ink); }
+  .nav .cta { display: inline-block; background: var(--gold); color: #fff; padding: 8px 16px; border-radius: 999px; font-weight: 600; text-shadow: none; box-shadow: 0 4px 14px rgba(140,99,38,0.35); }
   .nav .cta:hover { background: var(--gold-deep); color: #fff; }
+  .topbar.solid .nav .cta { background: var(--ink); box-shadow: none; }
+  .topbar.solid .nav .cta:hover { background: var(--gold-deep); }
   .menu-btn { display: none; background: none; border: 0; font-size: 1.5rem; cursor: pointer; color: var(--ink); }
-  .lang-toggle { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 1px solid var(--line); color: var(--ink-soft); border-radius: 999px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; margin-left: 18px; font-family: inherit; letter-spacing: 0.04em; transition: all 0.2s; text-transform: uppercase; }
-  .lang-toggle:hover { border-color: var(--ink); color: var(--ink); }
+  .lang-toggle { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.45); color: #fff; border-radius: 999px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; margin-left: 18px; font-family: inherit; letter-spacing: 0.04em; transition: all 0.2s; text-transform: uppercase; backdrop-filter: blur(6px); }
+  .lang-toggle:hover { border-color: #fff; background: rgba(255,255,255,0.18); }
+  .topbar.solid .lang-toggle { background: transparent; border-color: rgba(184,135,70,0.45); color: var(--ink-soft); backdrop-filter: none; }
+  .topbar.solid .lang-toggle:hover { border-color: var(--gold); color: var(--ink); }
   .lang-toggle .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
   body.lang-hi { font-family: 'Noto Sans Devanagari', 'Inter', sans-serif; }
   body.lang-hi h1, body.lang-hi h2 { font-family: 'Noto Sans Devanagari', 'Playfair Display', serif; letter-spacing: 0; }
@@ -690,6 +699,18 @@
 <script>
   // Year
   document.getElementById('yr').textContent = new Date().getFullYear();
+
+  // Sticky-overlay header: transparent over hero, solid once scrolled
+  (function () {
+    var topbar = document.querySelector('.topbar');
+    if (!topbar) return;
+    var onScroll = function () {
+      if (window.scrollY > 60) topbar.classList.add('solid');
+      else topbar.classList.remove('solid');
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  })();
 
   // Highlight today's row
   (function () {
