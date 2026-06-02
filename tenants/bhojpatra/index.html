@@ -365,15 +365,17 @@ footer a{color:var(--gold-light)}
   .dish .dprice{font-size:.92rem}
   .add-btn{width:26px;height:26px;font-size:1rem}
 
-  /* tray: floating bottom bar */
-  .tray{position:fixed;left:10px;right:10px;bottom:10px;top:auto;border-radius:10px;z-index:120;box-shadow:0 -8px 26px rgba(0,0,0,.28);display:flex;align-items:center;border:none}
-  .tray-head{flex:1;padding:10px 14px;background:var(--red);color:var(--cream)}
-  .tray-head b{font-size:.95rem}
-  .tray-head span{font-size:.66rem}
+  /* tray: Zepto-style sticky cart bar, leaves room for platform WhatsApp FAB */
+  .tray{position:fixed;left:10px;right:84px;bottom:14px;top:auto;border-radius:12px;z-index:120;box-shadow:0 12px 32px -8px rgba(0,0,0,.45),0 -2px 8px rgba(0,0,0,.15);display:flex;align-items:stretch;border:none;background:var(--red-deep);overflow:hidden}
+  .tray-head{flex:1;padding:10px 14px;background:transparent;color:var(--cream);display:flex;flex-direction:column;justify-content:center;min-width:0}
+  .tray-head b{font-size:.9rem;font-family:'Jost',sans-serif;font-weight:700;letter-spacing:.3px}
+  body.hi .tray-head b{font-family:'Noto Sans Devanagari'}
+  .tray-head span{font-size:.7rem;color:rgba(251,246,236,.78);display:block;margin-top:1px;letter-spacing:.3px}
   .tray-body{display:none}
-  .tray-foot{padding:0 10px 0 0;background:transparent;border:none;flex-shrink:0}
-  .tray-foot .btn{padding:11px 16px;font-size:.7rem;letter-spacing:.5px}
-  #custBuild{padding-bottom:90px}
+  .tray-foot{padding:0;background:transparent;border:none;flex-shrink:0;display:flex;align-items:stretch}
+  .tray-foot .btn{padding:0 18px;font-size:.74rem;letter-spacing:.6px;border-radius:0;height:auto;display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .tray-foot .btn::after{content:"›";font-size:1.4rem;font-weight:400;line-height:0;margin-left:2px}
+  #custBuild{padding-bottom:96px}
 
   /* vendor match cards: stack */
   .match-vendor{flex-wrap:wrap;padding:12px;gap:10px;border-radius:8px}
@@ -545,7 +547,7 @@ footer a{color:var(--gold-light)}
         <div><div class="dish-grid" id="dishGrid"></div></div>
         <div>
           <div class="tray">
-            <div class="tray-head"><b data-i="tray_title">My Menu</b><span><span id="trayCount">0</span> <span data-i="tray_dishes">dishes selected</span></span></div>
+            <div class="tray-head"><b><span id="trayCount">0</span> <span data-i="tray_dishes">dishes selected</span></b><span id="trayTotal" data-i="tray_subtitle">Build your feast menu</span></div>
             <div class="tray-body" id="trayBody"></div>
             <div class="tray-foot"><button class="btn btn-red" onclick="goToVendors()" data-i="tray_cta">Find Vendors</button></div>
           </div>
@@ -847,7 +849,7 @@ const dishes=[
   {n:{en:'Shahi Tukda',hi:'शाही टुकड़ा'},c:'Mughlai',course:'Dessert',diet:'veg',price:80,img:'photo-1605197788044-5a32c7078486'},
   {n:{en:'Rasgulla',hi:'रसगुल्ला'},c:'Bengali',course:'Dessert',diet:'veg',price:50,img:'photo-1567337710282-00832b415979'},
   {n:{en:'Tiramisu',hi:'तिरामिसु'},c:'Continental',course:'Dessert',diet:'veg',price:160,img:'photo-1571877227200-a0d98ea607e9'},
-  {n:{en:'Payasam',hi:'पायसम'},c:'South Indian',course:'Dessert',diet:'veg',price:70,img:'photo-1605197788044-5a32c7078486'},
+  {n:{en:'Payasam',hi:'पायसम'},c:'South Indian',course:'Dessert',diet:'veg',price:70,img:'photo-1567337710282-00832b415979'},
 ];
 function imgUrl(id){return `https://images.unsplash.com/${id}?w=400&q=70`;}
 
@@ -979,7 +981,7 @@ function renderDishes(){
     const added=CART.dishes.some(x=>x.n.en===d.n.en);
     const otags=(d.occ||[]).slice(0,3).map(o=>`<span class="otag">${occName(o)}</span>`).join('');
     return `<div class="dish ${added?'added':''}">
-      <div class="dimg"><img src="${imgUrl(d.img)}" alt="${d.n.en}" loading="lazy"><span class="vtag ${d.diet}"><i class="${d.diet==='veg'?'veg-dot':'nonveg-dot'}"></i></span></div>
+      <div class="dimg"><img src="${imgUrl(d.img)}" alt="${d.n.en}" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=70'"><span class="vtag ${d.diet}"><i class="${d.diet==='veg'?'veg-dot':'nonveg-dot'}"></i></span></div>
       <div class="dbody"><b>${d.n[lang]}</b>
         <div class="dmeta">${d.c} · ${d.course}</div>
         <div class="otags">${otags}</div>
@@ -995,6 +997,11 @@ function toggleDish(d){
 }
 function renderTray(){
   document.getElementById('trayCount').textContent=CART.dishes.length;
+  const tt=document.getElementById('trayTotal');
+  if(tt){
+    if(!CART.dishes.length){tt.textContent=lang==='en'?'Build your feast menu':'अपना फ़ीस्ट मेन्यू बनाएं';}
+    else{const sum=CART.dishes.reduce((s,d)=>s+d.price,0);tt.innerHTML=`₹${sum}/plate <small style="opacity:.7">· ${lang==='en'?'tap to find vendors':'वेंडर खोजें'}</small>`;}
+  }
   const b=document.getElementById('trayBody');
   if(!CART.dishes.length){b.innerHTML=`<div class="tray-empty">— ${lang==='en'?'No dishes yet':'अभी कोई डिश नहीं'} —</div>`;return;}
   b.innerHTML=CART.dishes.map((d,i)=>`<div class="tray-item"><span>${d.n[lang]} <small style="color:var(--muted)">(${d.diet==='veg'?L().diet_veg:L().diet_nonveg})</small></span><span class="ti-rm" onclick="rmTray(${i})">&times;</span></div>`).join('');
