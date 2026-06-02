@@ -181,25 +181,26 @@ body.hi .dish .dbody b{font-family:'Noto Sans Devanagari'}
 @media(max-width:1000px){.builder{grid-template-columns:1fr}.dish-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.dish-grid{grid-template-columns:1fr}}
 
-/* MY MENU TRAY — slim floating expandable at all widths */
-.tray{position:fixed;left:12px;right:12px;bottom:12px;max-width:560px;margin:0 auto;background:var(--red-deep);border-radius:14px;box-shadow:0 18px 40px -10px rgba(0,0,0,.5),0 -2px 8px rgba(0,0,0,.2);z-index:120;overflow:hidden;display:flex;flex-direction:column;transition:max-height .3s ease}
-.tray-handle{display:flex;align-items:center;cursor:pointer;width:100%}
-.tray-head{flex:1;padding:11px 16px;color:var(--cream);min-width:0}
-.tray-head b{font-family:'Jost',sans-serif;font-size:.92rem;font-weight:700;letter-spacing:.3px;color:var(--cream);display:block;line-height:1.15}
+/* MY MENU TRAY — slim single-row floating bar, body slides above when expanded */
+.tray{position:fixed;left:12px;right:84px;bottom:12px;max-width:520px;margin:0 auto;background:var(--red-deep);border-radius:12px;box-shadow:0 14px 32px -10px rgba(0,0,0,.5),0 -2px 8px rgba(0,0,0,.18);z-index:120;overflow:hidden;display:flex;flex-direction:column}
+.tray-dock{display:flex;align-items:stretch;width:100%;min-height:50px}
+.tray-handle{flex:1;display:flex;align-items:center;cursor:pointer;min-width:0;padding:0}
+.tray-head{flex:1;padding:8px 14px;color:var(--cream);min-width:0;line-height:1.2}
+.tray-head b{font-family:'Jost',sans-serif;font-size:.86rem;font-weight:700;letter-spacing:.3px;color:var(--cream);display:block}
 body.hi .tray-head b{font-family:'Noto Sans Devanagari'}
-.tray-head span{font-size:.7rem;color:rgba(251,246,236,.78);display:block;margin-top:2px;letter-spacing:.3px}
-.tray-chev{color:var(--gold-light);padding:0 12px 0 4px;font-size:1rem;transition:transform .3s;flex-shrink:0;line-height:1;display:flex;align-items:center;height:100%}
+.tray-head span{font-size:.66rem;color:rgba(251,246,236,.72);display:block;margin-top:1px;letter-spacing:.2px}
+.tray-chev{color:var(--gold-light);padding:0 10px 0 2px;font-size:.85rem;transition:transform .3s;flex-shrink:0;display:flex;align-items:center}
 .tray.expanded .tray-chev{transform:rotate(180deg)}
-.tray-body{display:none;background:#fff;max-height:46vh;overflow-y:auto;padding:6px 16px}
+.tray-cta{background:var(--red);color:var(--cream);border:none;padding:0 18px;font-family:'Jost',sans-serif;font-weight:700;font-size:.74rem;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;border-left:1px solid rgba(229,199,107,.2);transition:.2s}
+.tray-cta:hover{background:#a01b1b}
+.tray-cta::after{content:"›";font-size:1.3rem;line-height:0;font-weight:400}
+.tray-body{display:none;background:#fff;max-height:44vh;overflow-y:auto;padding:4px 14px}
 .tray.expanded .tray-body{display:block}
-.tray-item{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px dashed var(--cream-warm);font-size:.9rem;color:var(--ink)}
+.tray-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed var(--cream-warm);font-size:.88rem;color:var(--ink)}
 .tray-item .ti-rm{color:var(--muted);cursor:pointer;font-size:1.3rem;line-height:1;padding:0 4px}
 .tray-item .ti-rm:hover{color:var(--red)}
-.tray-empty{color:var(--muted);font-weight:300;text-align:center;padding:22px 0;font-size:.88rem}
-.tray-foot{padding:0;background:transparent;border-top:1px solid rgba(229,199,107,.18);display:flex}
-.tray-foot .btn{width:100%;justify-content:center;border-radius:0;padding:13px 18px;font-size:.76rem;letter-spacing:.6px;background:var(--red);color:var(--cream);display:flex;align-items:center;gap:6px}
-.tray-foot .btn::after{content:"›";font-size:1.5rem;line-height:0;font-weight:400}
-#custBuild{padding-bottom:100px}
+.tray-empty{color:var(--muted);font-weight:300;text-align:center;padding:18px 0;font-size:.84rem}
+#custBuild{padding-bottom:84px}
 
 /* ===== VENDOR MATCH / BOOKING ===== */
 .match-vendor{display:flex;gap:18px;background:#fff;border:1px solid var(--cream-warm);border-radius:10px;padding:18px;margin-bottom:16px;transition:.25s;cursor:pointer;align-items:center}
@@ -365,8 +366,6 @@ footer a{color:var(--gold-light)}
   .dish .dprice{font-size:.92rem}
   .add-btn{width:26px;height:26px;font-size:1rem}
 
-  /* tray: leave room for platform WhatsApp FAB on phone */
-  .tray{right:84px;left:12px;margin:0}
 
   /* vendor match cards: stack */
   .match-vendor{flex-wrap:wrap;padding:12px;gap:10px;border-radius:8px}
@@ -538,12 +537,14 @@ footer a{color:var(--gold-light)}
         <div><div class="dish-grid" id="dishGrid"></div></div>
         <div>
           <div class="tray" id="trayBar">
-            <div class="tray-handle" onclick="toggleTray()">
-              <div class="tray-head"><b><span id="trayCount">0</span> <span data-i="tray_dishes">dishes selected</span></b><span id="trayTotal" data-i="tray_subtitle">Build your feast menu</span></div>
-              <span class="tray-chev">▾</span>
-            </div>
             <div class="tray-body" id="trayBody"></div>
-            <div class="tray-foot"><button class="btn btn-red" onclick="goToVendors()" data-i="tray_cta">Find Vendors</button></div>
+            <div class="tray-dock">
+              <div class="tray-handle" onclick="toggleTray()">
+                <div class="tray-head"><b><span id="trayCount">0</span> <span data-i="tray_dishes">dishes</span></b><span id="trayTotal" data-i="tray_subtitle">Build your menu</span></div>
+                <span class="tray-chev">▾</span>
+              </div>
+              <button class="tray-cta" onclick="goToVendors()" data-i="tray_cta">Find Vendors</button>
+            </div>
           </div>
         </div>
       </div>
