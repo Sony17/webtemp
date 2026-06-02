@@ -297,6 +297,150 @@ footer a{color:var(--gold-light)}
 .gdiv::before,.gdiv::after{content:"";height:1px;width:50px;background:var(--gold);opacity:.5}
 .gdiv span{width:6px;height:6px;background:var(--gold);transform:rotate(45deg)}
 .done-seal{width:76px;height:76px;border:2px solid var(--gold);border-radius:50%;display:grid;place-items:center;margin:0 auto 18px;color:var(--gold);font-family:'Cormorant Garamond';font-size:2.2rem}
+
+/* ============ MOBILE ============ */
+@media(max-width:740px){
+  .wrap{padding:0 16px}
+  .sec{padding:30px 0}
+  .sec-title{font-size:1.55rem}
+  .sec-sub{margin-bottom:16px;font-size:.88rem}
+  .btn{padding:12px 22px;font-size:.76rem;letter-spacing:.5px}
+  .btn-sm{padding:8px 14px;font-size:.7rem}
+
+  /* nav */
+  nav{padding:9px 14px;gap:8px}
+  .logo b{font-size:1.15rem}
+  .logo span{font-size:.5rem;letter-spacing:2px}
+  .logo .mark{width:28px;height:34px}
+  .nav-right{gap:8px}
+  .mode-switch button{padding:7px 9px;font-size:.62rem;letter-spacing:.5px}
+  .lang-btn{padding:7px 10px;font-size:.66rem;letter-spacing:.5px}
+
+  /* hero */
+  .lhero{min-height:auto;padding:36px 0 30px}
+  .lhero-frame{inset:12px}
+  .lhero h1{font-size:2.1rem;margin-bottom:14px;line-height:1.06}
+  .lhero h1 em{display:inline}
+  .lhero p.lsub{font-size:.98rem;margin-bottom:20px;line-height:1.5}
+  .lhero .kick{margin-bottom:12px;font-size:.62rem;letter-spacing:3px}
+  .lhero .kick::before{width:24px}
+  .lhero-stats{margin-top:22px;gap:16px}
+  .lhero-stats .st b{font-size:1.5rem}
+  .lhero-stats .st span{font-size:.56rem;letter-spacing:1px}
+  .lhero-cue{display:none}
+  .lhero-btns .btn{padding:11px 18px}
+
+  /* occasion strip: horizontal scroll */
+  .occasion-strip{padding:12px 0}
+  .occasion-strip .wrap{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .occasion-strip .wrap::-webkit-scrollbar{display:none}
+  .occasion-strip .ol{flex-shrink:0}
+  .occ-chips{flex-wrap:nowrap}
+  .occ-chip{flex-shrink:0;padding:7px 12px;font-size:.76rem}
+
+  /* offers: 2-col compact */
+  .offer-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .offer{padding:14px 12px 12px;border-radius:8px}
+  .offer h3{font-size:.96rem;margin-bottom:6px}
+  .offer p{font-size:.66rem;margin-bottom:8px;line-height:1.35}
+  .offer .ribbon{font-size:.54rem;padding:3px 8px;margin-bottom:8px;letter-spacing:.5px}
+  .offer .code-box{padding:5px 5px 5px 9px}
+  .offer .code-box .cc{font-size:.7rem;letter-spacing:1px}
+  .offer .code-box .copy{padding:4px 7px;font-size:.54rem}
+
+  /* filters: stacked */
+  .filters{padding:14px;gap:10px;flex-direction:column;align-items:stretch;margin-bottom:18px}
+  .filters .fg{width:100%}
+  .filters select,.filters input{width:100%;min-width:0;padding:10px 12px;font-size:.88rem}
+
+  /* builder: dishes 2-col with floating tray */
+  .builder{grid-template-columns:1fr;gap:14px}
+  .dish-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px}
+  .dish{border-radius:7px}
+  .dish .dimg{height:100px}
+  .dish .dbody{padding:10px 11px}
+  .dish .dbody b{font-size:.98rem;line-height:1.1}
+  .dish .dmeta{font-size:.6rem;margin:3px 0 6px;letter-spacing:.3px}
+  .dish .otags{display:none}
+  .dish .dprice{font-size:.92rem}
+  .add-btn{width:26px;height:26px;font-size:1rem}
+
+  /* tray: floating bottom bar */
+  .tray{position:fixed;left:10px;right:10px;bottom:10px;top:auto;border-radius:10px;z-index:120;box-shadow:0 -8px 26px rgba(0,0,0,.28);display:flex;align-items:center;border:none}
+  .tray-head{flex:1;padding:10px 14px;background:var(--red);color:var(--cream)}
+  .tray-head b{font-size:.95rem}
+  .tray-head span{font-size:.66rem}
+  .tray-body{display:none}
+  .tray-foot{padding:0 10px 0 0;background:transparent;border:none;flex-shrink:0}
+  .tray-foot .btn{padding:11px 16px;font-size:.7rem;letter-spacing:.5px}
+  #custBuild{padding-bottom:90px}
+
+  /* vendor match cards: stack */
+  .match-vendor{flex-wrap:wrap;padding:12px;gap:10px;border-radius:8px}
+  .match-vendor img{width:100%;height:140px;border-radius:6px}
+  .mv-info{flex:1 1 100%;width:100%}
+  .mv-info b{font-size:1.1rem}
+  .mv-info .stars{font-size:.78rem}
+  .mv-info .mv-tag{font-size:.78rem}
+  .mv-actions{flex-direction:row;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:6px}
+  .mv-price{flex:1;text-align:left}
+  .mv-price b{font-size:1.4rem}
+  .ask-btn{flex:1 1 auto;justify-content:center;padding:9px 10px;font-size:.62rem;letter-spacing:.3px}
+
+  /* addon rows */
+  .addon-row{padding:12px 14px}
+  .addon-row b{font-size:.98rem}
+  .addon-row .ap{font-size:.98rem}
+
+  /* review: stacked */
+  #reviewGrid{grid-template-columns:1fr!important;gap:18px!important}
+  .bill{padding:18px 16px;max-width:100%}
+  .bill-row{font-size:.86rem;padding:9px 0}
+  .bill-row.tot{font-size:1.25rem;padding-top:12px}
+  .row2{gap:10px}
+  .field{margin-bottom:12px}
+  .field input,.field select,.field textarea{padding:11px 13px;font-size:.92rem}
+  .field label{font-size:.66rem;letter-spacing:1px}
+
+  /* vendor onboarding card */
+  .phero{padding:34px 0 28px}
+  .phero h1{font-size:1.8rem}
+  .phero p{font-size:.92rem}
+  .card{padding:20px 16px;border-radius:8px}
+  .card h3{font-size:1.3rem}
+  .card .sub{font-size:.88rem;margin-bottom:18px}
+  .steps-bar{gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:20px;padding-bottom:4px}
+  .steps-bar::-webkit-scrollbar{display:none}
+  .steps-bar .sb{flex-shrink:0;padding:8px 11px;font-size:.66rem;letter-spacing:0;min-width:auto;white-space:nowrap}
+
+  /* dashboard */
+  .dash-grid{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:22px}
+  .stat{padding:14px}
+  .stat b{font-size:1.7rem}
+  .stat span{font-size:.62rem}
+  .booking-card{padding:14px;flex-direction:column;align-items:flex-start;gap:8px}
+  .booking-card .bc-info b{font-size:1.05rem}
+  .booking-card>div:last-child{width:100%;justify-content:space-between;display:flex}
+
+  /* modal: bottom sheet */
+  .modal-bg{padding:0;align-items:flex-end}
+  .modal{max-height:90vh;border-radius:14px 14px 0 0;width:100%}
+  .modal-head{padding:16px 18px}
+  .modal-head b{font-size:1.2rem}
+  .modal-head span{font-size:.76rem}
+  .modal-body{padding:16px 18px}
+  .modal-foot{padding:14px 18px;flex-direction:column;gap:8px}
+  .modal-foot .btn{min-width:0;width:100%}
+  .qline{font-size:.84rem}
+
+  footer{padding:26px 16px;font-size:.76rem}
+}
+
+@media(max-width:380px){
+  .lhero h1{font-size:1.85rem}
+  .offer-grid{grid-template-columns:1fr}
+  .dash-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
