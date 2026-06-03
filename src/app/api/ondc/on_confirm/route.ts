@@ -41,6 +41,7 @@ import {
   verifyOndcSignature,
 } from "@/lib/ondc/auth";
 import type { OndcAckResponse, OndcError } from "@/lib/ondc/client";
+import { saveConfirmOrder } from "@/lib/ondc/store";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -231,16 +232,26 @@ function extractAndValidate(
 // ---------------------------------------------------------------------------
 //
 // On ACK the placed order must outlive this request so the Status/Track APIs can
-// read it (they reference the BPP-assigned order_id). That store isn't built
-// yet, so this is the single integration point for it. FUTURE: upsert keyed by
-// (transaction_id, bpp_id) — latest message_id wins, so a re-issued on_confirm
-// (or a subsequent on_status carrying a newer state) replaces the prior one. For
-// now we only log (structured, no secrets) so the flow is observable end-to-end
-// in dev.
+// read it (they reference the BPP-assigned order_id). Backed by the dummy store
+// (src/lib/ondc/store.ts): enriches the OrderRecord for (transaction_id, bpp_id)
+// to stage "confirm" — assigning order_id + initial state and registering the
+// order_id index — last-write-wins, so a re-issued on_confirm (or a subsequent
+// on_status carrying a newer state) replaces the prior snapshot. A store write
+// failure throws (OndcStoreError) and the handler downgrades it to a NACK rather
+// than silently dropping.
 async function persistOnConfirmOrder(data: ExtractedOnConfirm): Promise<void> {
-  // TODO(persistence): replace with a real store (DB/KV). Until then this is a
-  // no-op beyond logging — orders are NOT retained across requests.
-  console.log("ondc.on_confirm received", {
+  await saveConfirmOrder({
+    transactionId: data.transactionId,
+    messageId: data.messageId,
+    bppId: data.bppId,
+    bppUri: data.bppUri,
+    orderId: data.orderId,
+    state: data.order.state,
+    order: data.order,
+    fulfillments: data.fulfillments,
+  });
+  // Structured, no-secrets log — keeps the flow observable end-to-end in dev.
+  console.log("ondc.on_confirm persisted", {
     transactionId: data.transactionId,
     messageId: data.messageId,
     bppId: data.bppId,

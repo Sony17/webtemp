@@ -39,6 +39,7 @@ import {
   verifyOndcSignature,
 } from "@/lib/ondc/auth";
 import type { OndcAckResponse, OndcError } from "@/lib/ondc/client";
+import { saveInitOrder } from "@/lib/ondc/store";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -226,15 +227,23 @@ function extractAndValidate(
 // ---------------------------------------------------------------------------
 //
 // On ACK the firmed-up order must outlive this request so the Confirm API can
-// read it (confirm places the order against this quote + payment terms). That
-// store isn't built yet, so this is the single integration point for it.
-// FUTURE: upsert keyed by (transaction_id, bpp_id) — latest message_id wins, so
-// a BPP's re-issued on_init replaces the prior one for the same init. For now we
-// only log (structured, no secrets) so the flow is observable end-to-end in dev.
+// read it (confirm places the order against this quote + payment terms). Backed
+// by the dummy store (src/lib/ondc/store.ts): drafts the OrderRecord for
+// (transaction_id, bpp_id) at stage "init", last-write-wins, so a BPP's re-issued
+// on_init replaces the prior draft. A store write failure throws (OndcStoreError)
+// and the handler downgrades it to a NACK rather than silently dropping.
 async function persistOnInitOrder(data: ExtractedOnInit): Promise<void> {
-  // TODO(persistence): replace with a real store (DB/KV). Until then this is a
-  // no-op beyond logging — orders are NOT retained across requests.
-  console.log("ondc.on_init received", {
+  await saveInitOrder({
+    transactionId: data.transactionId,
+    messageId: data.messageId,
+    bppId: data.bppId,
+    bppUri: data.bppUri,
+    order: data.order,
+    quote: data.quote,
+    fulfillments: data.fulfillments,
+  });
+  // Structured, no-secrets log — keeps the flow observable end-to-end in dev.
+  console.log("ondc.on_init persisted", {
     transactionId: data.transactionId,
     messageId: data.messageId,
     bppId: data.bppId,

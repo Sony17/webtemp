@@ -38,6 +38,7 @@ import {
   verifyOndcSignature,
 } from "@/lib/ondc/auth";
 import type { OndcAckResponse, OndcError } from "@/lib/ondc/client";
+import { saveCatalog } from "@/lib/ondc/store";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -200,15 +201,21 @@ function extractAndValidate(
 // ---------------------------------------------------------------------------
 //
 // On ACK the catalog must outlive this request so the Select API can read it.
-// That store isn't built yet, so this is the single integration point for it.
-// FUTURE: upsert keyed by (transaction_id, bpp_id) — and message_id for a
-// BPP's incremental refreshes — so the N async callbacks for one transaction
-// accumulate into one aggregated, queryable result set. For now we only log
-// (structured, no secrets) so the flow is observable end-to-end in dev.
+// Backed by the dummy store (src/lib/ondc/store.ts): upsert keyed by
+// (transaction_id, bpp_id, message_id) so the N async callbacks for one
+// transaction — and a BPP's incremental refreshes — accumulate into one
+// aggregated, queryable result set. A store write failure throws (OndcStoreError)
+// and the handler downgrades it to a NACK rather than silently dropping.
 async function persistOnSearchCatalog(data: ExtractedOnSearch): Promise<void> {
-  // TODO(persistence): replace with a real store (DB/KV). Until then this is a
-  // no-op beyond logging — catalogs are NOT retained across requests.
-  console.log("ondc.on_search received", {
+  await saveCatalog({
+    transactionId: data.transactionId,
+    messageId: data.messageId,
+    bppId: data.bppId,
+    bppUri: data.bppUri,
+    catalog: data.catalog,
+  });
+  // Structured, no-secrets log — keeps the flow observable end-to-end in dev.
+  console.log("ondc.on_search persisted", {
     transactionId: data.transactionId,
     messageId: data.messageId,
     bppId: data.bppId,

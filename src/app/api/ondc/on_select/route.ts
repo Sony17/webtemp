@@ -38,6 +38,7 @@ import {
   verifyOndcSignature,
 } from "@/lib/ondc/auth";
 import type { OndcAckResponse, OndcError } from "@/lib/ondc/client";
+import { saveQuote } from "@/lib/ondc/store";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -219,15 +220,22 @@ function extractAndValidate(
 // ---------------------------------------------------------------------------
 //
 // On ACK the quote must outlive this request so the Init/Confirm APIs can read
-// it (init firms billing/fulfillment against this quote). That store isn't built
-// yet, so this is the single integration point for it.
-// FUTURE: upsert keyed by (transaction_id, bpp_id) — latest message_id wins, so
-// a BPP's re-quote replaces the prior one for the same select. For now we only
-// log (structured, no secrets) so the flow is observable end-to-end in dev.
+// it (init firms billing/fulfillment against this quote). Backed by the dummy
+// store (src/lib/ondc/store.ts): upsert keyed by (transaction_id, bpp_id) with
+// last-write-wins, so a BPP's re-quote replaces the prior one for the same
+// select. A store write failure throws (OndcStoreError) and the handler
+// downgrades it to a NACK rather than silently dropping.
 async function persistOnSelectQuote(data: ExtractedOnSelect): Promise<void> {
-  // TODO(persistence): replace with a real store (DB/KV). Until then this is a
-  // no-op beyond logging — quotes are NOT retained across requests.
-  console.log("ondc.on_select received", {
+  await saveQuote({
+    transactionId: data.transactionId,
+    messageId: data.messageId,
+    bppId: data.bppId,
+    bppUri: data.bppUri,
+    quote: data.quote,
+    fulfillments: data.fulfillments,
+  });
+  // Structured, no-secrets log — keeps the flow observable end-to-end in dev.
+  console.log("ondc.on_select persisted", {
     transactionId: data.transactionId,
     messageId: data.messageId,
     bppId: data.bppId,
