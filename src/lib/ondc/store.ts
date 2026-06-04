@@ -68,7 +68,13 @@ export type QuoteRecord = {
 };
 
 // Which lifecycle stage last touched an OrderRecord.
-export type OrderStage = "init" | "confirm" | "status" | "track" | "cancel";
+export type OrderStage =
+  | "init"
+  | "confirm"
+  | "status"
+  | "track"
+  | "cancel"
+  | "update";
 
 // One milestone from an on_status callback (packed → picked → delivered …),
 // accumulated so the order's progression stays observable.
@@ -85,6 +91,8 @@ export type OrderStatusSnapshot = {
 //   on_status  → updates state + appends to statusHistory, stage "status"
 //   on_track   → updates the latest tracking snapshot, stage "track"
 //   on_cancel  → records the cancellation + terminal milestone, stage "cancel"
+//   on_update  → applies the BPP's updated order (payments / fulfillments / state)
+//                + appends a milestone, stage "update"
 // orderId is absent until on_confirm; a secondary index (orderId → key) lets a
 // future Status/Track API look the order up by order_id alone.
 export type OrderRecord = {
@@ -95,6 +103,13 @@ export type OrderRecord = {
   state?: unknown; // latest known order state (confirm/status)
   order: unknown; // latest opaque order payload
   quote: unknown; // latest known quote (init/confirm)
+  // Latest known payment terms / status (collection, settlement, refunds). ONDC
+  // spells this `payments` (an array) in 1.2.x. Carried forward across callbacks
+  // and most relevant to on_update, which is how a BPP reports a payment-status
+  // change (e.g. COD collected, refund settled). Opaque pass-through; absent
+  // until a callback that carries it (on_update — or any future stage wired to
+  // populate it). Last-write-wins.
+  payments?: unknown;
   fulfillments: unknown; // latest assigned agent / tracking / delivery state
   // Latest tracking snapshot from on_track (url / live location / active|inactive
   // status / tags). Last-write-wins: on_track reports CURRENT tracking state, so
@@ -111,6 +126,57 @@ export type OrderRecord = {
   statusHistory: OrderStatusSnapshot[];
   createdAt: number;
   updatedAt: number;
+};
+
+// The support contact channels a BPP returned for a `support` request. STANDALONE
+// — deliberately NOT part of OrderRecord: a support request can be general (no
+// order) and on_support carries no order/order_id, so it is keyed only by
+// (transactionId, bppId), the same spine every directed action shares. One record
+// per (transactionId, bppId); a re-issue replaces it (last-write-wins).
+//
+// The contact fields are opaque pass-through (ONDC 1.2.x sends flat phone/email/
+// uri, some networks add GRO details) — we keep whatever the BPP sent under
+// `support` and surface the common channels for convenience. `refId` is the
+// request-side subject id (order_id / transaction_id) echoed back when present.
+export type SupportRecord = {
+  transactionId: string;
+  bppId: string;
+  bppUri: string;
+  messageId: string;
+  phone?: string;
+  email?: string;
+  uri?: string;
+  refId?: string;
+  support: unknown; // the full opaque on_support message
+  receivedAt: number;
+};
+
+// The feedback the BPP returned for a `rating` submission. STANDALONE — like
+// SupportRecord, and for the same reason: on_rating carries NO order and NO
+// order_id, only a `feedback_form` (an optional follow-up form the buyer MAY
+// fill in) and/or ack flags. So it is keyed only by (transactionId, bppId), the
+// lifecycle spine every directed action shares. One record per (transactionId,
+// bppId); a re-submitted rating replaces it (last-write-wins).
+//
+// The contact with the wire is opaque pass-through: on_rating's `feedback_form`
+// is `{ form: { url, mime_type }, required }` in the common case, but networks
+// vary (some return only `feedback_ack` / `rating_ack`). We keep the whole
+// message under `feedback` and lift the common fields out for convenience.
+export type RatingRecord = {
+  transactionId: string;
+  bppId: string;
+  bppUri: string;
+  messageId: string;
+  // The feedback_form object as received (opaque), when present.
+  feedbackForm?: unknown;
+  // Convenience-lifted common fields off feedback_form / message.
+  feedbackFormUrl?: string; // feedback_form.form.url
+  feedbackFormMimeType?: string; // feedback_form.form.mime_type
+  feedbackRequired?: boolean; // feedback_form.required
+  feedbackAck?: boolean; // message.feedback_ack
+  ratingAck?: boolean; // message.rating_ack
+  feedback: unknown; // the full opaque on_rating message
+  receivedAt: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -199,11 +265,73 @@ export type SaveCancelInput = {
   fulfillments: unknown;
 };
 
+// on_update carries the full updated order (its `id`, possibly a new `state`, and
+// whichever facets the update touched — typically `payments` and/or
+// `fulfillments`). Like on_status/on_cancel it has an orderId (order.id) so we
+// re-assert the secondary index; like them it can represent a state transition,
+// so the caller appends it to statusHistory. `update` is GENERIC: we do not model
+// returns/replacements specially — the order is passed through opaquely and the
+// updated payments/fulfillments are persisted as-is. on_update may arrive without
+// a preceding BAP /update (a BPP can push an unsolicited update), so the writer
+// creates the record defensively when needed.
+export type SaveUpdateOrderInput = {
+  transactionId: string;
+  messageId: string;
+  bppId: string;
+  bppUri: string;
+  orderId: string;
+  state: unknown;
+  order: unknown;
+  // The updated payment terms / status from the on_update order. Persisted to the
+  // OrderRecord's `payments`; when the update didn't restate payments, the prior
+  // value is retained.
+  payments?: unknown;
+  fulfillments: unknown;
+};
+
+// on_support carries the contact channels (phone / email / uri) and no order. We
+// key it by (transactionId, bppId) only — there is no order_id to index. The
+// common channels are lifted out for convenience; the full message is retained
+// opaquely under `support`.
+export type SaveSupportInput = {
+  transactionId: string;
+  messageId: string;
+  bppId: string;
+  bppUri: string;
+  phone?: string;
+  email?: string;
+  uri?: string;
+  refId?: string;
+  support: unknown;
+};
+
+// on_rating carries the feedback_form (and/or ack flags) and no order. We key it
+// by (transactionId, bppId) only — there is no order_id to index. The common
+// feedback_form fields are lifted out for convenience; the full message is
+// retained opaquely under `feedback`.
+export type SaveRatingInput = {
+  transactionId: string;
+  messageId: string;
+  bppId: string;
+  bppUri: string;
+  feedbackForm?: unknown;
+  feedbackFormUrl?: string;
+  feedbackFormMimeType?: string;
+  feedbackRequired?: boolean;
+  feedbackAck?: boolean;
+  ratingAck?: boolean;
+  feedback: unknown;
+};
+
 // ---------------------------------------------------------------------------
 // Backend — Maps as source of truth, write-through JSON snapshot for durability.
 // ---------------------------------------------------------------------------
 
-const SNAPSHOT_VERSION = 1 as const;
+// Bumped 1 → 2 when the standalone `supports` collection was added, 2 → 3 when
+// the standalone `ratings` collection was added. Old (v1/v2) snapshots remain
+// readable: the defensive reader defaults any missing collection to empty, so an
+// older file simply loads with no supports/ratings (backward compatible).
+const SNAPSHOT_VERSION = 3 as const;
 
 const DATA_FILE = path.join(process.cwd(), "data", "ondc", "store.json");
 const BLOB_KEY = "system/ondc/store.json";
@@ -215,6 +343,8 @@ type StoreSnapshot = {
   catalogs: CatalogRecord[];
   quotes: QuoteRecord[];
   orders: OrderRecord[];
+  supports: SupportRecord[];
+  ratings: RatingRecord[];
 };
 
 // In-memory state. Held on a globalThis singleton so Next dev's HMR (which re-
@@ -224,6 +354,8 @@ type StoreState = {
   quotes: Map<string, QuoteRecord>; // key: txn|bpp
   orders: Map<string, OrderRecord>; // key: txn|bpp
   orderIndex: Map<string, string>; // orderId -> txn|bpp
+  supports: Map<string, SupportRecord>; // key: txn|bpp
+  ratings: Map<string, RatingRecord>; // key: txn|bpp
   hydration: Promise<void> | null; // memoized one-time load from disk/blob
   writeQueue: Promise<void>; // serializes read-modify-write persists
 };
@@ -240,6 +372,8 @@ function getState(): StoreState {
       quotes: new Map(),
       orders: new Map(),
       orderIndex: new Map(),
+      supports: new Map(),
+      ratings: new Map(),
       hydration: null,
       writeQueue: Promise.resolve(),
     };
@@ -265,7 +399,14 @@ function catalogKey(
 // ---------------------------------------------------------------------------
 
 function emptySnapshot(): StoreSnapshot {
-  return { version: SNAPSHOT_VERSION, catalogs: [], quotes: [], orders: [] };
+  return {
+    version: SNAPSHOT_VERSION,
+    catalogs: [],
+    quotes: [],
+    orders: [],
+    supports: [],
+    ratings: [],
+  };
 }
 
 async function readSnapshot(): Promise<StoreSnapshot> {
@@ -299,6 +440,10 @@ async function readSnapshot(): Promise<StoreSnapshot> {
     catalogs: Array.isArray(snap?.catalogs) ? snap!.catalogs : [],
     quotes: Array.isArray(snap?.quotes) ? snap!.quotes : [],
     orders: Array.isArray(snap?.orders) ? snap!.orders : [],
+    // Absent in v1 snapshots → defaults to empty (backward compatible).
+    supports: Array.isArray(snap?.supports) ? snap!.supports : [],
+    // Absent in v1/v2 snapshots → defaults to empty (backward compatible).
+    ratings: Array.isArray(snap?.ratings) ? snap!.ratings : [],
   };
 }
 
@@ -338,6 +483,12 @@ async function loadSnapshot(s: StoreState): Promise<void> {
     s.orders.set(key, o);
     if (o.orderId) s.orderIndex.set(o.orderId, key);
   }
+  for (const sup of snap.supports) {
+    s.supports.set(compositeKey(sup.transactionId, sup.bppId), sup);
+  }
+  for (const r of snap.ratings) {
+    s.ratings.set(compositeKey(r.transactionId, r.bppId), r);
+  }
 }
 
 // Serialize a synchronous mutation of the Maps followed by a full-snapshot
@@ -361,6 +512,8 @@ async function persist(s: StoreState): Promise<void> {
     catalogs: [...s.catalogs.values()],
     quotes: [...s.quotes.values()],
     orders: [...s.orders.values()],
+    supports: [...s.supports.values()],
+    ratings: [...s.ratings.values()],
   };
   try {
     await writeSnapshot(snapshot);
@@ -434,6 +587,7 @@ export async function saveInitOrder(input: SaveInitOrderInput): Promise<void> {
       state: existing?.state,
       order: input.order,
       quote: input.quote,
+      payments: existing?.payments,
       fulfillments: input.fulfillments,
       tracking: existing?.tracking,
       cancellation: existing?.cancellation,
@@ -467,6 +621,7 @@ export async function saveConfirmOrder(
       state: input.state,
       order: input.order,
       quote: input.quote ?? existing?.quote,
+      payments: existing?.payments,
       fulfillments: input.fulfillments,
       tracking: existing?.tracking,
       cancellation: existing?.cancellation,
@@ -504,6 +659,7 @@ export async function saveStatusUpdate(
       state: input.state,
       order: input.order,
       quote: existing?.quote,
+      payments: existing?.payments,
       fulfillments: input.fulfillments,
       tracking: existing?.tracking,
       cancellation: existing?.cancellation,
@@ -540,6 +696,7 @@ export async function saveTrackingUpdate(
       state: existing?.state,
       order: existing?.order,
       quote: existing?.quote,
+      payments: existing?.payments,
       fulfillments: existing?.fulfillments,
       tracking: input.tracking,
       cancellation: existing?.cancellation,
@@ -581,6 +738,7 @@ export async function saveCancelUpdate(
       state: input.state,
       order: input.order,
       quote: existing?.quote,
+      payments: existing?.payments,
       fulfillments: input.fulfillments,
       tracking: existing?.tracking,
       cancellation: input.cancellation,
@@ -591,6 +749,97 @@ export async function saveCancelUpdate(
       updatedAt: ts,
     });
     s.orderIndex.set(input.orderId, key);
+  });
+}
+
+// on_update: apply the BPP's updated order to (txn, bpp) and mark stage "update".
+// GENERIC update — no special return/replacement handling: we persist the updated
+// `payments` (falling back to the prior value when the update didn't restate
+// them) and `fulfillments`, refresh the opaque `order`, update `state`, and append
+// the milestone to statusHistory (an update can be a state transition). Preserves
+// everything else (quote/tracking/cancellation) and carries the prior quote
+// forward. Creates the record defensively if no prior callback was seen (an
+// unsolicited BPP-pushed update). Re-asserts the orderId index since on_update can
+// arrive before/without confirm.
+export async function saveUpdateOrder(
+  input: SaveUpdateOrderInput
+): Promise<void> {
+  await ensureHydrated();
+  await enqueuePersist(() => {
+    const s = getState();
+    const key = compositeKey(input.transactionId, input.bppId);
+    const existing = s.orders.get(key);
+    const ts = now();
+    const statusHistory = [
+      ...(existing?.statusHistory ?? []),
+      { state: input.state, messageId: input.messageId, at: ts },
+    ];
+    s.orders.set(key, {
+      transactionId: input.transactionId,
+      bppId: input.bppId,
+      bppUri: input.bppUri,
+      orderId: input.orderId,
+      state: input.state,
+      order: input.order,
+      quote: existing?.quote,
+      payments: input.payments ?? existing?.payments,
+      fulfillments: input.fulfillments,
+      tracking: existing?.tracking,
+      cancellation: existing?.cancellation,
+      stage: "update",
+      messageId: input.messageId,
+      statusHistory,
+      createdAt: existing?.createdAt ?? ts,
+      updatedAt: ts,
+    });
+    s.orderIndex.set(input.orderId, key);
+  });
+}
+
+// on_support: upsert the support contact channels for (txn, bpp). STANDALONE —
+// does NOT touch any OrderRecord. Last write wins (a re-issued on_support replaces
+// the prior one). Keyed by (txn, bpp) only; there is no order_id to index.
+export async function saveSupport(input: SaveSupportInput): Promise<void> {
+  await ensureHydrated();
+  await enqueuePersist(() => {
+    const s = getState();
+    s.supports.set(compositeKey(input.transactionId, input.bppId), {
+      transactionId: input.transactionId,
+      bppId: input.bppId,
+      bppUri: input.bppUri,
+      messageId: input.messageId,
+      phone: input.phone,
+      email: input.email,
+      uri: input.uri,
+      refId: input.refId,
+      support: input.support,
+      receivedAt: now(),
+    });
+  });
+}
+
+// on_rating: upsert the feedback for (txn, bpp). STANDALONE — does NOT touch any
+// OrderRecord (on_rating carries no order/order_id). Last write wins (a re-issued
+// on_rating replaces the prior one). Keyed by (txn, bpp) only; there is no
+// order_id to index. Mirrors saveSupport exactly.
+export async function saveRating(input: SaveRatingInput): Promise<void> {
+  await ensureHydrated();
+  await enqueuePersist(() => {
+    const s = getState();
+    s.ratings.set(compositeKey(input.transactionId, input.bppId), {
+      transactionId: input.transactionId,
+      bppId: input.bppId,
+      bppUri: input.bppUri,
+      messageId: input.messageId,
+      feedbackForm: input.feedbackForm,
+      feedbackFormUrl: input.feedbackFormUrl,
+      feedbackFormMimeType: input.feedbackFormMimeType,
+      feedbackRequired: input.feedbackRequired,
+      feedbackAck: input.feedbackAck,
+      ratingAck: input.ratingAck,
+      feedback: input.feedback,
+      receivedAt: now(),
+    });
   });
 }
 
@@ -640,4 +889,25 @@ export async function getOrderById(
   const s = getState();
   const key = s.orderIndex.get(orderId);
   return key ? s.orders.get(key) ?? null : null;
+}
+
+// The support contact channels a BPP returned for (txn, bpp), or null. This is
+// what a buyer UI reads to show "contact the seller" details after on_support.
+export async function getSupport(
+  transactionId: string,
+  bppId: string
+): Promise<SupportRecord | null> {
+  await ensureHydrated();
+  return getState().supports.get(compositeKey(transactionId, bppId)) ?? null;
+}
+
+// The feedback a BPP returned for (txn, bpp) after a rating, or null. This is
+// what a buyer UI reads to render an optional follow-up feedback form (or to
+// confirm the rating was recorded) after on_rating.
+export async function getRating(
+  transactionId: string,
+  bppId: string
+): Promise<RatingRecord | null> {
+  await ensureHydrated();
+  return getState().ratings.get(compositeKey(transactionId, bppId)) ?? null;
 }
