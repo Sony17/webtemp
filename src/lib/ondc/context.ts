@@ -53,7 +53,7 @@ export type OndcContext = {
 // only supports the 1.2.x family. Before production rollout, refactor version
 // handling into a VersionProfile strategy so 1.2.0 / 1.2.5 / 2.0.x can be
 // switched without duplicating builder logic. See ./VERSIONING.md.
-export const ONDC_CORE_VERSION = "1.2.0";
+export const ONDC_CORE_VERSION = "1.2.5";
 
 // `search` is the only BAP action that omits BPP routing (it's broadcast to the
 // gateway). Everything else is directed at a specific BPP.

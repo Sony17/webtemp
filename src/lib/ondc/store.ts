@@ -68,7 +68,7 @@ export type QuoteRecord = {
 };
 
 // Which lifecycle stage last touched an OrderRecord.
-export type OrderStage = "init" | "confirm" | "status";
+export type OrderStage = "init" | "confirm" | "status" | "track" | "cancel";
 
 // One milestone from an on_status callback (packed → picked → delivered …),
 // accumulated so the order's progression stays observable.
@@ -83,6 +83,8 @@ export type OrderStatusSnapshot = {
 //   on_init    → drafts it (final quote, firmed order), stage "init"
 //   on_confirm → assigns orderId + initial state, stage "confirm"
 //   on_status  → updates state + appends to statusHistory, stage "status"
+//   on_track   → updates the latest tracking snapshot, stage "track"
+//   on_cancel  → records the cancellation + terminal milestone, stage "cancel"
 // orderId is absent until on_confirm; a secondary index (orderId → key) lets a
 // future Status/Track API look the order up by order_id alone.
 export type OrderRecord = {
@@ -94,6 +96,16 @@ export type OrderRecord = {
   order: unknown; // latest opaque order payload
   quote: unknown; // latest known quote (init/confirm)
   fulfillments: unknown; // latest assigned agent / tracking / delivery state
+  // Latest tracking snapshot from on_track (url / live location / active|inactive
+  // status / tags). Last-write-wins: on_track reports CURRENT tracking state, so
+  // we keep only the most recent — not an accumulating trail. Absent until the
+  // first on_track for this order.
+  tracking?: unknown;
+  // The cancellation block from on_cancel (cancelled_by / reason.id / …). Present
+  // once the order is cancelled — by the buyer (after a /cancel) OR unsolicited
+  // by the seller (force cancel). Last-write-wins. The terminal Cancelled state
+  // also lands in `state` and is appended to statusHistory as a milestone.
+  cancellation?: unknown;
   stage: OrderStage;
   messageId: string; // messageId of the latest callback that touched this
   statusHistory: OrderStatusSnapshot[];
@@ -154,6 +166,36 @@ export type SaveStatusUpdateInput = {
   orderId: string;
   state: unknown;
   order: unknown;
+  fulfillments: unknown;
+};
+
+// on_track carries a `tracking` object but NO order / order_id — the callback is
+// correlated to its order purely by (transactionId, bppId), the lifecycle spine.
+// So, unlike the status input, there is no orderId here: we resolve the existing
+// OrderRecord by composite key and enrich it.
+export type SaveTrackingInput = {
+  transactionId: string;
+  messageId: string;
+  bppId: string;
+  bppUri: string;
+  tracking: unknown;
+};
+
+// on_cancel carries the full updated order (state "Cancelled") plus a
+// `cancellation` block (cancelled_by / reason.id). Like on_status it has an
+// orderId (order.id) so we re-assert the secondary index; unlike a poll it is a
+// TERMINAL state transition — the caller appends it to statusHistory too.
+// on_cancel may be UNSOLICITED (seller force-cancel) so this can arrive with no
+// prior /cancel; the writer creates the record defensively when needed.
+export type SaveCancelInput = {
+  transactionId: string;
+  messageId: string;
+  bppId: string;
+  bppUri: string;
+  orderId: string;
+  state: unknown;
+  order: unknown;
+  cancellation: unknown;
   fulfillments: unknown;
 };
 
@@ -393,6 +435,8 @@ export async function saveInitOrder(input: SaveInitOrderInput): Promise<void> {
       order: input.order,
       quote: input.quote,
       fulfillments: input.fulfillments,
+      tracking: existing?.tracking,
+      cancellation: existing?.cancellation,
       stage: "init",
       messageId: input.messageId,
       statusHistory: existing?.statusHistory ?? [],
@@ -424,6 +468,8 @@ export async function saveConfirmOrder(
       order: input.order,
       quote: input.quote ?? existing?.quote,
       fulfillments: input.fulfillments,
+      tracking: existing?.tracking,
+      cancellation: existing?.cancellation,
       stage: "confirm",
       messageId: input.messageId,
       statusHistory: existing?.statusHistory ?? [],
@@ -459,7 +505,86 @@ export async function saveStatusUpdate(
       order: input.order,
       quote: existing?.quote,
       fulfillments: input.fulfillments,
+      tracking: existing?.tracking,
+      cancellation: existing?.cancellation,
       stage: "status",
+      messageId: input.messageId,
+      statusHistory,
+      createdAt: existing?.createdAt ?? ts,
+      updatedAt: ts,
+    });
+    s.orderIndex.set(input.orderId, key);
+  });
+}
+
+// on_track: refresh the order's latest tracking snapshot (last-write-wins) and
+// mark stage "track". on_track carries NO order_id, so we correlate by
+// (txn, bpp) and preserve everything else (orderId/state/order/quote/
+// fulfillments/statusHistory). Creates a minimal record if track somehow
+// precedes confirm (defensive against out-of-order / unsolicited callbacks);
+// orderId stays undefined in that case until a later confirm/status fills it in.
+export async function saveTrackingUpdate(
+  input: SaveTrackingInput
+): Promise<void> {
+  await ensureHydrated();
+  await enqueuePersist(() => {
+    const s = getState();
+    const key = compositeKey(input.transactionId, input.bppId);
+    const existing = s.orders.get(key);
+    const ts = now();
+    s.orders.set(key, {
+      transactionId: input.transactionId,
+      bppId: input.bppId,
+      bppUri: input.bppUri,
+      orderId: existing?.orderId,
+      state: existing?.state,
+      order: existing?.order,
+      quote: existing?.quote,
+      fulfillments: existing?.fulfillments,
+      tracking: input.tracking,
+      cancellation: existing?.cancellation,
+      stage: "track",
+      messageId: input.messageId,
+      statusHistory: existing?.statusHistory ?? [],
+      createdAt: existing?.createdAt ?? ts,
+      updatedAt: ts,
+    });
+  });
+}
+
+// on_cancel: record the cancellation on the order for (txn, bpp) and mark stage
+// "cancel". Sets the dedicated `cancellation` block AND appends the terminal
+// Cancelled milestone to statusHistory (a cancel is a state transition, like
+// on_status). Preserves everything else (order/quote/tracking) and carries the
+// init/confirm quote forward. Creates the record defensively if no prior
+// init/confirm/cancel was seen — covering the UNSOLICITED seller force-cancel,
+// where on_cancel is the first callback we see for this order. Re-asserts the
+// orderId index since on_cancel can arrive before/without confirm.
+export async function saveCancelUpdate(
+  input: SaveCancelInput
+): Promise<void> {
+  await ensureHydrated();
+  await enqueuePersist(() => {
+    const s = getState();
+    const key = compositeKey(input.transactionId, input.bppId);
+    const existing = s.orders.get(key);
+    const ts = now();
+    const statusHistory = [
+      ...(existing?.statusHistory ?? []),
+      { state: input.state, messageId: input.messageId, at: ts },
+    ];
+    s.orders.set(key, {
+      transactionId: input.transactionId,
+      bppId: input.bppId,
+      bppUri: input.bppUri,
+      orderId: input.orderId,
+      state: input.state,
+      order: input.order,
+      quote: existing?.quote,
+      fulfillments: input.fulfillments,
+      tracking: existing?.tracking,
+      cancellation: input.cancellation,
+      stage: "cancel",
       messageId: input.messageId,
       statusHistory,
       createdAt: existing?.createdAt ?? ts,

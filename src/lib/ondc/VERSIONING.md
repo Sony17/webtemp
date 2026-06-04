@@ -1,18 +1,19 @@
 # ONDC versioning — technical note & pre-production TODO
 
 **Status:** Planned, not implemented. **Gate:** must be done **before production rollout**.
-**Owner:** _unassigned_ · **Last verified:** 2026-06-03
+**Owner:** _unassigned_ · **Last verified:** 2026-06-04
 
 ## TL;DR
 
-`context.ts` currently hardcodes a single protocol version (`ONDC_CORE_VERSION = "1.2.0"`)
+`context.ts` currently hardcodes a single protocol version (`ONDC_CORE_VERSION = "1.2.5"`)
 and emits the **flat** `country` / `city` context shape. This is correct for the
 **1.2.x B2C domestic Retail** family only. Before production we will refactor version
 handling into a **VersionProfile strategy** so multiple ONDC versions can be switched
 from config without duplicating builder logic.
 
-**Do not implement the switch yet** — current behavior is intentionally frozen at 1.2.0
-until the onboarding version is confirmed (see "Open question" below).
+**Do not implement the switch yet** — the active Retail protocol version is confirmed as
+**1.2.5** (flat shape), so the single pinned constant is correct for now. The strategy
+refactor remains gated on multi-version/2.0.x support (see "Open question" below).
 
 ## Why this is needed
 
@@ -70,7 +71,7 @@ invariant fields → spread `{ [profile.versionField]: profile.versionValue,
 ...profile.renderLocation(country, city) }`. No `if (version === …)` ladder.
 
 **Default version source:** add a validated `protocolVersion` to `config.ts`
-(new env `ONDC_PROTOCOL_VERSION`, default `"1.2.0"`), validated against the registry
+(new env `ONDC_PROTOCOL_VERSION`, default `"1.2.5"`), validated against the registry
 keys with the existing fail-fast aggregation. Version is a deployment/environment
 property, so it belongs with the other env-driven config. A per-call `version` override
 stays available for tests and mixed-version interop.
@@ -109,12 +110,14 @@ object, so narrowing cost is near-zero, and an illegal shape (e.g. `version` + f
 - [ ] Invalid `ONDC_PROTOCOL_VERSION` fails fast at config load with a clear message.
 - [ ] `ONDC_CORE_VERSION` constant in `context.ts` is removed/replaced by the registry.
 
-## Open question (blocks defaulting)
+## Open question (blocks the multi-version refactor, not the current value)
 
-Which ONDC Retail track our NP onboarding / Preprod environment is approved against
-(B2C 1.2.0 vs B2B 2.0.2 vs B2C-Exports 2.0) is **not** derivable from the codebase — it
-lives in the ONDC NP registration / subscriber approval. Until confirmed, `context.ts`
-stays pinned at 1.2.0 (flat shape). Resolving this sets the config default version.
+The active Retail protocol version is confirmed as **1.2.5** (B2C domestic, flat shape),
+and `context.ts` is pinned there. What remains open is whether any of our environments
+must also target a **structurally different** track (B2B 2.0.2 / B2C-Exports 2.0) — that
+is **not** derivable from the codebase; it lives in the ONDC NP registration / subscriber
+approval. Resolving it determines whether the VersionProfile registry is needed and which
+profiles to seed; it does **not** change today's `1.2.5` default.
 
 ## References
 
