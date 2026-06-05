@@ -393,6 +393,18 @@
   .socials a.yt:hover svg { fill: #FF0000; }
   .socials a.gm:hover svg { fill: #4285F4; }
 
+  /* WhatsApp QR card in footer */
+  .wa-qr {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 8px;
+    margin-top: 16px; padding: 10px; border-radius: 12px;
+    background: #fff; text-decoration: none;
+    width: fit-content;
+    transition: transform 0.15s ease;
+  }
+  .wa-qr:hover { transform: translateY(-2px); }
+  .wa-qr img { display: block; border-radius: 6px; }
+  .wa-qr span { font-size: 0.78rem; color: #25D366; font-weight: 600; letter-spacing: 0.02em; }
+
   /* Inline socials (light bg) */
   .socials-light a { background: var(--panel); border-color: var(--line); }
   .socials-light a:hover { background: #fff; border-color: var(--gold); }
@@ -839,17 +851,18 @@
       <div>
         <div class="foot-brand"><span><i>Sai Wall</i></span> Decor</div>
         <p style="color: rgba(255,255,255,0.6); font-size: 0.92rem; margin: 0;" data-hi="प्रीमियम वॉलपेपर, विंडो ब्लाइंड्स, PVC पैनल, WPC लूवर और लग्ज़री सोफा — फिरोजाबाद और आसपास के क्षेत्रों में सेवा।">Premium wallpapers, window blinds, PVC panels, WPC louvers and luxury sofas &mdash; serving Firozabad and surrounding areas.</p>
+        <a class="wa-qr" href="https://wa.me/qr/2HEABQIHTXGTM1" target="_blank" rel="noopener" aria-label="Scan QR to chat on WhatsApp">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&amp;margin=8&amp;data=https%3A%2F%2Fwa.me%2Fqr%2F2HEABQIHTXGTM1" alt="WhatsApp QR for Sai Ram Handloom &amp; Decor" width="140" height="140" loading="lazy" />
+          <span data-hi="WhatsApp के लिए स्कैन करें">Scan to chat on WhatsApp</span>
+        </a>
         <div class="socials" aria-label="Follow us">
-          <a class="wa" href="https://wa.me/qr/2HEABQIHTXGTM1" target="_blank" rel="noopener" aria-label="WhatsApp">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Zm-7.08 15.4h-.01a8.3 8.3 0 0 1-4.24-1.16l-.3-.18-2.49.65.66-2.43-.2-.31a8.32 8.32 0 1 1 6.58 3.43Zm4.79-6.22c-.26-.13-1.55-.77-1.79-.86-.24-.09-.42-.13-.6.13s-.69.86-.85 1.04c-.16.18-.31.2-.57.07-.26-.13-1.1-.41-2.1-1.3-.78-.7-1.3-1.55-1.45-1.81-.15-.26-.02-.4.11-.53.12-.12.26-.31.39-.46.13-.16.17-.27.26-.44.09-.18.04-.33-.02-.46-.07-.13-.6-1.43-.82-1.96-.22-.52-.44-.45-.6-.46h-.51c-.18 0-.46.06-.7.32-.24.26-.92.9-.92 2.2 0 1.3.94 2.55 1.07 2.73.13.18 1.85 2.83 4.49 3.97.63.27 1.12.43 1.51.55.63.2 1.21.17 1.66.1.51-.08 1.55-.63 1.77-1.24.22-.61.22-1.13.16-1.24-.07-.11-.24-.18-.5-.31Z"/></svg>
-          </a>
-          <a class="ig" href="https://www.instagram.com/invites/contact/?utm_source=ig_contact_invite&amp;utm_medium=copy_link&amp;utm_content=k9tlf69" target="_blank" rel="noopener" aria-label="Instagram">
+          <a class="ig" href="https://www.instagram.com/sai_wall_decor_/" target="_blank" rel="noopener" aria-label="Instagram">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.42-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16ZM12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.34 4.14.63a5.85 5.85 0 0 0-2.13 1.38A5.85 5.85 0 0 0 .63 4.14C.34 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12c0 3.26.01 3.67.07 4.95.06 1.27.27 2.15.56 2.91.31.79.72 1.46 1.38 2.13a5.86 5.86 0 0 0 2.13 1.38c.76.29 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24c3.26 0 3.67-.01 4.95-.07 1.27-.06 2.15-.27 2.91-.56a5.86 5.86 0 0 0 2.13-1.38 5.85 5.85 0 0 0 1.38-2.13c.29-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.27-2.15-.56-2.91a5.85 5.85 0 0 0-1.38-2.13A5.85 5.85 0 0 0 19.86.63C19.1.34 18.22.13 16.95.07 15.67.01 15.26 0 12 0Zm0 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32ZM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm6.4-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88Z"/></svg>
           </a>
-          <a class="fb" href="https://www.facebook.com/share/18uRpEiECT/" target="_blank" rel="noopener" aria-label="Facebook">
+          <a class="fb" href="https://www.facebook.com/laluprasadlalit" target="_blank" rel="noopener" aria-label="Facebook">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12.07C22 6.51 17.52 2 12 2S2 6.51 2 12.07c0 5 3.66 9.15 8.44 9.93v-7.02H7.9v-2.91h2.54V9.85c0-2.52 1.49-3.91 3.78-3.91 1.09 0 2.24.2 2.24.2v2.47H15.2c-1.24 0-1.63.78-1.63 1.57v1.88h2.78l-.45 2.91h-2.34V22c4.78-.78 8.44-4.93 8.44-9.93Z"/></svg>
           </a>
-          <a class="yt" href="https://youtube.com/" target="_blank" rel="noopener" aria-label="YouTube">
+          <a class="yt" href="https://www.youtube.com/@luxurysofamaker823/shorts" target="_blank" rel="noopener" aria-label="YouTube">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.5 6.2a3.02 3.02 0 0 0-2.13-2.13C19.46 3.5 12 3.5 12 3.5s-7.46 0-9.37.57A3.02 3.02 0 0 0 .5 6.2 31.43 31.43 0 0 0 0 12a31.43 31.43 0 0 0 .5 5.8 3.02 3.02 0 0 0 2.13 2.13C4.54 20.5 12 20.5 12 20.5s7.46 0 9.37-.57a3.02 3.02 0 0 0 2.13-2.13A31.43 31.43 0 0 0 24 12a31.43 31.43 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.24 3.6L9.6 15.6Z"/></svg>
           </a>
           <a class="gm" href="https://maps.google.com/?cid=4738395756158602651" target="_blank" rel="noopener" aria-label="Google Maps">
