@@ -1,15 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import Brand from "@/components/Brand";
 
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "admin";
 
+// Only allow `next` redirects to known internal admin paths, so a malicious
+// link can't bounce the user to an external URL after login.
+const ALLOWED_NEXT = new Set(["/admin", "/sai-admin"]);
+
 export default function AdminLoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +31,9 @@ export default function AdminLoginPage() {
       } catch {
         // ignore storage errors
       }
-      router.push("/admin");
+      const nextParam = searchParams?.get("next");
+      const target = nextParam && ALLOWED_NEXT.has(nextParam) ? nextParam : "/admin";
+      router.push(target);
       return;
     }
 

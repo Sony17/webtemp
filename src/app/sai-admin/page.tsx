@@ -50,7 +50,7 @@ export default function SaiAdminPage() {
       // ignore
     }
     if (!authed) {
-      router.replace("/admin/login");
+      router.replace("/admin/login?next=/sai-admin");
       return;
     }
     fetch("/api/sai-admin", { cache: "no-store" })
