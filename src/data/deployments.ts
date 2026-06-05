@@ -37,6 +37,17 @@ export const deployments: Deployment[] = [
     hours: "Mon–Sat · 10am – 9pm",
   },
   {
+    subdomain: "mobile-repair-sample",
+    templateSlug: "mobile-repair",
+    brandName: "Mobile Repair Hub",
+    tagline: "Phone repair, instant quote, doorstep service.",
+    primaryColor: "#06b6d4",
+    phone: "+91 90000 00000",
+    address: "Sector 18, Noida",
+    city: "Noida",
+    hours: "Mon–Sun · 10am – 9pm",
+  },
+  {
     subdomain: "bakery",
     templateSlug: "bakery",
     brandName: "Sweet Crumb Bakery",
