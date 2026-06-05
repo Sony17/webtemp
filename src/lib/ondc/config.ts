@@ -75,7 +75,7 @@ const NETWORK_DEFAULTS: Record<
     gatewayUrl: "https://staging.gateway.proteantech.in",
   },
   preprod: {
-    registryBaseUrl: "https://preprod.registry.ondc.org/ondc",
+    registryBaseUrl: "https://preprod.registry.ondc.org/v2.0",
     gatewayUrl: "https://preprod.gateway.ondc.org",
   },
   prod: {
