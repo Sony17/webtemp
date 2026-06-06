@@ -1,6 +1,6 @@
 # ONDC Gap Analysis
 
-Last Updated: 2026-06-05
+Last Updated: 2026-06-06
 
 ## Overview
 
@@ -62,9 +62,6 @@ This document tracks the implementation status of the ONDC Buyer App (BAP), iden
 * Shared registry resolver
 * Registry cache
 * Strict key matching
-
-### Remaining
-
 * Signed vlookup
 * Subscriber validation
 * SUBSCRIBED status validation
@@ -73,22 +70,32 @@ This document tracks the implementation status of the ONDC Buyer App (BAP), iden
 * TTL cache
 * Negative cache
 
+### Remaining
+
+* Live validation against ONDC pre-prod registry response (untested end-to-end)
+
 ---
 
 ## Persistence Layer
 
-### Current
+### Completed
 
-* JSON / Blob persistence through store.ts
-
-### Planned
-
-* Prisma integration
-* PostgreSQL persistence
+* Prisma integration (Prisma 7 + @prisma/adapter-pg)
+* PostgreSQL schema (prisma/schema.prisma)
 * ondc_search table
 * ondc_search_result table
 * ondc_order table
 * ondc_event table
+* Dual-backend dispatcher (JSON fallback when DATABASE_URL unset)
+
+### Remaining
+
+* Run `prisma migrate dev` against Supabase to create tables
+* End-to-end smoke test of writes/reads against the live DB
+
+### Current
+
+* JSON / Blob persistence still available as fallback (store-json.ts)
 
 ---
 

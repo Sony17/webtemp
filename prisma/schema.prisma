@@ -1,0 +1,162 @@
+// ONDC BAP persistence schema.
+//
+// FOUR tables, matching the gap-analysis spec:
+//   ondc_search         — one row per discovery session (transaction id).
+//   ondc_search_result  — one row per catalog slice (txn, bpp, message id).
+//   ondc_order          — one row per (transaction id, bpp id) order, progressively
+//                         enriched across the init / confirm / status / track /
+//                         cancel / update lifecycle.
+//   ondc_event          — append-only audit + flex bucket for callbacks that
+//                         don't fit the three structured tables (on_support /
+//                         on_rating today; any future kind tomorrow).
+//
+// Design intent:
+//   * Composite natural keys live in unique constraints, not the primary key.
+//     A surrogate `id` keeps relations and migrations simple.
+//   * Opaque ONDC payloads ride as `Json` columns so a schema bump on the wire
+//     doesn't require a database migration on our side.
+//   * The order's quote / tracking / cancellation / payments / fulfillments
+//     all live on ondc_order as Json columns — there is one logical "order"
+//     per (txn, bpp) so splitting them buys nothing and costs joins.
+//   * ondc_event is intentionally generic: a `kind` discriminator + the raw
+//     normalized payload. on_support and on_rating land here today; an audit
+//     UI can replay the lifecycle by transactionId order.
+//
+// Postgres on purpose — we use Json, partial indexes via @@unique, and large
+// payloads; SQLite would work for local dev but the production target is
+// Postgres (Neon / Vercel Postgres / RDS).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Prisma 7 moved the connection URL out of the schema; it now lives in
+// prisma.config.ts (loaded via the @prisma/config adapter for migrate, and
+// passed to PrismaClient at runtime). The schema still needs the provider
+// declaration so it knows what dialect to generate for.
+datasource db {
+  provider = "postgresql"
+}
+
+// One discovery session, opened the moment we issue (or receive an on_search
+// for) a transaction. createdAt is set on first sight; lastEventAt advances
+// every time a callback for this transaction is persisted. Holds the request
+// CONTEXT (domain / country / city), so a UI can show "search across RET10 in
+// std:080" without re-deriving it from the catalog slices.
+model OndcSearch {
+  id            String   @id @default(cuid())
+  transactionId String   @unique
+  domain        String
+  countryCode   String
+  cityCode      String
+  // The opaque search intent (fulfillment.location, item criteria, …) as sent.
+  intent        Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastEventAt   DateTime @default(now())
+
+  results SearchResult[]
+  orders  Order[]
+  events  Event[]
+
+  @@map("ondc_search")
+}
+
+// One catalog slice returned by one BPP for one search messageId. A single
+// transaction fans out to N BPPs and a BPP may send incremental refreshes
+// (distinct messageId), so the natural key is the triple. `catalog` is the
+// opaque catalog payload.
+model SearchResult {
+  id            String   @id @default(cuid())
+  transactionId String
+  bppId         String
+  bppUri        String
+  messageId     String
+  catalog       Json
+  receivedAt    DateTime @default(now())
+
+  search OndcSearch @relation(fields: [transactionId], references: [transactionId], onDelete: Cascade)
+
+  @@unique([transactionId, bppId, messageId])
+  @@index([transactionId])
+  @@map("ondc_search_result")
+}
+
+// Lifecycle stage that last wrote to this order. Mirrors store.OrderStage so
+// the existing callback seams keep the same vocabulary across the boundary.
+enum OrderStage {
+  init
+  confirm
+  status
+  track
+  cancel
+  update
+}
+
+// One order per (transactionId, bppId). Progressively enriched from on_init
+// through every later callback. orderId is absent until on_confirm; we index
+// it so post-confirm flows (Status / Track) can look up by BPP-assigned id.
+// statusHistory holds the milestones; quote / tracking / cancellation /
+// payments / fulfillments are last-write-wins JSON columns.
+model Order {
+  id             String     @id @default(cuid())
+  transactionId  String
+  bppId          String
+  bppUri         String
+  orderId        String?    @unique
+  stage          OrderStage
+  messageId      String
+  // Latest known order state (e.g. "Created" / "Accepted" / "Delivered").
+  state          Json?
+  // The opaque order payload from the latest callback (init/confirm/status/…).
+  order          Json
+  // Latest known quote (carried forward from init→confirm if not restated).
+  quote          Json?
+  // Latest payment terms / status (on_update is the typical writer).
+  payments       Json?
+  // Latest assigned fulfillment (agent / tracking / delivery state).
+  fulfillments   Json?
+  // Latest tracking snapshot from on_track (last-write-wins, NOT a trail).
+  tracking       Json?
+  // Cancellation block from on_cancel (cancelled_by / reason.id / …).
+  cancellation   Json?
+  // Append-only list of { state, messageId, at } snapshots from status / cancel /
+  // update milestones. Modeled as Json (not a separate table) because access is
+  // always "give me this order's whole history" — never "find all snapshots
+  // matching X across orders", so a join buys nothing.
+  statusHistory  Json       @default("[]")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  search OndcSearch @relation(fields: [transactionId], references: [transactionId], onDelete: Cascade)
+
+  @@unique([transactionId, bppId])
+  @@index([transactionId])
+  @@index([bppId])
+  @@map("ondc_order")
+}
+
+// Append-only audit + flex bucket. EVERY persistence call writes one row here
+// before mutating the structured tables — gives us a replayable log and a home
+// for callback kinds (on_support / on_rating) that don't fit the structured
+// tables. `kind` is the callback action (`on_search`/`on_select`/…); `payload`
+// is the normalized Extracted* struct from the route (NOT the raw wire body —
+// that's an HTTP-tier concern). Indexed by transactionId for "show me the
+// timeline of this transaction" and by kind for "all supports" / "all ratings".
+model Event {
+  id            String   @id @default(cuid())
+  transactionId String
+  bppId         String?
+  bppUri        String?
+  messageId     String
+  kind          String
+  payload       Json
+  receivedAt    DateTime @default(now())
+
+  search OndcSearch @relation(fields: [transactionId], references: [transactionId], onDelete: Cascade)
+
+  @@index([transactionId])
+  @@index([kind])
+  @@index([transactionId, kind])
+  @@map("ondc_event")
+}
