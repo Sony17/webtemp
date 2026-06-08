@@ -184,6 +184,13 @@ async function persistOnSearchCatalog(data: ExtractedOnSearch): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
+  // TEMP DIAGNOSTIC — proves a callback reached this route (remove after triage).
+  console.log("ondc.on_search HIT", {
+    at: new Date().toISOString(),
+    url: req.url,
+    hasAuth: req.headers.has("authorization"),
+  });
+
   // Can't verify signatures without our network config loaded. A misconfig is a
   // server fault, not the sender's — NACK 500.
   if (!isOndcConfigured()) {
