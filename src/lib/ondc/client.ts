@@ -298,6 +298,12 @@ export async function sendOndcRequest<TMessage = unknown>(
     // returning HTML) surfaces as a clear transport error with the body
     // attached, instead of an opaque JSON.parse stack.
     const text = await res.text();
+    console.log("ondc.search RAW", {
+    url,
+    headers: Object.keys(headers), // safer than logging Authorization
+    status: res.status,
+    body: text,
+    });
     let parsed: unknown;
     try {
       parsed = text ? JSON.parse(text) : {};
