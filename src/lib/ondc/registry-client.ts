@@ -377,6 +377,11 @@ async function fetchAndValidate(
     };
   }
 
+  const fetchStartedAt = Date.now();
+  console.log("ondc.registry vlookup start", {
+    startedAt: new Date(fetchStartedAt).toISOString(),
+    url,
+  });
   let res: Response;
   try {
     res = await fetch(url, {
@@ -387,6 +392,10 @@ async function fetchAndValidate(
         Digest: digest,
       },
       body,
+    });
+    console.log("ondc.registry vlookup response", {
+      status: res.status,
+      elapsedMs: Date.now() - fetchStartedAt,
     });
   } catch (err) {
     return {
