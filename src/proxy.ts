@@ -45,12 +45,27 @@ export function extractSubdomain(host: string | null): string | null {
   return null;
 }
 
+// Per-tenant admin paths that must stay reachable on custom domains
+// (e.g. saiwalldecor.com/sai-admin) instead of being rewritten to the
+// tenant site. The global /admin is intentionally excluded — it manages
+// every tenant and should only be reachable on the apex host.
+const TENANT_ADMIN_PATHS = new Set(["/sai-admin"]);
+
+function isTenantAdminPath(pathname: string) {
+  if (pathname === "/admin/login") return true;
+  for (const p of TENANT_ADMIN_PATHS) {
+    if (pathname === p || pathname.startsWith(p + "/")) return true;
+  }
+  return false;
+}
+
 export function proxy(req: NextRequest) {
   const sub = extractSubdomain(req.headers.get("host"));
   if (!sub) return NextResponse.next();
 
   const url = req.nextUrl.clone();
   if (url.pathname.startsWith("/s/")) return NextResponse.next();
+  if (isTenantAdminPath(url.pathname)) return NextResponse.next();
 
   url.pathname = `/s/${sub}${url.pathname === "/" ? "" : url.pathname}`;
   return NextResponse.rewrite(url);

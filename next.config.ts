@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
+        source: "/ondc/:path*",
+        destination: "/api/ondc/:path*",
+      },
+      {
         source: "/kalptaru-residency-sample",
         destination: "/kalptaru-residency-sample/index.html",
       },

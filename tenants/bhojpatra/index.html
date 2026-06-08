@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bhojpatra Platform — Feast Booking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Jost:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --red:#8E1616;--red-mid:#A91D1D;--red-deep:#5C0A0A;--red-black:#2C0606;
+  --gold:#C9A227;--gold-light:#E5C76B;--cream:#FBF6EC;--cream-warm:#F4E9D4;--paper:#FDFAF3;
+  --ink:#241008;--muted:#7d6450;--green:#2e7d32;
+  --sh-lg:0 40px 80px -30px rgba(44,6,6,.5);--sh-md:0 20px 44px -22px rgba(44,6,6,.38);
+  --gold-grad:linear-gradient(135deg,#E5C76B,#C9A227 50%,#9c7d18);
+  --nav-h:70px;
+}
+@media(max-width:740px){:root{--nav-h:54px}}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink)}
+body.hi{font-family:'Noto Sans Devanagari','Jost',sans-serif}
+h1,h2,h3,h4{font-family:'Cormorant Garamond',serif}
+body.hi h1,body.hi h2,body.hi h3,body.hi h4{font-family:'Noto Sans Devanagari',serif;font-weight:700}
+a{text-decoration:none;color:inherit}
+img{display:block;max-width:100%}
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px}
+.hide{display:none!important}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 30px;border-radius:3px;font-weight:600;font-size:.84rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:.3s;font-family:inherit}
+.btn-gold{background:var(--gold-grad);color:var(--red-black)}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 16px 34px -12px var(--gold)}
+.btn-red{background:var(--red);color:var(--cream)}
+.btn-red:hover{background:var(--red-deep)}
+.btn-line{background:transparent;color:var(--red);border:1px solid var(--red)}
+.btn-line:hover{background:var(--red);color:var(--cream)}
+.btn-sm{padding:9px 18px;font-size:.74rem}
+.svg-icon{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:200;background:rgba(44,6,6,.97);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;padding:14px 36px;box-shadow:0 8px 26px rgba(0,0,0,.25)}
+.logo{display:flex;align-items:center;gap:12px;cursor:pointer}
+.logo .mark{width:38px;height:44px}
+.logo b{font-family:'Cormorant Garamond';font-weight:700;font-size:1.5rem;color:var(--cream);line-height:.85}
+.logo span{font-size:.58rem;letter-spacing:3px;color:var(--gold-light);text-transform:uppercase;display:block}
+body.hi .logo b{font-family:'Noto Sans Devanagari'}
+.nav-right{display:flex;align-items:center;gap:14px}
+.mode-switch{display:flex;background:rgba(229,199,107,.12);border:1px solid rgba(229,199,107,.3);border-radius:4px;overflow:hidden}
+.mode-switch button{background:transparent;border:none;color:rgba(251,246,236,.7);padding:9px 18px;font-size:.76rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:inherit;font-weight:600;transition:.25s}
+.mode-switch button.on{background:var(--gold-grad);color:var(--red-black)}
+.lang-btn{background:transparent;border:1px solid rgba(229,199,107,.4);color:var(--gold-light);padding:9px 14px;border-radius:4px;font-size:.76rem;font-weight:600;cursor:pointer;letter-spacing:1px;font-family:inherit}
+.lang-btn:hover{background:rgba(229,199,107,.12)}
+@media(max-width:740px){nav{padding:12px 18px;flex-wrap:wrap;gap:10px}.mode-switch button{padding:8px 12px}}
+
+/* HERO mini */
+.phero{background:var(--red-black);color:var(--cream);padding:64px 0 56px;text-align:center;position:relative;overflow:hidden}
+.phero::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(201,162,39,.14),transparent 55%)}
+.phero .wrap{position:relative;z-index:2}
+.phero .kick{color:var(--gold-light);letter-spacing:5px;text-transform:uppercase;font-size:.74rem;font-weight:600;margin-bottom:16px}
+.phero h1{font-size:clamp(2.4rem,5vw,3.6rem);font-weight:600;line-height:1.05;margin-bottom:14px}
+.phero h1 em{font-style:italic;color:var(--gold-light)}
+.phero p{color:rgba(251,246,236,.78);font-weight:300;max-width:560px;margin:0 auto;font-size:1.08rem}
+
+/* ELEGANT FULL HERO (customer) */
+.lhero{position:relative;min-height:84vh;display:flex;align-items:center;background:var(--red-black);overflow:hidden;perspective:1400px}
+.lhero-bg{position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1555244162-803834f70033?w=1600&q=80');background-size:cover;background-position:center;transform:scale(1.12);will-change:transform}
+.lhero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,rgba(44,6,6,.96) 0%,rgba(92,10,10,.8) 48%,rgba(44,6,6,.5) 100%)}
+
+/* HERO static backdrop (subtle) */
+.lhero-back{position:absolute;inset:0;z-index:0;background-image:url('https://images.unsplash.com/photo-1505253758473-96b7015fcd40?w=1600&q=80');background-size:cover;background-position:center}
+.lhero-back::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,rgba(44,6,6,.97) 0%,rgba(92,10,10,.86) 45%,rgba(44,6,6,.66) 100%),radial-gradient(circle at 78% 38%,rgba(201,162,39,.14),transparent 55%)}
+/* two-column hero */
+@media(max-width:900px){.lhero-collage{display:none}}
+
+/* CIRCULAR DISH COLLAGE (right) */
+.lhero-collage{position:relative;z-index:5;opacity:0;animation:hrise 1.1s .55s forwards;transform:translateY(28px)}
+.collage-grid{margin:auto;width:100%;max-width:480px;aspect-ratio:1/1;display:grid;grid-template-columns:repeat(16,1fr);grid-template-rows:repeat(16,1fr)}
+.collage-grid .cit{border-radius:50%;overflow:hidden;border:4px solid var(--cream);box-shadow:rgba(0,0,0,.45) 8px 8px 18px 0;transition:transform .5s,z-index 0s}
+.collage-grid .cit img{width:100%;height:100%;object-fit:cover}
+.collage-grid .cit:hover{z-index:99;transform:scale(1.22)}
+.cit1{z-index:10;grid-area:1/6/5/10}
+.cit2{z-index:6;grid-area:5/1/11/7}
+.cit3{z-index:5;grid-area:4/6/11/13}
+.cit4{grid-area:2/-1/8/-7}
+.cit5{z-index:10;grid-area:7/-3/10/-6}
+.cit6{z-index:6;grid-area:-1/3/-9/11}
+.cit7{z-index:6;grid-area:-3/-2/-9/-8}
+.lhero-vig{position:absolute;inset:0;box-shadow:inset 0 0 220px 70px rgba(0,0,0,.5);pointer-events:none;z-index:1}
+.lhero-frame{position:absolute;inset:34px;border:1px solid rgba(229,199,107,.28);pointer-events:none;z-index:3}
+.lhero .wrap{position:relative;z-index:5;width:100%;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}
+@media(max-width:900px){.lhero .wrap{grid-template-columns:1fr}}
+.lhero .kick{display:inline-flex;align-items:center;gap:14px;color:var(--gold-light);letter-spacing:5px;text-transform:uppercase;font-size:.74rem;font-weight:600;margin-bottom:26px;opacity:0;animation:hrise .9s .15s forwards}
+.lhero .kick::before{content:"";width:40px;height:1px;background:var(--gold)}
+.lhero h1{font-size:clamp(3rem,6.5vw,5.6rem);font-weight:600;line-height:.98;color:var(--cream);letter-spacing:-1px;margin-bottom:24px;max-width:780px;text-shadow:0 14px 44px rgba(0,0,0,.5);opacity:0;animation:hrise 1s .3s forwards}
+.lhero h1 em{font-style:italic;color:var(--gold-light);display:block}
+body.hi .lhero h1 em{display:inline}
+.lhero p.lsub{font-size:1.22rem;color:rgba(251,246,236,.82);max-width:540px;line-height:1.6;font-weight:300;margin-bottom:38px;opacity:0;animation:hrise 1s .45s forwards}
+.lhero-btns{display:flex;gap:16px;flex-wrap:wrap;opacity:0;animation:hrise 1s .6s forwards}
+.lhero-stats{display:flex;gap:44px;margin-top:56px;opacity:0;animation:hrise 1s .75s forwards}
+.lhero-stats .st b{font-family:'Cormorant Garamond';font-size:2.6rem;font-weight:700;color:var(--gold-light);display:block;line-height:1}
+body.hi .lhero-stats .st b{font-family:'Cormorant Garamond'}
+.lhero-stats .st span{font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:rgba(251,246,236,.6)}
+.lhero-stats .sep{width:1px;background:rgba(229,199,107,.3)}
+.lhero-cue{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);z-index:5;color:var(--gold-light);font-size:.68rem;letter-spacing:3px;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:9px;opacity:.7}
+.lhero-cue i{width:1px;height:38px;background:linear-gradient(var(--gold),transparent);animation:hcue 1.8s infinite}
+@keyframes hcue{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+@keyframes hrise{to{opacity:1;transform:none}}
+.lhero .kick,.lhero h1,.lhero p.lsub,.lhero-btns,.lhero-stats{transform:translateY(28px)}
+@media(max-width:680px){.lhero-stats{gap:24px}.lhero-stats .st b{font-size:2rem}.lhero-frame{inset:18px}}
+
+/* OCCASION STRIP — horizontal carousel at all widths */
+.occasion-strip{background:var(--paper);border-bottom:1px solid var(--cream-warm);padding:16px 0}
+.occasion-strip .wrap{display:flex;align-items:center;gap:14px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.occasion-strip .wrap::-webkit-scrollbar{display:none}
+.occasion-strip .ol{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;flex-shrink:0}
+.occ-chips{display:flex;gap:8px;flex-wrap:nowrap}
+.occ-chip{display:flex;align-items:center;gap:7px;padding:8px 16px;border:1px solid var(--cream-warm);border-radius:30px;font-size:.82rem;font-weight:600;cursor:pointer;background:#fff;transition:.25s;color:var(--muted);flex-shrink:0;white-space:nowrap}
+.occ-chip:hover{border-color:var(--gold)}
+.occ-chip.on{background:var(--red);color:var(--cream);border-color:var(--red)}
+.occ-chip .oc-ic{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6}
+
+/* occasion tags on dish + vendor */
+.otag{display:inline-block;font-size:.6rem;letter-spacing:.5px;text-transform:uppercase;color:var(--gold);border:1px solid rgba(201,162,39,.4);border-radius:20px;padding:2px 9px;margin:2px 3px 0 0;font-weight:600}
+.dish .otags{margin-top:7px;display:flex;flex-wrap:wrap}
+.mv-occ{margin-top:6px;display:flex;flex-wrap:wrap}
+
+/* OFFERS */
+.offers{background:var(--cream)}
+.offer-grid{display:flex;flex-wrap:nowrap;gap:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;padding:4px 4px 14px;margin:0 -4px;scrollbar-width:none}
+.offer-grid::-webkit-scrollbar{display:none}
+.offer{flex:0 0 300px;scroll-snap-align:start}
+.offer{position:relative;background:linear-gradient(150deg,var(--red-deep),var(--red-black));color:var(--cream);border-radius:12px;padding:26px 22px 22px;overflow:hidden;border:1px solid rgba(229,199,107,.25);transition:.3s}
+.offer:hover{transform:translateY(-6px);box-shadow:var(--sh-lg)}
+.offer::before{content:"";position:absolute;top:-30px;right:-30px;width:110px;height:110px;border:1px solid rgba(229,199,107,.18);border-radius:50%}
+.offer::after{content:"";position:absolute;bottom:-40px;left:-20px;width:90px;height:90px;border:1px solid rgba(229,199,107,.12);border-radius:50%}
+.offer .ribbon{display:inline-block;background:var(--gold-grad);color:var(--red-black);font-size:.62rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:14px}
+.offer h3{font-size:1.5rem;font-weight:600;color:var(--cream);line-height:1.05;margin-bottom:8px;position:relative;z-index:2}
+.offer p{font-size:.84rem;color:rgba(251,246,236,.78);font-weight:300;line-height:1.5;margin-bottom:16px;position:relative;z-index:2}
+.offer .code-box{display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(251,246,236,.08);border:1px dashed var(--gold);border-radius:6px;padding:9px 8px 9px 14px;position:relative;z-index:2}
+.offer .code-box .cc{font-family:'Jost';font-weight:700;letter-spacing:2px;color:var(--gold-light);font-size:.92rem}
+.offer .code-box .copy{background:var(--gold-grad);color:var(--red-black);border:none;border-radius:4px;padding:6px 12px;font-size:.68rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;font-family:inherit}
+@media(max-width:520px){.offer{flex:0 0 78%;max-width:280px}}
+
+/* SECTION */
+.sec{padding:60px 0}
+.sec-title{font-size:2.2rem;font-weight:600;color:var(--red-deep);margin-bottom:6px}
+.sec-sub{color:var(--muted);font-weight:300;margin-bottom:30px}
+
+/* ===== CUSTOMER: DISH CATALOG ===== */
+.builder{display:grid;grid-template-columns:1fr;gap:0;align-items:start}
+.filters{position:sticky;top:var(--nav-h);z-index:50;background:rgba(251,246,236,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--cream-warm);border-radius:0;padding:12px 0;margin:0 0 18px;display:flex;flex-wrap:nowrap;gap:10px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filters .fg{display:flex;flex-direction:row;align-items:center;gap:6px;flex-shrink:0}
+.filters label{font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;white-space:nowrap}
+.filters select,.filters input{padding:8px 12px;border:1px solid var(--cream-warm);border-radius:24px;font-family:inherit;font-size:.84rem;background:#fff;color:var(--ink);min-width:0}
+.filters #fSearch{min-width:140px}
+.filters select:focus,.filters input:focus{outline:none;border-color:var(--gold)}
+.chip-row{display:flex;gap:6px;flex-wrap:nowrap}
+.fchip{padding:7px 13px;border:1px solid var(--cream-warm);border-radius:24px;font-size:.74rem;font-weight:600;cursor:pointer;background:#fff;transition:.2s;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.fchip.on{background:var(--red);color:var(--cream);border-color:var(--red)}
+.dish-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.dish{background:#fff;border:1px solid var(--cream-warm);border-radius:8px;overflow:hidden;transition:.3s;display:flex;flex-direction:column}
+.dish:hover{box-shadow:var(--sh-md);transform:translateY(-4px)}
+.dish .dimg{height:130px;position:relative;overflow:hidden}
+.dish .dimg img{width:100%;height:100%;object-fit:cover;transition:.6s}
+.dish:hover .dimg img{transform:scale(1.08)}
+.dish .vtag{position:absolute;top:10px;left:10px;width:18px;height:18px;border-radius:3px;display:grid;place-items:center;background:#fff}
+.dish .vtag i{width:9px;height:9px;border-radius:50%}
+.veg-dot{background:var(--green)}.nonveg-dot{background:var(--red)}
+.dish .vtag.veg{border:1.5px solid var(--green)}.dish .vtag.nonveg{border:1.5px solid var(--red)}
+.dish .dbody{padding:14px 16px;flex:1;display:flex;flex-direction:column}
+.dish .dbody b{font-family:'Cormorant Garamond';font-size:1.2rem;font-weight:600;color:var(--red-deep);line-height:1.05}
+body.hi .dish .dbody b{font-family:'Noto Sans Devanagari'}
+.dish .dmeta{font-size:.72rem;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:4px 0 10px}
+.dish .dfoot{margin-top:auto;display:flex;align-items:center;justify-content:space-between}
+.dish .dprice{font-family:'Cormorant Garamond';font-weight:700;color:var(--gold);font-size:1.05rem}
+.add-btn{width:30px;height:30px;border-radius:50%;border:1px solid var(--red);background:#fff;color:var(--red);font-size:1.1rem;cursor:pointer;display:grid;place-items:center;transition:.2s;line-height:1}
+.add-btn:hover{background:var(--red);color:#fff}
+.dish.added{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.dish.added .add-btn{background:var(--green);border-color:var(--green);color:#fff}
+@media(max-width:1000px){.builder{grid-template-columns:1fr}.dish-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.dish-grid{grid-template-columns:1fr}}
+
+/* MY MENU TRAY — slim single-row floating bar, body slides above when expanded */
+.tray{position:fixed;left:12px;right:84px;bottom:12px;max-width:312px;margin:0 auto;background:var(--red-deep);border-radius:9px;box-shadow:0 10px 24px -8px rgba(0,0,0,.5),0 -2px 6px rgba(0,0,0,.18);z-index:120;overflow:hidden;display:flex;flex-direction:column}
+.tray-dock{display:flex;align-items:stretch;width:100%;min-height:30px}
+.tray-handle{flex:1;display:flex;align-items:center;cursor:pointer;min-width:0;padding:0}
+.tray-head{flex:1;padding:4px 9px;color:var(--cream);min-width:0;line-height:1.15}
+.tray-head b{font-family:'Jost',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.2px;color:var(--cream);display:block}
+body.hi .tray-head b{font-family:'Noto Sans Devanagari'}
+.tray-head span{font-size:.54rem;color:rgba(251,246,236,.72);display:block;margin-top:0;letter-spacing:.2px}
+.tray-chev{color:var(--gold-light);padding:0 6px 0 2px;font-size:.7rem;transition:transform .3s;flex-shrink:0;display:flex;align-items:center}
+.tray.expanded .tray-chev{transform:rotate(180deg)}
+.tray-cta{background:var(--red);color:var(--cream);border:none;padding:0 11px;font-family:'Jost',sans-serif;font-weight:700;font-size:.6rem;letter-spacing:.4px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;border-left:1px solid rgba(229,199,107,.2);transition:.2s}
+.tray-cta:hover{background:#a01b1b}
+.tray-cta::after{content:"›";font-size:1rem;line-height:0;font-weight:400}
+.tray-body{display:none;background:#fff;max-height:44vh;overflow-y:auto;padding:4px 14px}
+.tray.expanded .tray-body{display:block}
+.tray-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed var(--cream-warm);font-size:.88rem;color:var(--ink)}
+.tray-item .ti-rm{color:var(--muted);cursor:pointer;font-size:1.3rem;line-height:1;padding:0 4px}
+.tray-item .ti-rm:hover{color:var(--red)}
+.tray-empty{color:var(--muted);font-weight:300;text-align:center;padding:18px 0;font-size:.84rem}
+#custBuild{padding-bottom:60px}
+
+/* ===== VENDOR MATCH / BOOKING ===== */
+.match-vendor{display:flex;gap:18px;background:#fff;border:1px solid var(--cream-warm);border-radius:10px;padding:18px;margin-bottom:16px;transition:.25s;cursor:pointer;align-items:center}
+.match-vendor:hover{border-color:var(--gold);box-shadow:var(--sh-md)}
+.match-vendor.sel{border-color:var(--red);background:var(--cream)}
+.match-vendor img{width:110px;height:110px;border-radius:8px;object-fit:cover;flex-shrink:0}
+.mv-info{flex:1}
+.mv-info b{font-family:'Cormorant Garamond';font-size:1.4rem;font-weight:600;color:var(--red-deep);display:block;line-height:1}
+body.hi .mv-info b{font-family:'Noto Sans Devanagari'}
+.mv-info .stars{color:var(--gold);font-size:.86rem;margin:3px 0}
+.mv-info .mv-tag{font-size:.84rem;color:var(--muted);font-weight:300}
+.mv-info .mv-cover{font-size:.74rem;color:var(--green);font-weight:600;margin-top:5px;letter-spacing:.5px}
+.mv-price{text-align:right;flex-shrink:0}
+.mv-price b{font-family:'Cormorant Garamond';color:var(--gold);font-size:1.7rem;display:block;line-height:1}
+.mv-price small{font-size:.68rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.mv-verified{display:inline-flex;align-items:center;gap:5px;font-size:.66rem;color:var(--green);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:4px}
+.mv-actions{display:flex;flex-direction:column;gap:8px;flex-shrink:0;align-items:flex-end}
+.uncovered-note{font-size:.74rem;color:var(--red);background:#fdeee9;border:1px solid #f3cfc6;border-radius:6px;padding:7px 11px;margin-top:8px;font-weight:500;line-height:1.4}
+.ask-btn{display:inline-flex;align-items:center;gap:7px;background:var(--gold-grad);color:var(--red-black);border:none;border-radius:4px;padding:9px 16px;font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap}
+.ask-btn:hover{filter:brightness(1.05)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(20,3,3,.7);backdrop-filter:blur(4px);z-index:600;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.show{display:flex}
+.modal{background:#fff;border-radius:12px;max-width:540px;width:100%;box-shadow:var(--sh-lg);overflow:hidden;max-height:90vh;display:flex;flex-direction:column}
+.modal-head{background:var(--red-deep);color:var(--cream);padding:22px 26px;display:flex;justify-content:space-between;align-items:flex-start}
+.modal-head b{font-family:'Cormorant Garamond';font-size:1.5rem;font-weight:600}
+body.hi .modal-head b{font-family:'Noto Sans Devanagari'}
+.modal-head span{font-size:.82rem;color:rgba(251,246,236,.78);display:block;font-weight:300;margin-top:3px}
+.modal-x{color:rgba(251,246,236,.8);font-size:1.6rem;cursor:pointer;line-height:1;background:none;border:none}
+.modal-body{padding:24px 26px;overflow-y:auto}
+.qline{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--cream-warm);font-size:.92rem}
+.qline.uncov span:first-child{color:var(--red);font-weight:500}
+.qsub{font-size:.78rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:18px 0 8px}
+.modal-foot{padding:18px 26px;border-top:1px solid var(--cream-warm);display:flex;gap:10px;flex-wrap:wrap;background:var(--paper)}
+.modal-foot .btn{flex:1;justify-content:center;min-width:150px}
+.wa-inline{background:#1f9d55;color:#fff}
+.wa-inline:hover{background:#178045}
+.req-card{background:#fff;border:1px solid var(--cream-warm);border-left:4px solid var(--gold);border-radius:8px;padding:18px 22px;margin-bottom:12px}
+.req-card .rc-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px}
+.req-card b{font-family:'Cormorant Garamond';font-size:1.2rem;color:var(--red-deep)}
+body.hi .req-card b{font-family:'Noto Sans Devanagari'}
+.req-card .rc-meta{font-size:.82rem;color:var(--muted);font-weight:300}
+.req-card .rc-dishes{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+.req-card .rc-dishes i{font-style:normal;background:var(--cream);border:1px solid var(--cream-warm);border-radius:20px;padding:3px 11px;font-size:.78rem}
+.req-card .rc-price{font-family:'Cormorant Garamond';font-weight:700;color:var(--gold);font-size:1.3rem}
+
+.addon-row{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--cream-warm);border-radius:6px;padding:15px 20px;margin-bottom:10px;cursor:pointer;transition:.25s}
+.addon-row:hover{border-color:var(--gold)}
+.addon-row.sel{border-color:var(--red);background:var(--cream)}
+.addon-row b{font-family:'Cormorant Garamond';font-size:1.15rem;font-weight:600;color:var(--red-deep)}
+body.hi .addon-row b{font-family:'Noto Sans Devanagari'}
+.addon-row .ap{font-family:'Cormorant Garamond';font-weight:700;color:var(--gold);font-size:1.15rem}
+.addon-row .box{width:24px;height:24px;border-radius:4px;border:1px solid #d8c9ad;display:grid;place-items:center;color:#fff;margin-left:14px}
+.addon-row.sel .box{background:var(--red);border-color:var(--red)}
+
+/* bill */
+.bill{background:#fff;border:1px solid var(--cream-warm);border-radius:10px;padding:28px 32px;box-shadow:var(--sh-md);max-width:560px}
+.bill-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--cream-warm);font-weight:300}
+.bill-row.gst{color:var(--muted);font-size:.92rem}
+.bill-row.disc{color:var(--green);font-weight:500}
+.bill-row.tot{font-family:'Cormorant Garamond';font-weight:700;font-size:1.6rem;color:var(--red-deep);border:none;padding-top:16px}
+.bill-row.adv{border:none;color:var(--red);font-weight:600}
+
+/* fields */
+.field{margin-bottom:16px}
+.field label{display:block;font-weight:500;margin-bottom:7px;font-size:.74rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.field input,.field select,.field textarea{width:100%;padding:13px 16px;border:1px solid var(--cream-warm);border-radius:4px;font-family:inherit;font-size:1rem;background:var(--paper);color:var(--ink)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--gold)}
+.row2{display:flex;gap:16px;flex-wrap:wrap}.row2>*{flex:1;min-width:180px}
+
+/* vendor wizard steps */
+.steps-bar{display:flex;gap:8px;margin-bottom:30px}
+.steps-bar .sb{flex:1;text-align:center;padding:12px;border-radius:4px;background:#fff;border:1px solid var(--cream-warm);font-size:.78rem;font-weight:600;color:var(--muted);letter-spacing:.5px}
+.steps-bar .sb.on{background:var(--red);color:var(--cream);border-color:var(--red)}
+.steps-bar .sb.done{background:var(--cream);border-color:var(--gold);color:var(--red-deep)}
+.card{background:#fff;border:1px solid var(--cream-warm);border-radius:10px;padding:34px;box-shadow:var(--sh-md);max-width:760px;margin:0 auto}
+.card h3{font-size:1.7rem;font-weight:600;color:var(--red-deep);margin-bottom:6px}
+.card .sub{color:var(--muted);font-weight:300;margin-bottom:24px}
+
+/* menu builder list */
+.mb-dish{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--cream-warm);border-radius:6px;margin-bottom:10px;background:var(--paper)}
+.mb-dish .mb-name{flex:1;font-weight:500}
+.mb-dish .mb-meta{font-size:.78rem;color:var(--muted)}
+.mb-dish .mb-price{font-family:'Cormorant Garamond';font-weight:700;color:var(--gold)}
+.mb-dish .mb-rm{cursor:pointer;color:var(--muted);font-size:1.2rem}
+
+/* dashboard */
+.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px}
+.stat{background:#fff;border:1px solid var(--cream-warm);border-radius:8px;padding:22px;text-align:center}
+.stat b{font-family:'Cormorant Garamond';font-size:2.4rem;font-weight:700;color:var(--red);display:block;line-height:1}
+.stat span{font-size:.74rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.booking-card{background:#fff;border:1px solid var(--cream-warm);border-radius:8px;padding:18px 22px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.booking-card .bc-info b{font-family:'Cormorant Garamond';font-size:1.2rem;color:var(--red-deep)}
+.booking-card .bc-info span{display:block;font-size:.84rem;color:var(--muted);font-weight:300}
+.status{padding:5px 13px;border-radius:20px;font-size:.7rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.status.new{background:#fff3cd;color:#856404}.status.acc{background:#d4edda;color:#155724}
+@media(max-width:740px){.dash-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* toast */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--red-deep);color:var(--cream);padding:15px 28px;border-radius:6px;font-weight:500;box-shadow:var(--sh-lg);z-index:500;opacity:0;transition:.4s;border:1px solid rgba(229,199,107,.3)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+footer{background:#1a0303;color:rgba(251,246,236,.5);text-align:center;padding:40px 28px;font-size:.84rem;font-weight:300}
+footer a{color:var(--gold-light)}
+.gdiv{display:flex;align-items:center;justify-content:center;gap:12px;margin:18px auto}
+.gdiv::before,.gdiv::after{content:"";height:1px;width:50px;background:var(--gold);opacity:.5}
+.gdiv span{width:6px;height:6px;background:var(--gold);transform:rotate(45deg)}
+.done-seal{width:76px;height:76px;border:2px solid var(--gold);border-radius:50%;display:grid;place-items:center;margin:0 auto 18px;color:var(--gold);font-family:'Cormorant Garamond';font-size:2.2rem}
+
+/* ============ MOBILE ============ */
+@media(max-width:740px){
+  .wrap{padding:0 16px}
+  .sec{padding:30px 0}
+  .sec-title{font-size:1.55rem}
+  .sec-sub{margin-bottom:16px;font-size:.88rem}
+  .btn{padding:12px 22px;font-size:.76rem;letter-spacing:.5px}
+  .btn-sm{padding:8px 14px;font-size:.7rem}
+
+  /* nav */
+  nav{padding:9px 14px;gap:8px}
+  .logo b{font-size:1.15rem}
+  .logo span{font-size:.5rem;letter-spacing:2px}
+  .logo .mark{width:28px;height:34px}
+  .nav-right{gap:8px}
+  .mode-switch button{padding:7px 9px;font-size:.62rem;letter-spacing:.5px}
+  .lang-btn{padding:7px 10px;font-size:.66rem;letter-spacing:.5px}
+
+  /* hero */
+  .lhero{min-height:auto;padding:36px 0 30px}
+  .lhero-frame{inset:12px}
+  .lhero h1{font-size:2.1rem;margin-bottom:14px;line-height:1.06}
+  .lhero h1 em{display:inline}
+  .lhero p.lsub{font-size:.98rem;margin-bottom:20px;line-height:1.5}
+  .lhero .kick{margin-bottom:12px;font-size:.62rem;letter-spacing:3px}
+  .lhero .kick::before{width:24px}
+  .lhero-stats{margin-top:22px;gap:16px}
+  .lhero-stats .st b{font-size:1.5rem}
+  .lhero-stats .st span{font-size:.56rem;letter-spacing:1px}
+  .lhero-cue{display:none}
+  .lhero-btns .btn{padding:11px 18px}
+
+  /* offers — compact card width on phone */
+  .offers{padding:24px 0 28px}
+  .offers .sec-title{font-size:1.4rem;margin-bottom:2px}
+  .offers .sec-sub{margin-bottom:14px;font-size:.82rem}
+  .offer{padding:16px 14px 14px;border-radius:10px}
+  .offer h3{font-size:1.05rem;margin-bottom:6px}
+  .offer p{font-size:.72rem;margin-bottom:10px;line-height:1.4}
+  .offer .ribbon{font-size:.56rem;padding:3px 9px;margin-bottom:10px;letter-spacing:.5px}
+  .offer .code-box{padding:6px 6px 6px 11px}
+  .offer .code-box .cc{font-size:.78rem;letter-spacing:1.5px}
+  .offer .code-box .copy{padding:5px 9px;font-size:.58rem}
+
+  /* dishes 2-col on phone */
+  .dish-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px}
+  .dish{border-radius:7px}
+  .dish .dimg{height:100px}
+  .dish .dbody{padding:10px 11px}
+  .dish .dbody b{font-size:.98rem;line-height:1.1}
+  .dish .dmeta{font-size:.6rem;margin:3px 0 6px;letter-spacing:.3px}
+  .dish .otags{display:none}
+  .dish .dprice{font-size:.92rem}
+  .add-btn{width:26px;height:26px;font-size:1rem}
+
+
+  /* vendor match cards: stack */
+  .match-vendor{flex-wrap:wrap;padding:12px;gap:10px;border-radius:8px}
+  .match-vendor img{width:100%;height:140px;border-radius:6px}
+  .mv-info{flex:1 1 100%;width:100%}
+  .mv-info b{font-size:1.1rem}
+  .mv-info .stars{font-size:.78rem}
+  .mv-info .mv-tag{font-size:.78rem}
+  .mv-actions{flex-direction:row;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:6px}
+  .mv-price{flex:1;text-align:left}
+  .mv-price b{font-size:1.4rem}
+  .ask-btn{flex:1 1 auto;justify-content:center;padding:9px 10px;font-size:.62rem;letter-spacing:.3px}
+
+  /* addon rows */
+  .addon-row{padding:12px 14px}
+  .addon-row b{font-size:.98rem}
+  .addon-row .ap{font-size:.98rem}
+
+  /* review: stacked */
+  #reviewGrid{grid-template-columns:1fr!important;gap:18px!important}
+  .bill{padding:18px 16px;max-width:100%}
+  .bill-row{font-size:.86rem;padding:9px 0}
+  .bill-row.tot{font-size:1.25rem;padding-top:12px}
+  .row2{gap:10px}
+  .field{margin-bottom:12px}
+  .field input,.field select,.field textarea{padding:11px 13px;font-size:.92rem}
+  .field label{font-size:.66rem;letter-spacing:1px}
+
+  /* vendor onboarding card */
+  .phero{padding:34px 0 28px}
+  .phero h1{font-size:1.8rem}
+  .phero p{font-size:.92rem}
+  .card{padding:20px 16px;border-radius:8px}
+  .card h3{font-size:1.3rem}
+  .card .sub{font-size:.88rem;margin-bottom:18px}
+  .steps-bar{gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:20px;padding-bottom:4px}
+  .steps-bar::-webkit-scrollbar{display:none}
+  .steps-bar .sb{flex-shrink:0;padding:8px 11px;font-size:.66rem;letter-spacing:0;min-width:auto;white-space:nowrap}
+
+  /* dashboard */
+  .dash-grid{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:22px}
+  .stat{padding:14px}
+  .stat b{font-size:1.7rem}
+  .stat span{font-size:.62rem}
+  .booking-card{padding:14px;flex-direction:column;align-items:flex-start;gap:8px}
+  .booking-card .bc-info b{font-size:1.05rem}
+  .booking-card>div:last-child{width:100%;justify-content:space-between;display:flex}
+
+  /* modal: bottom sheet */
+  .modal-bg{padding:0;align-items:flex-end}
+  .modal{max-height:90vh;border-radius:14px 14px 0 0;width:100%}
+  .modal-head{padding:16px 18px}
+  .modal-head b{font-size:1.2rem}
+  .modal-head span{font-size:.76rem}
+  .modal-body{padding:16px 18px}
+  .modal-foot{padding:14px 18px;flex-direction:column;gap:8px}
+  .modal-foot .btn{min-width:0;width:100%}
+  .qline{font-size:.84rem}
+
+  footer{padding:26px 16px;font-size:.76rem}
+}
+
+@media(max-width:380px){
+  .lhero h1{font-size:1.85rem}
+  .offer-grid{grid-template-columns:1fr}
+  .dash-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo" onclick="goHome()">
+    <svg class="mark" viewBox="0 0 42 48"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E5C76B"/><stop offset="1" stop-color="#C9A227"/></linearGradient></defs>
+    <path d="M7 5h24a4 4 0 014 4v30l-5 4H11a4 4 0 01-4-4V9z" fill="url(#g)"/><text x="21" y="30" font-family="Cormorant Garamond,serif" font-size="15" font-weight="700" fill="#8E1616" text-anchor="middle">B</text></svg>
+    <div><b>Bhojpatra</b><span data-i="brand_sub">Feast Booking</span></div>
+  </div>
+  <div class="nav-right">
+    <div class="mode-switch">
+      <button id="modeCust" class="on" onclick="setMode('customer')" data-i="mode_customer">Book a Feast</button>
+      <button id="modeVend" onclick="setMode('vendor')" data-i="mode_vendor">List as Vendor</button>
+    </div>
+    <button class="lang-btn" onclick="toggleLang()" id="langBtn">हिन्दी</button>
+  </div>
+</nav>
+
+<!-- ============ CUSTOMER MODE ============ -->
+<div id="customerMode">
+  <!-- ELEGANT HERO -->
+  <header class="lhero" id="lhero">
+    <div class="lhero-back"></div>
+    <div class="lhero-vig"></div>
+    <div class="lhero-frame"></div>
+    <div class="wrap">
+      <div class="lhero-text">
+        <div class="kick" data-i="cust_kick">Menu First. Vendor Second.</div>
+        <h1 data-i="cust_h1">Build Your Menu, <em data-i="cust_h1b">Then Choose</em></h1>
+        <p class="lsub" data-i="cust_p">Browse dishes, filter by occasion and taste, and we will show you only the verified caterers who can serve your exact menu.</p>
+        <div class="lhero-btns">
+          <a href="#custBuild" class="btn btn-gold" data-i="hero_cta1">Start Selecting Dishes</a>
+          <button class="btn btn-line" style="color:var(--cream);border-color:rgba(229,199,107,.5)" onclick="setMode('vendor')" data-i="hero_cta2">List as Vendor</button>
+        </div>
+        <div class="lhero-stats">
+          <div class="st"><b>500+</b><span data-i="hero_s1">Verified Caterers</span></div>
+          <div class="sep"></div>
+          <div class="st"><b>7</b><span data-i="hero_s2">Cuisine Traditions</span></div>
+          <div class="sep"></div>
+          <div class="st"><b>50K</b><span data-i="hero_s3">Guest Capacity</span></div>
+        </div>
+      </div>
+      <div class="lhero-collage">
+        <div class="collage-grid">
+          <div class="cit cit1"><img src="https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=500&q=75" alt="paneer tikka"></div>
+          <div class="cit cit2"><img src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&q=75" alt="biryani"></div>
+          <div class="cit cit3"><img src="https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500&q=75" alt="thali"></div>
+          <div class="cit cit4"><img src="https://images.unsplash.com/photo-1585032226651-759b368d7246?w=500&q=75" alt="curry"></div>
+          <div class="cit cit5"><img src="https://images.unsplash.com/photo-1666190092159-3171cf0fbb12?w=500&q=75" alt="gulab jamun"></div>
+          <div class="cit cit6"><img src="https://images.unsplash.com/photo-1596797038530-2c107229654b?w=500&q=75" alt="curry spread"></div>
+          <div class="cit cit7"><img src="https://images.unsplash.com/photo-1630383249896-424e482df921?w=500&q=75" alt="dosa"></div>
+        </div>
+      </div>
+    </div>
+    <div class="lhero-cue" data-i="hero_scroll">Scroll<i></i></div>
+  </header>
+
+  <!-- OCCASION STRIP -->
+  <div class="occasion-strip">
+    <div class="wrap">
+      <span class="ol" data-i="occ_label">Planning for</span>
+      <div class="occ-chips" id="occChips"></div>
+    </div>
+  </div>
+
+  <!-- OFFERS -->
+  <section class="sec offers" id="custOffers">
+    <div class="wrap">
+      <h2 class="sec-title" data-i="off_title">Offers & Deals</h2>
+      <p class="sec-sub" data-i="off_sub">Apply a code at checkout and save on your feast.</p>
+      <div class="offer-grid" id="offerGrid"></div>
+    </div>
+  </section>
+
+  <!-- STEP: BUILD MENU -->
+  <section class="sec" id="custBuild">
+    <div class="wrap">
+      <h2 class="sec-title" data-i="build_title">Browse & Select Dishes</h2>
+      <p class="sec-sub" data-i="build_sub">Filter the catalog and add dishes to build your feast menu.</p>
+      <div class="filters">
+        <div class="fg"><label data-i="f_search">Search</label><input type="text" id="fSearch" oninput="renderDishes()" placeholder="Dish name..."></div>
+        <div class="fg"><label data-i="f_cuisine">Cuisine</label>
+          <select id="fCuisine" onchange="renderDishes()"><option value="" data-i="f_all">All</option>
+            <option>North Indian</option><option>South Indian</option><option>Chinese</option>
+            <option>Continental</option><option>Mughlai</option><option>Punjabi</option><option>Bengali</option></select></div>
+        <div class="fg"><label data-i="f_course">Course</label>
+          <select id="fCourse" onchange="renderDishes()"><option value="" data-i="f_all2">All</option>
+            <option value="Starter" data-i="course_starter">Starter</option>
+            <option value="Main" data-i="course_main">Main Course</option>
+            <option value="Bread" data-i="course_bread">Bread & Rice</option>
+            <option value="Dessert" data-i="course_dessert">Dessert</option></select></div>
+        <div class="fg"><label data-i="f_diet">Diet</label>
+          <div class="chip-row">
+            <span class="fchip on" data-diet="" onclick="setDiet(this,'')" data-i="diet_all">All</span>
+            <span class="fchip" data-diet="veg" onclick="setDiet(this,'veg')" data-i="diet_veg">Veg</span>
+            <span class="fchip" data-diet="nonveg" onclick="setDiet(this,'nonveg')" data-i="diet_nonveg">Non-Veg</span>
+          </div></div>
+      </div>
+
+      <div class="builder">
+        <div><div class="dish-grid" id="dishGrid"></div></div>
+        <div>
+          <div class="tray" id="trayBar">
+            <div class="tray-body" id="trayBody"></div>
+            <div class="tray-dock">
+              <div class="tray-handle" onclick="toggleTray()">
+                <div class="tray-head"><b><span id="trayCount">0</span> <span data-i="tray_dishes">dishes</span></b><span id="trayTotal" data-i="tray_subtitle">Build your menu</span></div>
+                <span class="tray-chev">▾</span>
+              </div>
+              <button class="tray-cta" onclick="goToVendors()" data-i="tray_cta">Find Vendors</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP: VENDORS -->
+  <section class="sec hide" id="custVendors">
+    <div class="wrap">
+      <button class="btn btn-line btn-sm" onclick="backToBuild()" style="margin-bottom:20px">&larr; <span data-i="back_menu">Back to Menu</span></button>
+      <h2 class="sec-title" data-i="vend_title">Caterers For Your Menu</h2>
+      <p class="sec-sub"><span data-i="vend_sub">Showing verified vendors who can serve all</span> <span id="vendDishCount">0</span> <span data-i="vend_sub2">of your selected dishes.</span></p>
+      <div id="matchList"></div>
+    </div>
+  </section>
+
+  <!-- STEP: ADDONS -->
+  <section class="sec hide" id="custAddons">
+    <div class="wrap">
+      <button class="btn btn-line btn-sm" onclick="showStep('custVendors')" style="margin-bottom:20px">&larr; <span data-i="back_vendor">Back to Vendors</span></button>
+      <h2 class="sec-title" data-i="addon_title">Add Live Counters</h2>
+      <p class="sec-sub" data-i="addon_sub">Optional indulgences, charged per event.</p>
+      <div id="custAddonList" style="max-width:640px"></div>
+      <div id="addonVendorWrap" style="max-width:640px;margin-top:30px"></div>
+      <button class="btn btn-gold" style="margin-top:24px" onclick="showStep('custReview')" data-i="addon_cta">Review & Pay</button>
+    </div>
+  </section>
+
+  <!-- STEP: REVIEW + PAY -->
+  <section class="sec hide" id="custReview">
+    <div class="wrap">
+      <button class="btn btn-line btn-sm" onclick="showStep('custAddons')" style="margin-bottom:20px">&larr; <span data-i="back_addon">Back to Counters</span></button>
+      <h2 class="sec-title" data-i="rev_title">Final Menu & Payment</h2>
+      <p class="sec-sub" data-i="rev_sub">Review your feast. A 20% advance confirms your reservation.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:start" id="reviewGrid">
+        <div>
+          <div class="field"><label data-i="rev_guests">Number of Guests</label><input type="number" id="rGuests" value="100" min="50" max="50000" oninput="renderBill()"></div>
+          <div class="row2"><div class="field"><label data-i="rev_name">Your Name</label><input type="text" id="rName" placeholder="Full name"></div>
+          <div class="field"><label data-i="rev_phone">Phone</label><input type="tel" id="rPhone" placeholder="10-digit"></div></div>
+          <div class="field"><label data-i="rev_date">Event Date</label><input type="date" id="rDate"></div>
+          <span class="btn btn-line btn-sm" onclick="downloadMenu()" data-i="rev_dl">Download Final Menu</span>
+        </div>
+        <div class="bill" id="billBox"></div>
+      </div>
+      <div id="custDone" class="card hide" style="text-align:center;margin-top:30px">
+        <div class="done-seal">&#10003;</div>
+        <h3 data-i="done_title">Reservation Confirmed</h3>
+        <p class="sub" id="custDoneMsg"></p>
+        <span class="btn btn-line btn-sm" onclick="downloadMenu()" data-i="done_dl">Download Your Menu</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ VENDOR MODE ============ -->
+<div id="vendorMode" class="hide">
+  <section class="phero">
+    <div class="wrap">
+      <div class="kick" data-i="vmode_kick">Grow Your Catering Business</div>
+      <h1 data-i="vmode_h1">List on <em>Bhojpatra</em></h1>
+      <p data-i="vmode_p">Reach customers across the city. Register, build your menu, get verified, and start receiving bookings.</p>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+      <div class="steps-bar" id="vSteps">
+        <div class="sb on" data-i="vs1">1. Register</div>
+        <div class="sb" data-i="vs2">2. Profile</div>
+        <div class="sb" data-i="vs3">3. Menu</div>
+        <div class="sb" data-i="vs4">4. Counters</div>
+        <div class="sb" data-i="vs5">5. Verify</div>
+      </div>
+
+      <!-- V1 REGISTER -->
+      <div class="card vstep" data-vs="1">
+        <h3 data-i="v1_title">Register Your Business</h3>
+        <p class="sub" data-i="v1_sub">Basic details to create your vendor account.</p>
+        <div class="row2"><div class="field"><label data-i="v1_biz">Business Name</label><input id="vBiz" placeholder="e.g. Annapurna Caterers"></div>
+        <div class="field"><label data-i="v1_owner">Owner Name</label><input id="vOwner" placeholder="Full name"></div></div>
+        <div class="row2"><div class="field"><label data-i="v1_phone">Phone / WhatsApp</label><input id="vPhone" placeholder="10-digit"></div>
+        <div class="field"><label data-i="v1_email">Email</label><input id="vEmail" placeholder="you@email.com"></div></div>
+        <div class="field"><label data-i="v1_city">City</label><input id="vCity" placeholder="e.g. Lucknow"></div>
+        <button class="btn btn-gold" onclick="vNext(1)" data-i="v1_cta">Continue</button>
+      </div>
+
+      <!-- V2 PROFILE -->
+      <div class="card vstep hide" data-vs="2">
+        <h3 data-i="v2_title">Business Profile</h3>
+        <p class="sub" data-i="v2_sub">Tell customers what you specialise in.</p>
+        <div class="field"><label data-i="v2_cuisine">Cuisine Specializations</label>
+          <div class="chip-row" id="vCuisineChips"></div></div>
+        <div class="field"><label data-i="v2_occ">Occasions You Cater</label>
+          <div class="chip-row" id="vOccChips"></div></div>
+        <div class="row2">
+          <div class="field"><label data-i="v2_diet">Veg / Non-Veg Capability</label>
+            <select id="vDiet"><option value="both" data-i="v2_both">Both Veg & Non-Veg</option><option value="veg" data-i="v2_vegonly">Veg Only</option></select></div>
+          <div class="field"><label data-i="v2_min">Min Guests</label><input type="number" id="vMin" value="50"></div>
+          <div class="field"><label data-i="v2_max">Max Capacity</label><input type="number" id="vMax" value="5000"></div>
+        </div>
+        <div class="row2"><div class="field"><label data-i="v2_fssai">FSSAI License No.</label><input id="vFssai" placeholder="14-digit FSSAI"></div>
+        <div class="field"><label data-i="v2_gst">GST Number</label><input id="vGst" placeholder="15-digit GSTIN"></div></div>
+        <button class="btn btn-gold" onclick="vNext(2)" data-i="v2_cta">Continue</button>
+      </div>
+
+      <!-- V3 MENU -->
+      <div class="card vstep hide" data-vs="3">
+        <h3 data-i="v3_title">Build Your Menu</h3>
+        <p class="sub" data-i="v3_sub">Add the dishes you serve, with per-plate contribution.</p>
+        <div class="row2">
+          <div class="field"><label data-i="v3_dish">Dish Name</label><input id="vDishName" placeholder="e.g. Shahi Paneer"></div>
+          <div class="field"><label data-i="v3_course">Course</label><select id="vDishCourse"><option>Starter</option><option>Main</option><option>Bread</option><option>Dessert</option></select></div>
+          <div class="field"><label data-i="v3_diet">Type</label><select id="vDishDiet"><option value="veg" data-i="v3_veg">Veg</option><option value="nonveg" data-i="v3_nonveg">Non-Veg</option></select></div>
+        </div>
+        <button class="btn btn-line btn-sm" onclick="addVendorDish()" data-i="v3_add">+ Add Dish</button>
+        <div id="vMenuList" style="margin-top:20px"></div>
+        <button class="btn btn-gold" style="margin-top:18px" onclick="vNext(3)" data-i="v3_cta">Continue</button>
+      </div>
+
+      <!-- V4 COUNTERS -->
+      <div class="card vstep hide" data-vs="4">
+        <h3 data-i="v4_title">Live Counter Capabilities</h3>
+        <p class="sub" data-i="v4_sub">Select the live counters you can provide.</p>
+        <div id="vCounterList"></div>
+        <button class="btn btn-gold" style="margin-top:18px" onclick="vNext(4)" data-i="v4_cta">Submit for Verification</button>
+      </div>
+
+      <!-- V5 VERIFY -->
+      <div class="card vstep hide" data-vs="5" style="text-align:center">
+        <div class="done-seal">&#10003;</div>
+        <h3 data-i="v5_title">Submitted for Verification</h3>
+        <p class="sub" id="vSubmitMsg" data-i="v5_sub">Your application is under review. Once approved, your "Verified" badge goes live and customers can book you.</p>
+        <div style="background:var(--cream);border:1px solid var(--gold);border-radius:8px;padding:16px;margin:10px 0 20px;display:inline-block">
+          <span class="mv-verified"><svg class="svg-icon" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> <span data-i="v5_status">Status: Verified (Demo)</span></span>
+        </div>
+        <div><button class="btn btn-red" onclick="goVendorDash()" data-i="v5_cta">Go to Dashboard</button></div>
+      </div>
+
+      <!-- VENDOR DASHBOARD -->
+      <div class="vstep hide" data-vs="dash">
+        <h2 class="sec-title" id="dashName" style="margin-bottom:4px">Vendor Dashboard</h2>
+        <p class="sec-sub" data-i="dash_sub">Manage your bookings and menu.</p>
+        <div class="dash-grid">
+          <div class="stat"><b>3</b><span data-i="stat_new">New Requests</span></div>
+          <div class="stat"><b>12</b><span data-i="stat_month">This Month</span></div>
+          <div class="stat"><b id="dashMenuCount">0</b><span data-i="stat_dishes">Menu Dishes</span></div>
+          <div class="stat"><b>4.8</b><span data-i="stat_rating">Rating</span></div>
+        </div>
+        <h3 style="color:var(--red-deep);margin-bottom:14px" data-i="dash_quotes">Quote Requests (cover all dishes)</h3>
+        <div id="quoteReqList" style="margin-bottom:30px"></div>
+        <h3 style="color:var(--red-deep);margin-bottom:14px" data-i="dash_bookings">Incoming Bookings</h3>
+        <div class="booking-card"><div class="bc-info"><b>Wedding · 400 guests</b><span>Royal Bhoj · 12 Dec 2026 · Lucknow</span></div>
+          <div style="display:flex;gap:10px;align-items:center"><span class="status new" data-i="st_new">New</span><button class="btn btn-red btn-sm" onclick="toast(L().acc_msg)" data-i="dash_accept">Accept</button></div></div>
+        <div class="booking-card"><div class="bc-info"><b>Corporate · 150 guests</b><span>Gold Feast · 20 Dec 2026 · Lucknow</span></div>
+          <div style="display:flex;gap:10px;align-items:center"><span class="status new" data-i="st_new2">New</span><button class="btn btn-red btn-sm" onclick="toast(L().acc_msg)" data-i="dash_accept2">Accept</button></div></div>
+        <div class="booking-card"><div class="bc-info"><b>Birthday · 80 guests</b><span>Silver Feast · 5 Jan 2027 · Lucknow</span></div>
+          <div style="display:flex;gap:10px;align-items:center"><span class="status acc" data-i="st_acc">Accepted</span></div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div>Bhojpatra · <span data-i="foot_tag">India's Feast Booking Platform</span></div>
+  <div class="gdiv"><span></span></div>
+  <p data-i="foot_co">A unit of Norion India Pvt. Ltd. · Established 2026</p>
+  <p style="margin-top:6px">© 2026 Bhojpatra · <span data-i="foot_by">Crafted by</span> <a href="https://openidea.world" target="_blank">Open Idea</a></p>
+</footer>
+
+<div class="modal-bg" id="askModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div><b id="askTitle">Request a Quote</b><span id="askVendorName"></span></div>
+      <button class="modal-x" onclick="closeAskModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="askBody"></div>
+    <div class="modal-foot">
+      <a class="btn wa-inline" id="askWa" target="_blank">WhatsApp</a>
+      <button class="btn btn-red" onclick="sendInAppRequest()" id="askSend">Send Request</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ TRANSLATIONS ============ */
+const T={
+  en:{
+    brand_sub:"Feast Booking",mode_customer:"Book a Feast",mode_vendor:"List as Vendor",
+    cust_kick:"Menu First. Vendor Second.",cust_h1:"Build Your Menu,",cust_h1b:"Then Choose",    cust_p:"Browse dishes, filter to your taste, and we will show you only the caterers who can serve your exact menu.",
+    build_title:"Browse & Select Dishes",build_sub:"Filter the catalog and add dishes to build your feast menu.",
+    f_search:"Search",f_cuisine:"Cuisine",f_course:"Course",f_diet:"Diet",f_all:"All",f_all2:"All",
+    course_starter:"Starter",course_main:"Main Course",course_bread:"Bread & Rice",course_dessert:"Dessert",
+    diet_all:"All",diet_veg:"Veg",diet_nonveg:"Non-Veg",
+    tray_title:"My Menu",tray_dishes:"dishes selected",tray_cta:"Find Vendors",
+    vend_title:"Caterers For Your Menu",vend_sub:"Showing verified vendors who can serve all",vend_sub2:"of your selected dishes.",
+    back_menu:"Back to Menu",back_vendor:"Back to Vendors",back_addon:"Back to Counters",
+    addon_title:"Add Live Counters",addon_sub:"Optional indulgences, charged per event.",addon_cta:"Review & Pay",
+    rev_title:"Final Menu & Payment",rev_sub:"Review your feast. A 20% advance confirms your reservation.",
+    rev_guests:"Number of Guests",rev_name:"Your Name",rev_phone:"Phone",rev_date:"Event Date",rev_dl:"Download Final Menu",
+    done_title:"Reservation Confirmed",done_dl:"Download Your Menu",
+    vmode_kick:"Grow Your Catering Business",vmode_h1:"List on",vmode_p:"Reach customers across the city. Register, build your menu, get verified, and start receiving bookings.",
+    vs1:"1. Register",vs2:"2. Profile",vs3:"3. Menu",vs4:"4. Counters",vs5:"5. Verify",
+    v1_title:"Register Your Business",v1_sub:"Basic details to create your vendor account.",
+    v1_biz:"Business Name",v1_owner:"Owner Name",v1_phone:"Phone / WhatsApp",v1_email:"Email",v1_city:"City",v1_cta:"Continue",
+    v2_title:"Business Profile",v2_sub:"Tell customers what you specialise in.",v2_cuisine:"Cuisine Specializations",
+    v2_diet:"Veg / Non-Veg Capability",v2_both:"Both Veg & Non-Veg",v2_vegonly:"Veg Only",v2_min:"Min Guests",v2_max:"Max Capacity",
+    v2_fssai:"FSSAI License No.",v2_gst:"GST Number",v2_cta:"Continue",v2_occ:"Occasions You Cater",
+    hero_cta1:"Start Selecting Dishes",hero_cta2:"List as Vendor",hero_s1:"Verified Caterers",hero_s2:"Cuisine Traditions",hero_s3:"Guest Capacity",hero_scroll:"Scroll",occ_label:"Planning for",
+    off_title:"Offers & Deals",off_sub:"Apply a code at checkout and save on your feast.",
+    v3_title:"Build Your Menu",v3_sub:"Add the dishes you serve, with per-plate contribution.",
+    v3_dish:"Dish Name",v3_course:"Course",v3_diet:"Type",v3_veg:"Veg",v3_nonveg:"Non-Veg",v3_add:"+ Add Dish",v3_cta:"Continue",
+    v4_title:"Live Counter Capabilities",v4_sub:"Select the live counters you can provide.",v4_cta:"Submit for Verification",
+    v5_title:"Submitted for Verification",v5_sub:"Your application is under review. Once approved, your \"Verified\" badge goes live and customers can book you.",
+    v5_status:"Status: Verified (Demo)",v5_cta:"Go to Dashboard",
+    dash_sub:"Manage your bookings and menu.",stat_new:"New Requests",stat_month:"This Month",stat_dishes:"Menu Dishes",stat_rating:"Rating",
+    dash_bookings:"Incoming Bookings",dash_quotes:"Quote Requests (cover all dishes)",st_new:"New",st_new2:"New",st_acc:"Accepted",dash_accept:"Accept",dash_accept2:"Accept",    foot_tag:"India's Feast Booking Platform",foot_co:"A unit of Norion India Pvt. Ltd. · Established 2026",foot_by:"Crafted by",
+    perplate:"per plate",covers:"Serves your full menu",verified:"Verified",sub_label:"Subtotal",gst_label:"GST (5%)",disc_label:"Bulk discount",
+    total_label:"Total",adv_label:"Booking advance (20%)",
+    added:"added to your menu",need_dish:"Please select at least one dish.",
+    acc_msg:"Booking accepted. Customer notified.",dish_added_dash:"Dish added to menu.",
+    fillall:"Please fill the required fields.",confirmed:"Thank you"
+  },
+  hi:{
+    brand_sub:"फ़ीस्ट बुकिंग",mode_customer:"फ़ीस्ट बुक करें",mode_vendor:"वेंडर बनें",
+    cust_kick:"पहले मेन्यू, फिर वेंडर।",cust_h1:"अपना मेन्यू बनाएं,",cust_h1b:"फिर चुनें",
+    cust_p:"डिश ब्राउज़ करें, अपने स्वाद अनुसार फ़िल्टर करें, और हम आपको सिर्फ़ वही कैटरर दिखाएंगे जो आपका मेन्यू बना सकते हैं।",
+    build_title:"डिश ब्राउज़ करें और चुनें",build_sub:"कैटलॉग फ़िल्टर करें और अपने फ़ीस्ट मेन्यू में डिश जोड़ें।",
+    f_search:"खोजें",f_cuisine:"व्यंजन",f_course:"कोर्स",f_diet:"आहार",f_all:"सभी",f_all2:"सभी",
+    course_starter:"स्टार्टर",course_main:"मेन कोर्स",course_bread:"रोटी और चावल",course_dessert:"मिठाई",
+    diet_all:"सभी",diet_veg:"शाकाहारी",diet_nonveg:"मांसाहारी",
+    tray_title:"मेरा मेन्यू",tray_dishes:"डिश चुनी गईं",tray_cta:"वेंडर खोजें",
+    vend_title:"आपके मेन्यू के लिए कैटरर",vend_sub:"वेरिफाइड वेंडर जो आपकी सभी",vend_sub2:"चुनी हुई डिश बना सकते हैं।",
+    back_menu:"मेन्यू पर वापस",back_vendor:"वेंडर पर वापस",back_addon:"काउंटर पर वापस",
+    addon_title:"लाइव काउंटर जोड़ें",addon_sub:"वैकल्पिक, प्रति इवेंट शुल्क।",addon_cta:"समीक्षा और भुगतान",
+    rev_title:"फाइनल मेन्यू और भुगतान",rev_sub:"अपना फ़ीस्ट देखें। 20% एडवांस से बुकिंग कन्फर्म होती है।",
+    rev_guests:"मेहमानों की संख्या",rev_name:"आपका नाम",rev_phone:"फ़ोन",rev_date:"इवेंट की तारीख",rev_dl:"फाइनल मेन्यू डाउनलोड करें",
+    done_title:"बुकिंग कन्फर्म हुई",done_dl:"अपना मेन्यू डाउनलोड करें",
+    vmode_kick:"अपना कैटरिंग बिज़नेस बढ़ाएं",vmode_h1:"लिस्ट करें",vmode_p:"पूरे शहर में ग्राहकों तक पहुंचें। रजिस्टर करें, मेन्यू बनाएं, वेरिफाई हों, और बुकिंग पाएं।",
+    vs1:"1. रजिस्टर",vs2:"2. प्रोफाइल",vs3:"3. मेन्यू",vs4:"4. काउंटर",vs5:"5. वेरिफाई",
+    v1_title:"अपना बिज़नेस रजिस्टर करें",v1_sub:"वेंडर अकाउंट बनाने के लिए बेसिक जानकारी।",
+    v1_biz:"बिज़नेस का नाम",v1_owner:"मालिक का नाम",v1_phone:"फ़ोन / व्हाट्सएप",v1_email:"ईमेल",v1_city:"शहर",v1_cta:"आगे बढ़ें",
+    v2_title:"बिज़नेस प्रोफाइल",v2_sub:"ग्राहकों को बताएं आप किसमें माहिर हैं।",v2_cuisine:"व्यंजन विशेषज्ञता",
+    v2_diet:"शाकाहारी / मांसाहारी क्षमता",v2_both:"दोनों शाकाहारी और मांसाहारी",v2_vegonly:"सिर्फ़ शाकाहारी",v2_min:"न्यूनतम मेहमान",v2_max:"अधिकतम क्षमता",
+    v2_fssai:"FSSAI लाइसेंस नंबर",v2_gst:"GST नंबर",v2_cta:"आगे बढ़ें",v2_occ:"आप किन अवसरों के लिए कैटर करते हैं",
+    hero_cta1:"डिश चुनना शुरू करें",hero_cta2:"वेंडर बनें",hero_s1:"वेरिफाइड कैटरर",hero_s2:"व्यंजन परंपराएं",hero_s3:"मेहमान क्षमता",hero_scroll:"स्क्रॉल",occ_label:"किसके लिए योजना",
+    off_title:"ऑफ़र और डील",off_sub:"चेकआउट पर कोड लगाएं और अपने फ़ीस्ट पर बचत करें।",
+    v3_title:"अपना मेन्यू बनाएं",v3_sub:"आप जो डिश बनाते हैं उन्हें जोड़ें।",
+    v3_dish:"डिश का नाम",v3_course:"कोर्स",v3_diet:"प्रकार",v3_veg:"शाकाहारी",v3_nonveg:"मांसाहारी",v3_add:"+ डिश जोड़ें",v3_cta:"आगे बढ़ें",
+    v4_title:"लाइव काउंटर क्षमताएं",v4_sub:"जो लाइव काउंटर आप दे सकते हैं चुनें।",v4_cta:"वेरिफिकेशन के लिए भेजें",
+    v5_title:"वेरिफिकेशन के लिए भेजा गया",v5_sub:"आपका आवेदन समीक्षा में है। मंज़ूरी के बाद आपका \"वेरिफाइड\" बैज लाइव होगा और ग्राहक बुक कर सकेंगे।",
+    v5_status:"स्थिति: वेरिफाइड (डेमो)",v5_cta:"डैशबोर्ड पर जाएं",
+    dash_sub:"अपनी बुकिंग और मेन्यू मैनेज करें।",stat_new:"नए अनुरोध",stat_month:"इस महीने",stat_dishes:"मेन्यू डिश",stat_rating:"रेटिंग",
+    dash_bookings:"आने वाली बुकिंग",dash_quotes:"कोटेशन अनुरोध (सभी डिश के लिए)",st_new:"नया",st_new2:"नया",st_acc:"स्वीकृत",dash_accept:"स्वीकारें",dash_accept2:"स्वीकारें",
+    foot_tag:"भारत का फ़ीस्ट बुकिंग प्लेटफ़ॉर्म",foot_co:"नोरियन इंडिया प्रा. लि. की एक इकाई · स्थापित 2026",foot_by:"द्वारा निर्मित",
+    perplate:"प्रति प्लेट",covers:"आपका पूरा मेन्यू बनाता है",verified:"वेरिफाइड",sub_label:"सबटोटल",gst_label:"GST (5%)",disc_label:"बल्क छूट",
+    total_label:"कुल",adv_label:"बुकिंग एडवांस (20%)",
+    added:"आपके मेन्यू में जोड़ा गया",need_dish:"कृपया कम से कम एक डिश चुनें।",
+    acc_msg:"बुकिंग स्वीकृत। ग्राहक को सूचित किया गया।",dish_added_dash:"डिश मेन्यू में जोड़ी।",
+    fillall:"कृपया आवश्यक फ़ील्ड भरें।",confirmed:"धन्यवाद"
+  }
+};
+let lang='en';
+function L(){return T[lang];}
+function applyLang(){
+  document.querySelectorAll('[data-i]').forEach(el=>{const k=el.getAttribute('data-i');if(L()[k]!==undefined)el.textContent=L()[k];});
+  document.body.classList.toggle('hi',lang==='hi');
+  document.getElementById('langBtn').textContent = lang==='en'?'हिन्दी':'English';
+  renderDishes();renderTray();renderCounters();renderVendorCuisineChips();renderOccChips();renderOffers();
+  if(document.getElementById('billBox').innerHTML)renderBill();
+}
+function toggleLang(){lang=lang==='en'?'hi':'en';applyLang();}
+
+/* ============ DATA ============ */
+const dishes=[
+  {n:{en:'Paneer Tikka',hi:'पनीर टिक्का'},c:'North Indian',course:'Starter',diet:'veg',price:120,img:'photo-1567188040759-fb8a883dc6d8'},
+  {n:{en:'Hara Bhara Kebab',hi:'हरा भरा कबाब'},c:'North Indian',course:'Starter',diet:'veg',price:100,img:'photo-1601050690597-df0568f70950'},
+  {n:{en:'Murgh Malai Tikka',hi:'मुर्ग़ मलाई टिक्का'},c:'Mughlai',course:'Starter',diet:'nonveg',price:160,img:'photo-1610057099431-d73a1c9d2f2f'},
+  {n:{en:'Galouti Kebab',hi:'गलौटी कबाब'},c:'Mughlai',course:'Starter',diet:'nonveg',price:180,img:'photo-1599487488170-d11ec9c172f0'},
+  {n:{en:'Dal Makhani',hi:'दाल मखनी'},c:'North Indian',course:'Main',diet:'veg',price:140,img:'photo-1546833999-b9f581a1996d'},
+  {n:{en:'Shahi Paneer',hi:'शाही पनीर'},c:'North Indian',course:'Main',diet:'veg',price:160,img:'photo-1631452180519-c014fe946bc7'},
+  {n:{en:'Butter Chicken',hi:'बटर चिकन'},c:'Punjabi',course:'Main',diet:'nonveg',price:220,img:'photo-1603894584373-5ac82b2ae398'},
+  {n:{en:'Mutton Rogan Josh',hi:'मटन रोगन जोश'},c:'Mughlai',course:'Main',diet:'nonveg',price:280,img:'photo-1545247181-516773cae754'},
+  {n:{en:'Sarson Da Saag',hi:'सरसों दा साग'},c:'Punjabi',course:'Main',diet:'veg',price:130,img:'photo-1631452180519-c014fe946bc7'},
+  {n:{en:'Chettinad Chicken',hi:'चेट्टीनाड चिकन'},c:'South Indian',course:'Main',diet:'nonveg',price:240,img:'photo-1565557623262-b51c2513a641'},
+  {n:{en:'Avial',hi:'अवियल'},c:'South Indian',course:'Main',diet:'veg',price:120,img:'photo-1630383249896-424e482df921'},
+  {n:{en:'Hakka Noodles',hi:'हक्का नूडल्स'},c:'Chinese',course:'Main',diet:'veg',price:140,img:'photo-1626700051175-6818013e1d4f'},
+  {n:{en:'Chilli Chicken',hi:'चिली चिकन'},c:'Chinese',course:'Main',diet:'nonveg',price:190,img:'photo-1606471191009-63994c53433b'},
+  {n:{en:'Penne Arrabbiata',hi:'पेन्ने अरबियाता'},c:'Continental',course:'Main',diet:'veg',price:200,img:'photo-1551183053-bf91a1d81141'},
+  {n:{en:'Grilled Chicken Steak',hi:'ग्रिल्ड चिकन स्टेक'},c:'Continental',course:'Main',diet:'nonveg',price:300,img:'photo-1432139509613-5c4255815697'},
+  {n:{en:'Hyderabadi Biryani',hi:'हैदराबादी बिरयानी'},c:'Mughlai',course:'Bread',diet:'nonveg',price:260,img:'photo-1563379091339-03b21ab4a4f8'},
+  {n:{en:'Veg Pulao',hi:'वेज पुलाव'},c:'North Indian',course:'Bread',diet:'veg',price:110,img:'photo-1596797038530-2c107229654b'},
+  {n:{en:'Assorted Naan',hi:'विभिन्न नान'},c:'North Indian',course:'Bread',diet:'veg',price:40,img:'photo-1601050690117-94f5f6fa8bd7'},
+  {n:{en:'Appam',hi:'अप्पम'},c:'South Indian',course:'Bread',diet:'veg',price:60,img:'photo-1630383249896-424e482df921'},
+  {n:{en:'Gulab Jamun',hi:'गुलाब जामुन'},c:'North Indian',course:'Dessert',diet:'veg',price:60,img:'photo-1601303516361-77d8b8fbe9e0'},
+  {n:{en:'Shahi Tukda',hi:'शाही टुकड़ा'},c:'Mughlai',course:'Dessert',diet:'veg',price:80,img:'photo-1605197788044-5a32c7078486'},
+  {n:{en:'Rasgulla',hi:'रसगुल्ला'},c:'Bengali',course:'Dessert',diet:'veg',price:50,img:'photo-1567337710282-00832b415979'},
+  {n:{en:'Tiramisu',hi:'तिरामिसु'},c:'Continental',course:'Dessert',diet:'veg',price:160,img:'photo-1571877227200-a0d98ea607e9'},
+  {n:{en:'Payasam',hi:'पायसम'},c:'South Indian',course:'Dessert',diet:'veg',price:70,img:'photo-1567337710282-00832b415979'},
+];
+function imgUrl(id){return `https://images.unsplash.com/${id}?w=400&q=70`;}
+
+let vendors=[
+  {id:'A',name:{en:'Annapurna Caterers',hi:'अन्नपूर्णा कैटरर्स'},tag:{en:'North Indian & Punjabi',hi:'नॉर्थ इंडियन और पंजाबी'},rating:'4.9',rev:'320',mult:1.0,fee:80,verified:true,
+   img:'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&q=75',
+   serves:['Paneer Tikka','Hara Bhara Kebab','Dal Makhani','Shahi Paneer','Butter Chicken','Sarson Da Saag','Veg Pulao','Assorted Naan','Gulab Jamun']},
+  {id:'B',name:{en:'Banaras Bhoj Co.',hi:'बनारस भोज कं.'},tag:{en:'Mughlai & Awadhi',hi:'मुग़लई और अवधी'},rating:'4.8',rev:'210',mult:1.05,fee:95,verified:true,
+   img:'https://images.unsplash.com/photo-1631515243349-e0cb75fb8d3a?w=400&q=75',
+   serves:['Murgh Malai Tikka','Galouti Kebab','Mutton Rogan Josh','Shahi Paneer','Hyderabadi Biryani','Assorted Naan','Shahi Tukda','Gulab Jamun','Paneer Tikka','Dal Makhani']},
+  {id:'C',name:{en:'Chulha Catering',hi:'चूल्हा कैटरिंग'},tag:{en:'Rustic Punjabi',hi:'देहाती पंजाबी'},rating:'4.7',rev:'185',mult:0.95,fee:70,verified:true,
+   img:'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&q=75',
+   serves:['Hara Bhara Kebab','Butter Chicken','Sarson Da Saag','Dal Makhani','Veg Pulao','Assorted Naan','Gulab Jamun','Paneer Tikka','Shahi Paneer']},
+  {id:'D',name:{en:'Dakshin Delights',hi:'दक्षिण डिलाइट्स'},tag:{en:'South Indian & coastal',hi:'साउथ इंडियन और तटीय'},rating:'4.8',rev:'260',mult:1.0,fee:75,verified:true,
+   img:'https://images.unsplash.com/photo-1630383249896-424e482df921?w=400&q=75',
+   serves:['Chettinad Chicken','Avial','Appam','Payasam','Hakka Noodles','Paneer Tikka','Veg Pulao','Gulab Jamun']},
+  {id:'E',name:{en:'Elite Events Kitchen',hi:'एलीट इवेंट्स किचन'},tag:{en:'Continental & Indo-Chinese',hi:'कॉन्टिनेंटल और इंडो-चाइनीज़'},rating:'5.0',rev:'140',mult:1.15,fee:120,verified:true,
+   img:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=75',
+   serves:['Hakka Noodles','Chilli Chicken','Penne Arrabbiata','Grilled Chicken Steak','Tiramisu','Paneer Tikka','Shahi Paneer','Butter Chicken','Assorted Naan','Gulab Jamun']},
+];
+const addonsList=[
+  {id:'pan',name:{en:'Paan Counter',hi:'पान काउंटर'},price:8000},
+  {id:'chaat',name:{en:'Live Chaat Station',hi:'लाइव चाट स्टेशन'},price:12000},
+  {id:'tandoor',name:{en:'Live Tandoor',hi:'लाइव तंदूर'},price:15000},
+  {id:'dessert',name:{en:'Dessert & Kulfi Bar',hi:'डेज़र्ट और कुल्फी बार'},price:10000},
+  {id:'decor',name:{en:'Premium Decor',hi:'प्रीमियम सजावट'},price:18000},
+  {id:'drinks',name:{en:'Mocktail & Welcome Bar',hi:'मॉकटेल और वेलकम बार'},price:9000},
+];
+const addonVendors=[
+  {id:'AV1',name:{en:'Banarasi Paan House',hi:'बनारसी पान हाउस'},rating:'4.9',
+   img:'https://images.pexels.com/photos/3303058/pexels-photo-3303058.jpeg?auto=compress&cs=tinysrgb&w=300',
+   offers:{pan:7500,chaat:11000}},
+  {id:'AV2',name:{en:'Chaska Live Counters',hi:'चस्का लाइव काउंटर'},rating:'4.8',
+   img:'https://images.pexels.com/photos/1382728/pexels-photo-1382728.jpeg?auto=compress&cs=tinysrgb&w=300',
+   offers:{chaat:12500,tandoor:14500,dessert:9500}},
+  {id:'AV3',name:{en:'Royal Decor & Bar',hi:'रॉयल डेकोर और बार'},rating:'5.0',
+   img:'https://images.pexels.com/photos/12105771/pexels-photo-12105771.jpeg?auto=compress&cs=tinysrgb&w=300',
+   offers:{decor:17000,drinks:8500,dessert:10500}},
+];
+
+/* ============ OCCASIONS ============ */
+const occasions=[
+  {id:'wedding',name:{en:'Wedding',hi:'शादी'},ic:'M12 2l2.5 5L20 8l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-1z'},
+  {id:'corporate',name:{en:'Corporate',hi:'कॉर्पोरेट'},ic:'M3 21V8l9-5 9 5v13M9 21v-6h6v6'},
+  {id:'birthday',name:{en:'Birthday',hi:'जन्मदिन'},ic:'M4 21h16v-7H4zM6 14V9h12v5M12 9V4M9 6h6'},
+  {id:'festival',name:{en:'Festival',hi:'त्योहार'},ic:'M12 2v6M5 9l14 0M7 9l1 12h8l1-12'},
+  {id:'house',name:{en:'House Party',hi:'हाउस पार्टी'},ic:'M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z'},
+  {id:'pooja',name:{en:'Pooja / Bhandara',hi:'पूजा / भंडारा'},ic:'M12 3v4M8 7h8l-1 5H9zM7 12h10l-1 9H8z'},
+];
+function dishOccasions(d){
+  const o=[];
+  if((d.course==='Main'&&['Mughlai','North Indian','Punjabi'].includes(d.c))||d.n.en.includes('Biryani')||d.course==='Dessert')o.push('wedding');
+  if(d.course==='Dessert'||(d.course==='Main'&&['North Indian','Bengali','Punjabi'].includes(d.c)))o.push('festival');
+  if(['Continental','Chinese'].includes(d.c)||(d.course==='Starter'&&d.c!=='Mughlai')||d.c==='South Indian')o.push('corporate');
+  if(['Chinese','Continental'].includes(d.c)||(['Starter','Dessert'].includes(d.course)))o.push('birthday');
+  if(d.course==='Starter'||d.c==='Chinese'||d.course==='Bread')o.push('house');
+  if(d.diet==='veg'&&['North Indian','South Indian','Bengali','Punjabi'].includes(d.c))o.push('pooja');
+  return [...new Set(o)];
+}
+dishes.forEach(d=>d.occ=dishOccasions(d));
+vendors.forEach(v=>{
+  const set=new Set();
+  v.serves.forEach(name=>{const d=dishes.find(x=>x.n.en===name);if(d)d.occ.forEach(o=>set.add(o));});
+  v.occ=[...set];
+});
+let occFilter='';
+
+/* ============ OFFERS & COUPONS ============ */
+const coupons=[
+  {code:'BHOJ10',type:'pct',value:10,cap:15000,min:50000,
+    title:{en:'10% OFF your first feast',hi:'पहली फ़ीस्ट पर 10% छूट'},
+    desc:{en:'Up to ₹15,000 off on orders above ₹50,000',hi:'₹50,000 से ऊपर के ऑर्डर पर ₹15,000 तक की छूट'}},
+  {code:'WEDDING2026',type:'pct',value:12,cap:30000,min:200000,
+    title:{en:'Wedding Season: 12% OFF',hi:'शादी सीज़न: 12% छूट'},
+    desc:{en:'Up to ₹30,000 off on grand bookings above ₹2,00,000',hi:'₹2,00,000 से ऊपर की बड़ी बुकिंग पर ₹30,000 तक'}},
+  {code:'FLAT5000',type:'flat',value:5000,cap:5000,min:75000,
+    title:{en:'Flat ₹5,000 OFF',hi:'सीधे ₹5,000 की छूट'},
+    desc:{en:'Flat ₹5,000 off on orders above ₹75,000',hi:'₹75,000 से ऊपर के ऑर्डर पर सीधे ₹5,000'}},
+  {code:'COUNTERFREE',type:'flat',value:8000,cap:8000,min:100000,
+    title:{en:'Free Paan Counter',hi:'मुफ़्त पान काउंटर'},
+    desc:{en:'₹8,000 off (a free Paan Counter) above ₹1,00,000',hi:'₹1,00,000 से ऊपर ₹8,000 की छूट (मुफ़्त पान काउंटर)'}},
+];
+let appliedCoupon=null;
+function findCoupon(code){return coupons.find(c=>c.code.toUpperCase()===(code||'').trim().toUpperCase());}
+
+/* ============ STATE ============ */
+let dietFilter='';
+const CART={dishes:[],vendors:[],addons:[],addonVendor:null,guests:100,name:'',phone:'',date:''};
+function vendorPlate(v){const dishSum=CART.dishes.reduce((s,d)=>s+d.price,0);return Math.round((dishSum+v.fee)*v.mult);}
+function isVendorSel(id){return CART.vendors.some(x=>x.id===id);}
+
+/* ============ CUSTOMER: DISHES ============ */
+function setDiet(el,d){document.querySelectorAll('[data-diet]').forEach(c=>c.classList.remove('on'));el.classList.add('on');dietFilter=d;renderDishes();}
+function renderOccChips(){
+  const el=document.getElementById('occChips');if(!el)return;
+  el.innerHTML=`<span class="occ-chip ${occFilter===''?'on':''}" onclick="setOcc('')">${lang==='en'?'Any Occasion':'कोई भी अवसर'}</span>`+
+    occasions.map(o=>`<span class="occ-chip ${occFilter===o.id?'on':''}" onclick="setOcc('${o.id}')">
+      <svg class="oc-ic" viewBox="0 0 24 24"><path d="${o.ic}"/></svg>${o.name[lang]}</span>`).join('');
+}
+function setOcc(id){occFilter=id;renderOccChips();renderDishes();}
+function renderOffers(){
+  const el=document.getElementById('offerGrid');if(!el)return;
+  el.innerHTML=coupons.map(c=>`<div class="offer">
+    <span class="ribbon">${c.type==='pct'?c.value+'% OFF':'₹'+c.value.toLocaleString('en-IN')+' OFF'}</span>
+    <h3>${c.title[lang]}</h3>
+    <p>${c.desc[lang]}</p>
+    <div class="code-box"><span class="cc">${c.code}</span>
+      <button class="copy" onclick="useOffer('${c.code}')">${lang==='en'?'Use Code':'कोड लगाएं'}</button></div>
+  </div>`).join('');
+}
+function useOffer(code){
+  applyCouponCode(code);
+  document.getElementById('custBuild').scrollIntoView({behavior:'smooth'});
+}
+function occName(id){const o=occasions.find(x=>x.id===id);return o?o.name[lang]:id;}
+function renderDishes(){
+  const q=(document.getElementById('fSearch').value||'').toLowerCase();
+  const cz=document.getElementById('fCuisine').value;
+  const co=document.getElementById('fCourse').value;
+  const list=dishes.filter(d=>{
+    if(q&&!d.n.en.toLowerCase().includes(q)&&!d.n.hi.includes(q))return false;
+    if(cz&&d.c!==cz)return false;
+    if(co&&d.course!==co)return false;
+    if(dietFilter&&d.diet!==dietFilter)return false;
+    if(occFilter&&!(d.occ||[]).includes(occFilter))return false;
+    return true;
+  });
+  document.getElementById('dishGrid').innerHTML=list.map(d=>{
+    const added=CART.dishes.some(x=>x.n.en===d.n.en);
+    const otags=(d.occ||[]).slice(0,3).map(o=>`<span class="otag">${occName(o)}</span>`).join('');
+    return `<div class="dish ${added?'added':''}">
+      <div class="dimg"><img src="${imgUrl(d.img)}" alt="${d.n.en}" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=70'"><span class="vtag ${d.diet}"><i class="${d.diet==='veg'?'veg-dot':'nonveg-dot'}"></i></span></div>
+      <div class="dbody"><b>${d.n[lang]}</b>
+        <div class="dmeta">${d.c} · ${d.course}</div>
+        <div class="otags">${otags}</div>
+        <div class="dfoot"><span class="dprice">&#8377;${d.price}<small style="color:var(--muted);font-weight:400">/plate</small></span>
+          <button class="add-btn" onclick='toggleDish(${JSON.stringify(d).replace(/'/g,"&#39;")})'>${added?'&#10003;':'+'}</button></div>
+      </div></div>`;
+  }).join('') || `<p style="color:var(--muted)">${lang==='en'?'No dishes match these filters.':'इन फ़िल्टर से कोई डिश नहीं मिली।'}</p>`;
+}
+function toggleDish(d){
+  const i=CART.dishes.findIndex(x=>x.n.en===d.n.en);
+  if(i>=0)CART.dishes.splice(i,1); else {CART.dishes.push(d);toast(d.n[lang]+' '+L().added);}
+  renderDishes();renderTray();
+}
+function renderTray(){
+  document.getElementById('trayCount').textContent=CART.dishes.length;
+  const tt=document.getElementById('trayTotal');
+  if(tt){
+    if(!CART.dishes.length){tt.textContent=lang==='en'?'Build your feast menu':'अपना फ़ीस्ट मेन्यू बनाएं';}
+    else{const sum=CART.dishes.reduce((s,d)=>s+d.price,0);tt.innerHTML=`₹${sum}/plate <small style="opacity:.7">· ${lang==='en'?'tap to find vendors':'वेंडर खोजें'}</small>`;}
+  }
+  const b=document.getElementById('trayBody');
+  if(!CART.dishes.length){b.innerHTML=`<div class="tray-empty">— ${lang==='en'?'No dishes yet':'अभी कोई डिश नहीं'} —</div>`;return;}
+  b.innerHTML=CART.dishes.map((d,i)=>`<div class="tray-item"><span>${d.n[lang]} <small style="color:var(--muted)">(${d.diet==='veg'?L().diet_veg:L().diet_nonveg})</small></span><span class="ti-rm" onclick="rmTray(${i})">&times;</span></div>`).join('');
+}
+function rmTray(i){CART.dishes.splice(i,1);renderTray();renderDishes();}
+function toggleTray(){const t=document.getElementById('trayBar');if(!t)return;t.classList.toggle('expanded');}
+
+/* ============ VENDOR MATCH ============ */
+function goToVendors(){
+  if(!CART.dishes.length)return toast(L().need_dish);
+  document.getElementById('vendDishCount').textContent=CART.dishes.length;
+  renderMatch();showStep('custVendors');
+}
+function backToBuild(){showStep('custBuild');}
+function renderMatch(){
+  const sel=CART.dishes.map(d=>d.n.en);
+  let matched=vendors.filter(v=>v.verified && sel.every(name=>v.serves.includes(name)));
+  let partial=vendors.filter(v=>v.verified && !sel.every(name=>v.serves.includes(name)) && sel.some(name=>v.serves.includes(name)));
+  if(occFilter){matched=matched.sort((a,b)=>((b.occ||[]).includes(occFilter)?1:0)-((a.occ||[]).includes(occFilter)?1:0));}
+  let html='';
+  html+=renderSelectedBar();
+  if(occFilter){html+=`<p style="color:var(--muted);margin:8px 0 16px">${lang==='en'?'For your':'आपके'} <b style="color:var(--red)">${occName(occFilter)}</b> ${lang==='en'?'occasion':'अवसर के लिए'}</p>`;}
+  html+=`<p style="color:var(--muted);margin-bottom:14px;font-size:.92rem">${lang==='en'?'Pick up to 2 caterers. Combine two to cover dishes one alone cannot.':'2 कैटरर तक चुनें। दो को मिलाकर वे डिश कवर करें जो एक अकेला नहीं कर सकता।'}</p>`;
+  if(matched.length)html+=matched.map(v=>vendorCard(v,vendorPlate(v),true)).join('');
+  if(partial.length){
+    html+=`<p style="color:var(--muted);margin:18px 0 12px;font-size:.92rem">${lang==='en'?'Partial matches — combine, or ask them to cover the rest:':'आंशिक मैच — मिलाएं, या बाकी के लिए पूछें:'}</p>`;
+    html+=partial.slice(0,4).map(v=>{const covered=CART.dishes.filter(d=>v.serves.includes(d.n.en)).length;return vendorCard(v,vendorPlate(v),false,covered);}).join('');
+  }
+  document.getElementById('matchList').innerHTML=html;
+}
+function renderSelectedBar(){
+  if(!CART.vendors.length)return '';
+  const sel=CART.dishes.map(d=>d.n.en);
+  const coveredBySel=new Set();
+  CART.vendors.forEach(sv=>{const v=vendors.find(x=>x.id===sv.id);if(v)v.serves.forEach(n=>{if(sel.includes(n))coveredBySel.add(n);});});
+  const stillMissing=CART.dishes.filter(d=>!coveredBySel.has(d.n.en));
+  const names=CART.vendors.map(sv=>vendors.find(x=>x.id===sv.id).name[lang]).join(' + ');
+  return `<div style="background:var(--cream);border:1px solid var(--gold);border-radius:10px;padding:16px 20px;margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div><b style="font-family:'Cormorant Garamond';color:var(--red-deep);font-size:1.2rem">${lang==='en'?'Selected':'चयनित'} (${CART.vendors.length}/2):</b> ${names}</div>
+      <button class="btn btn-red btn-sm" onclick="proceedAddons()">${lang==='en'?'Continue to Counters':'काउंटर पर जाएं'} &rarr;</button>
+    </div>
+    ${stillMissing.length?`<div class="uncovered-note" style="margin-top:10px">${lang==='en'?'Still not covered':'अभी भी कवर नहीं'}: ${stillMissing.map(d=>d.n[lang]).join(', ')} — ${lang==='en'?'add a 2nd vendor or ask one to cover all.':'दूसरा वेंडर जोड़ें या किसी से पूछें।'}</div>`:`<div class="mv-cover" style="margin-top:8px">&#10003; ${lang==='en'?'All your dishes are covered':'आपकी सभी डिश कवर हैं'}</div>`}
+  </div>`;
+}
+function vendorCard(v,pp,full,covered){
+  const occMatch=occFilter&&(v.occ||[]).includes(occFilter);
+  const otags=(v.occ||[]).slice(0,4).map(o=>`<span class="otag" style="${o===occFilter?'background:var(--red);color:#fff;border-color:var(--red)':''}">${occName(o)}</span>`).join('');
+  const uncovered=full?[]:CART.dishes.filter(d=>!v.serves.includes(d.n.en));
+  const picked=isVendorSel(v.id);
+  return `<div class="match-vendor ${picked?'sel':''}">
+    <img src="${v.img}" alt="${v.name.en}" onclick="toggleVendor('${v.id}',${pp})">
+    <div class="mv-info" onclick="toggleVendor('${v.id}',${pp})"><b>${v.name[lang]} ${occMatch?`<span class="otag" style="background:var(--gold);color:var(--red-black);border:none">${lang==='en'?'Great for '+occName(occFilter):occName(occFilter)+' के लिए बढ़िया'}</span>`:''}</b>
+      <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733; ${v.rating} <small style="color:var(--muted)">(${v.rev})</small></div>
+      <div class="mv-tag">${v.tag[lang]}</div>
+      ${full?`<div class="mv-cover">&#10003; ${L().covers}</div>`:`<div class="mv-cover" style="color:var(--muted)">${covered}/${CART.dishes.length} ${lang==='en'?'dishes covered':'डिश उपलब्ध'}</div>`}
+      ${uncovered.length?`<div class="uncovered-note">${lang==='en'?"Doesn't list":'नहीं बनाता'}: ${uncovered.map(d=>d.n[lang]).join(', ')}</div>`:''}
+      <div class="mv-occ">${otags}</div>
+      <span class="mv-verified"><svg class="svg-icon" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> ${L().verified}</span>
+    </div>
+    <div class="mv-actions">
+      <div class="mv-price"><b>&#8377;${pp}</b><small>${L().perplate}</small></div>
+      <button class="ask-btn" style="${picked?'background:var(--red);color:var(--cream)':''}" onclick="event.stopPropagation();toggleVendor('${v.id}',${pp})">${picked?(lang==='en'?'Remove':'हटाएं'):(lang==='en'?'Add':'जोड़ें')}</button>
+      ${!full?`<button class="ask-btn" style="background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="event.stopPropagation();openAskModal('${v.id}',${pp})">${lang==='en'?'Ask to cover all':'सभी के लिए पूछें'}</button>`:''}
+    </div>
+  </div>`;
+}
+function toggleVendor(id,pp){
+  const i=CART.vendors.findIndex(x=>x.id===id);
+  if(i>=0){CART.vendors.splice(i,1);}
+  else{
+    if(CART.vendors.length>=2){toast(lang==='en'?'You can select up to 2 vendors':'अधिकतम 2 वेंडर चुन सकते हैं');return;}
+    CART.vendors.push({id,plate:pp});
+  }
+  renderMatch();
+}
+function proceedAddons(){
+  if(!CART.vendors.length)return toast(lang==='en'?'Select at least one vendor':'कम से कम एक वेंडर चुनें');
+  renderCustAddons();showStep('custAddons');
+}
+
+/* ============ QUOTE REQUESTS (cover-all) ============ */
+const quoteRequests=[];
+let askCtx=null;
+function openAskModal(vid,pp){
+  const v=vendors.find(x=>x.id===vid);if(!v)return;
+  const covered=CART.dishes.filter(d=>v.serves.includes(d.n.en));
+  const uncovered=CART.dishes.filter(d=>!v.serves.includes(d.n.en));
+  const g=Math.max(50,Math.min(50000,+(document.getElementById('rGuests')?.value)||100));
+  askCtx={vid,pp,covered,uncovered,g,v};
+  document.getElementById('askTitle').textContent=lang==='en'?'Request a Quote':'कोटेशन का अनुरोध';
+  document.getElementById('askVendorName').textContent=(lang==='en'?'To: ':'को: ')+v.name[lang];
+  const plate=pp, plates=plate*g;
+  document.getElementById('askBody').innerHTML=`
+    <p style="color:var(--muted);font-weight:300;margin-bottom:14px">${lang==='en'
+      ?`Ask <b style="color:var(--red-deep)">${v.name.en}</b> if they can also prepare the dishes they haven't listed, and share a price.`
+      :`<b style="color:var(--red-deep)">${v.name.hi}</b> से पूछें कि क्या वे बाकी डिश भी बना सकते हैं और कीमत बताएंगे।`}</p>
+    <div class="qsub">${lang==='en'?'Dishes they cover':'जो डिश वे बनाते हैं'} (${covered.length})</div>
+    ${covered.map(d=>`<div class="qline"><span>${d.n[lang]}</span><span style="color:var(--muted)">&#8377;${d.price}/plate</span></div>`).join('')||`<div class="qline"><span style="color:var(--muted)">—</span></div>`}
+    <div class="qsub" style="color:var(--red)">${lang==='en'?'Please also cover':'कृपया ये भी बनाएं'} (${uncovered.length})</div>
+    ${uncovered.map(d=>`<div class="qline uncov"><span>${d.n[lang]} <small style="color:var(--muted)">(${d.c})</small></span><span style="color:var(--muted)">${lang==='en'?'quote?':'कीमत?'}</span></div>`).join('')}
+    <div class="qline" style="border:none;margin-top:12px"><b>${lang==='en'?'Guests':'मेहमान'}</b><b>${g}</b></div>
+    <div class="qline" style="border:none"><b>${lang==='en'?'Est. plate (listed dishes)':'अनुमानित प्लेट'}</b><b style="color:var(--gold)">&#8377;${plate} &times; ${g} = &#8377;${plates.toLocaleString('en-IN')}</b></div>`;
+  document.getElementById('askWa').href=buildWaLink(v,covered,uncovered,g,plate,plates);
+  document.getElementById('askModal').classList.add('show');
+}
+function buildWaLink(v,covered,uncovered,g,plate,plates){
+  const lines=[
+    'Hi '+v.name.en+', I am booking via Bhojpatra.',
+    'Guests: '+g,
+    '',
+    'Dishes you cover:',
+    ...covered.map(d=>'- '+d.n.en+' (Rs '+d.price+'/plate)'),
+    '',
+    'Can you ALSO prepare these and share a price?',
+    ...uncovered.map(d=>'- '+d.n.en+' ('+d.c+')'),
+    '',
+    'Estimated for listed dishes: Rs '+plate+' x '+g+' = Rs '+plates.toLocaleString('en-IN'),
+    'Please send a full quote including the extra dishes. Thank you.'
+  ];
+  return 'https://wa.me/919918359017?text='+encodeURIComponent(lines.join('\n'));
+}
+function sendInAppRequest(){
+  if(!askCtx)return;
+  const {v,covered,uncovered,g,pp}=askCtx;
+  quoteRequests.unshift({
+    vendor:v.name.en, vid:v.id, guests:g, plate:pp,
+    covered:covered.map(d=>d.n.en), uncovered:uncovered.map(d=>({n:d.n.en,c:d.c})),
+    customer:(document.getElementById('rName')?.value)||'Customer',
+    phone:(document.getElementById('rPhone')?.value)||'—',
+    date:(document.getElementById('rDate')?.value)||'—',
+    occasion: occFilter?occName(occFilter):'—'
+  });
+  closeAskModal();
+  toast(lang==='en'?'Request sent to '+v.name.en:'अनुरोध भेजा गया '+v.name.hi);
+}
+function closeAskModal(){document.getElementById('askModal').classList.remove('show');}
+
+/* ============ ADDONS ============ */
+function addonPrice(id){
+  if(CART.addonVendor){const av=addonVendors.find(x=>x.id===CART.addonVendor);if(av&&av.offers[id]!=null)return av.offers[id];}
+  return addonsList.find(a=>a.id===id).price;
+}
+function renderCustAddons(){
+  document.getElementById('custAddonList').innerHTML=addonsList.map(a=>`
+    <div class="addon-row ${CART.addons.includes(a.id)?'sel':''}" onclick="toggleCustAddon('${a.id}')">
+      <b>${a.name[lang]}</b><div style="display:flex;align-items:center"><span class="ap">+&#8377;${addonPrice(a.id).toLocaleString('en-IN')}</span><span class="box">&#10003;</span></div>
+    </div>`).join('');
+  renderAddonVendors();
+}
+function renderAddonVendors(){
+  const wrap=document.getElementById('addonVendorWrap');if(!wrap)return;
+  if(!CART.addons.length){wrap.innerHTML='';return;}
+  const cards=addonVendors.map(av=>{
+    const can=CART.addons.filter(id=>av.offers[id]!=null);
+    if(!can.length)return '';
+    const sel=CART.addonVendor===av.id;
+    const total=can.reduce((s,id)=>s+av.offers[id],0);
+    return `<div class="match-vendor ${sel?'sel':''}" style="padding:14px">
+      <img src="${av.img}" alt="${av.name.en}" style="width:80px;height:80px" onclick="toggleAddonVendor('${av.id}')">
+      <div class="mv-info" onclick="toggleAddonVendor('${av.id}')">
+        <b style="font-size:1.2rem">${av.name[lang]}</b>
+        <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733; ${av.rating}</div>
+        <div class="mv-tag">${lang==='en'?'Covers':'देता है'}: ${can.map(id=>addonsList.find(a=>a.id===id).name[lang]).join(', ')}</div>
+      </div>
+      <div class="mv-actions"><div class="mv-price"><b style="font-size:1.3rem">&#8377;${total.toLocaleString('en-IN')}</b><small>${lang==='en'?'for selected':'चयनित के लिए'}</small></div>
+        <button class="ask-btn" style="${sel?'background:var(--red);color:var(--cream)':''}" onclick="event.stopPropagation();toggleAddonVendor('${av.id}')">${sel?(lang==='en'?'Chosen':'चुना'):(lang==='en'?'Use This':'इसे लें')}</button></div>
+    </div>`;
+  }).filter(Boolean).join('');
+  wrap.innerHTML=`<h3 style="font-family:'Cormorant Garamond';color:var(--red-deep);font-size:1.5rem;margin-bottom:6px">${lang==='en'?'Specialist Counter Vendors':'काउंटर विशेषज्ञ वेंडर'}</h3>
+    <p style="color:var(--muted);font-weight:300;margin-bottom:16px;font-size:.92rem">${lang==='en'?'Optional — let a dedicated counter specialist handle your live stations (often better priced).':'वैकल्पिक — समर्पित काउंटर विशेषज्ञ से अपने लाइव सेक्शन करवाएं।'}</p>
+    ${cards||`<p style="color:var(--muted)">${lang==='en'?'No specialist matches your selected counters — your caterer will handle them.':'आपके काउंटर के लिए कोई विशेषज्ञ नहीं — आपका कैटरर संभालेगा।'}</p>`}`;
+}
+function toggleAddonVendor(id){CART.addonVendor=CART.addonVendor===id?null:id;renderCustAddons();}
+function toggleCustAddon(id){CART.addons.includes(id)?CART.addons=CART.addons.filter(x=>x!==id):CART.addons.push(id);renderCustAddons();}
+
+/* ============ BILL ============ */
+function calcBill(){
+  const g=Math.max(50,Math.min(50000,+document.getElementById('rGuests').value||100));
+  CART.guests=g;
+  const sel=CART.dishes.map(d=>d.n.en);
+  let plate=0;const vlines=[];
+  if(CART.vendors.length){
+    CART.vendors.forEach((sv,idx)=>{
+      const v=vendors.find(x=>x.id===sv.id);if(!v)return;
+      const takenByEarlier=new Set();
+      CART.vendors.slice(0,idx).forEach(p=>{const pv=vendors.find(x=>x.id===p.id);if(pv)pv.serves.forEach(n=>{if(sel.includes(n))takenByEarlier.add(n);});});
+      const myDishes=CART.dishes.filter(d=>v.serves.includes(d.n.en)&&!takenByEarlier.has(d.n.en));
+      const myPlate=myDishes.length?Math.round((myDishes.reduce((s,d)=>s+d.price,0)+v.fee)*v.mult):0;
+      plate+=myPlate;
+      vlines.push({name:v.name[lang],nameEn:v.name.en,plate:myPlate,count:myDishes.length});
+    });
+  }
+  const plates=plate*g;
+  const addon=CART.addons.reduce((s,id)=>s+addonPrice(id),0);
+  const pre=plates+addon;
+  let dr=0; if(g>=500)dr=.10; else if(g>=200)dr=.05;
+  const disc=Math.round(pre*dr);
+  let coupon=0,couponValid=false,couponMsg='';
+  if(appliedCoupon){
+    if(pre>=appliedCoupon.min){
+      couponValid=true;
+      const afterBulk=pre-disc;
+      let raw = appliedCoupon.type==='pct' ? Math.round(afterBulk*appliedCoupon.value/100) : appliedCoupon.value;
+      coupon=Math.min(raw,appliedCoupon.cap,afterBulk);
+    } else {
+      couponMsg = (lang==='en'?'Min order ₹':'न्यूनतम ऑर्डर ₹')+appliedCoupon.min.toLocaleString('en-IN')+(lang==='en'?' required':' चाहिए');
+    }
+  }
+  const taxable=pre-disc-coupon;
+  const gst=Math.round(taxable*.05);
+  const total=taxable+gst;
+  return{plate,plates,addon,pre,dr,disc,coupon,couponValid,couponMsg,taxable,gst,total,advance:Math.round(total*.2),g,vlines};
+}
+function renderBill(){
+  const c=calcBill();
+  const av=CART.addonVendor?addonVendors.find(x=>x.id===CART.addonVendor):null;
+  const couponUI = appliedCoupon
+    ? `<div style="display:flex;justify-content:space-between;align-items:center;background:var(--cream);border:1px dashed var(--gold);border-radius:6px;padding:10px 14px;margin:14px 0">
+         <span style="font-weight:600;color:var(--red-deep)">&#10003; ${appliedCoupon.code}${c.couponValid?'':' <small style="color:var(--red);font-weight:400">('+c.couponMsg+')</small>'}</span>
+         <span class="ti-rm" style="cursor:pointer;color:var(--muted)" onclick="removeCoupon()">${lang==='en'?'Remove':'हटाएं'}</span></div>`
+    : `<div style="display:flex;gap:8px;margin:14px 0">
+         <input id="couponInput" placeholder="${lang==='en'?'Coupon code':'कूपन कोड'}" style="flex:1;padding:11px 14px;border:1px solid var(--cream-warm);border-radius:4px;font-family:inherit;text-transform:uppercase;background:var(--paper)">
+         <button class="btn btn-line btn-sm" onclick="applyCoupon()">${lang==='en'?'Apply':'लगाएं'}</button></div>`;
+  const vendorLines=c.vlines.filter(vl=>vl.count>0).map(vl=>
+    `<div class="bill-row"><span>${vl.name} · ${vl.count} ${lang==='en'?'dishes':'डिश'} · ${c.g} &times; &#8377;${vl.plate}</span><span>&#8377;${(vl.plate*c.g).toLocaleString('en-IN')}</span></div>`).join('');
+  document.getElementById('billBox').innerHTML=`
+    ${vendorLines}
+    ${c.vlines.filter(vl=>vl.count>0).length>1?`<div class="bill-row" style="border-bottom:1px solid var(--gold)"><span style="color:var(--muted)">${lang==='en'?'Combined plate':'संयुक्त प्लेट'}</span><span>&#8377;${c.plate}/plate</span></div>`:''}
+    ${CART.addons.map(id=>{const a=addonsList.find(x=>x.id===id);const p=addonPrice(id);return `<div class="bill-row"><span>${a.name[lang]}${av&&av.offers[id]!=null?` <small style="color:var(--muted)">(${av.name[lang]})</small>`:''}</span><span>&#8377;${p.toLocaleString('en-IN')}</span></div>`}).join('')}
+    <div class="bill-row"><span>${L().sub_label}</span><span>&#8377;${c.pre.toLocaleString('en-IN')}</span></div>
+    ${c.disc>0?`<div class="bill-row disc"><span>${L().disc_label} (${Math.round(c.dr*100)}%)</span><span>&minus; &#8377;${c.disc.toLocaleString('en-IN')}</span></div>`:''}
+    ${c.coupon>0?`<div class="bill-row disc"><span>${lang==='en'?'Coupon':'कूपन'} ${appliedCoupon.code}</span><span>&minus; &#8377;${c.coupon.toLocaleString('en-IN')}</span></div>`:''}
+    ${couponUI}
+    <div class="bill-row gst"><span>${L().gst_label}</span><span>+ &#8377;${c.gst.toLocaleString('en-IN')}</span></div>
+    <div class="bill-row tot"><span>${L().total_label}</span><span>&#8377;${c.total.toLocaleString('en-IN')}</span></div>
+    <div class="bill-row adv"><span>${L().adv_label}</span><span>&#8377;${c.advance.toLocaleString('en-IN')}</span></div>
+    <button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:18px" onclick="payNow()">${lang==='en'?'Confirm & Pay':'कन्फर्म और भुगतान'} &#8377;${c.advance.toLocaleString('en-IN')}</button>`;
+}
+function applyCoupon(){
+  const code=document.getElementById('couponInput').value;
+  const c=findCoupon(code);
+  if(!c){toast(lang==='en'?'Invalid coupon code':'अमान्य कूपन कोड');return;}
+  appliedCoupon=c;
+  const b=calcBill();
+  toast(b.couponValid?(c.code+' '+(lang==='en'?'applied!':'लागू!')):b.couponMsg);
+  renderBill();
+}
+function applyCouponCode(code){appliedCoupon=findCoupon(code)||null;if(appliedCoupon)toast(appliedCoupon.code+' '+(lang==='en'?'ready — review your bill':'तैयार — बिल देखें'));}
+function removeCoupon(){appliedCoupon=null;renderBill();}
+function payNow(){
+  CART.name=document.getElementById('rName').value;CART.phone=document.getElementById('rPhone').value;CART.date=document.getElementById('rDate').value;
+  if(!CART.name||!CART.phone)return toast(L().fillall);
+  const c=calcBill();
+  document.getElementById('reviewGrid').classList.add('hide');
+  document.getElementById('custDone').classList.remove('hide');
+  document.getElementById('custDoneMsg').innerHTML=`${L().confirmed}, ${CART.name}. ${lang==='en'?'Booking advance of':'बुकिंग एडवांस'} <b>&#8377;${c.advance.toLocaleString('en-IN')}</b> ${lang==='en'?'received. We will reach you on':'प्राप्त हुई। हम आपसे संपर्क करेंगे'} ${CART.phone}.`;
+}
+function showStep(id){
+  ['custBuild','custVendors','custAddons','custReview'].forEach(s=>document.getElementById(s).classList.toggle('hide',s!==id));
+  if(id==='custReview'){document.getElementById('reviewGrid').classList.remove('hide');document.getElementById('custDone').classList.add('hide');renderBill();}
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function downloadMenu(){
+  if(!CART.vendors.length)return toast(lang==='en'?'Select a vendor first':'पहले वेंडर चुनें');
+  if(!(window.jspdf&&window.jspdf.jsPDF))return toast('PDF engine loading, try again.');
+  const c=calcBill();
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'pt',format:'a4'});
+  const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
+  const RED=[142,22,22],REDD=[92,10,10],GOLD=[201,162,39],INK=[36,16,8],MUT=[125,100,80],GREEN=[46,125,50],CREAM=[251,246,236];
+  const rs=n=>'Rs '+Number(n).toLocaleString('en-IN');
+  const M=34;
+  function frame(){
+    doc.setDrawColor(...GOLD);doc.setLineWidth(1.5);doc.rect(M,M,W-2*M,H-2*M);
+    doc.setLineWidth(.5);doc.rect(M+6,M+6,W-2*M-12,H-2*M-12);
+    [[M,M],[W-M,M],[M,H-M],[W-M,H-M]].forEach(([x,yy])=>{doc.setFillColor(...GOLD);doc.triangle(x-5,yy,x,yy-5,x+5,yy,'F');doc.triangle(x-5,yy,x,yy+5,x+5,yy,'F');});
+  }
+  frame();
+  let y=0;
+  doc.setFillColor(...REDD);doc.rect(M+6,M+6,W-2*M-12,86,'F');
+  doc.setDrawColor(...GOLD);doc.setLineWidth(.8);doc.line(M+6,M+92,W-M-6,M+92);
+  doc.setTextColor(...CREAM);doc.setFont('times','bold');doc.setFontSize(32);
+  doc.text('Bhojpatra',W/2,M+44,{align:'center'});
+  doc.setFont('times','italic');doc.setFontSize(11);doc.setTextColor(...GOLD);
+  doc.text("~ India's Feast Booking Platform ~",W/2,M+64,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(220,210,195);
+  doc.text('FINAL MENU & QUOTATION  ·  '+new Date().toLocaleDateString('en-IN'),W/2,M+80,{align:'center'});
+  y=M+118;
+  const LX=M+24,RX=W-M-24;
+  function sectionTitle(t){doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...RED);doc.text(t.toUpperCase(),LX,y);
+    doc.setDrawColor(...GOLD);doc.setLineWidth(.5);doc.line(LX,y+5,RX,y+5);y+=20;}
+  sectionTitle(lang==='en'?'Booking Details':'Booking Details');
+  doc.setFont('helvetica','normal');doc.setFontSize(10);
+  const rows=[['Customer',CART.name||'-'],['Phone',CART.phone||'-'],['Event Date',CART.date||'-'],['Guests',String(c.g)],['Occasion',occFilter?occName(occFilter):'-']];
+  rows.forEach((r,i)=>{const col=i%2,x=LX+col*((RX-LX)/2);if(col===0&&i>0)y+=17;doc.setTextColor(...MUT);doc.text(r[0]+':',x,y);doc.setTextColor(...INK);doc.text(String(r[1]),x+74,y);});
+  y+=30;
+  sectionTitle((CART.vendors.length>1?(lang==='en'?'Your Caterers':'Caterers'):(lang==='en'?'Your Caterer':'Caterer')));
+  const sel=CART.dishes.map(d=>d.n.en);
+  CART.vendors.forEach((sv,idx)=>{
+    const v=vendors.find(x=>x.id===sv.id);if(!v)return;
+    const takenByEarlier=new Set();CART.vendors.slice(0,idx).forEach(p=>{const pv=vendors.find(x=>x.id===p.id);if(pv)pv.serves.forEach(n=>{if(sel.includes(n))takenByEarlier.add(n);});});
+    const myDishes=CART.dishes.filter(d=>v.serves.includes(d.n.en)&&!takenByEarlier.has(d.n.en));
+    doc.setFont('times','bold');doc.setFontSize(13);doc.setTextColor(...RED);
+    doc.text((CART.vendors.length>1?('Vendor '+(idx+1)+': '):'')+v.name.en+'  ('+String.fromCharCode(0x2605)+' '+v.rating+')',LX,y);y+=15;
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUT);
+    doc.text(v.tag.en+'  ·  '+myDishes.length+' dishes  ·  Rs '+sv.plate+'/plate',LX,y);y+=16;
+    myDishes.forEach(d=>{if(y>H-120){doc.addPage();frame();y=M+40;}
+      doc.setFillColor(...(d.diet==='veg'?GREEN:RED));doc.circle(LX+4,y-3,2.6,'F');
+      doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...INK);doc.text(d.n.en,LX+14,y);
+      doc.setTextColor(...MUT);doc.setFontSize(8);doc.text(d.c+' · '+d.course,RX,y,{align:'right'});y+=15;});
+    y+=8;
+  });
+  if(CART.addons.length){
+    if(y>H-160){doc.addPage();frame();y=M+40;}
+    const av=CART.addonVendor?addonVendors.find(x=>x.id===CART.addonVendor):null;
+    sectionTitle((lang==='en'?'Live Counters':'Live Counters')+(av?'  ·  '+av.name.en:''));
+    CART.addons.forEach(id=>{const a=addonsList.find(x=>x.id===id);if(y>H-110){doc.addPage();frame();y=M+40;}
+      doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...INK);doc.text('+ '+a.name.en,LX+10,y);
+      doc.setTextColor(...MUT);doc.text(rs(addonPrice(id)),RX,y,{align:'right'});y+=15;});
+    y+=8;
+  }
+  const boxH=70+ (c.disc>0?16:0)+(c.coupon>0?16:0)+44;
+  if(y>H-boxH-70){doc.addPage();frame();y=M+40;}
+  doc.setFillColor(...CREAM);doc.setDrawColor(...GOLD);doc.setLineWidth(.8);doc.roundedRect(LX-6,y,RX-LX+12,boxH,6,6,'FD');
+  let by=y+24;const blx=LX+8,brx=RX-8;
+  const bl=(lbl,val,col,bold)=>{doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(bold?12:10);doc.setTextColor(...(col||INK));doc.text(lbl,blx,by);doc.text(val,brx,by,{align:'right'});by+=bold?22:17;};
+  bl('Food subtotal ('+c.g+' guests)',rs(c.plates));
+  if(c.addon>0)bl('Live counters',rs(c.addon));
+  bl('Subtotal',rs(c.pre),MUT);
+  if(c.disc>0)bl('Bulk discount ('+Math.round(c.dr*100)+'%)','- '+rs(c.disc),GREEN);
+  if(c.coupon>0)bl('Coupon '+appliedCoupon.code,'- '+rs(c.coupon),GREEN);
+  bl('GST (5%)','+ '+rs(c.gst),MUT);
+  doc.setDrawColor(...GOLD);doc.setLineWidth(.5);doc.line(blx,by-6,brx,by-6);
+  bl('TOTAL',rs(c.total),RED,true);
+  bl('Booking advance (20%)',rs(c.advance),RED);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUT);
+  doc.text('+91 99183 59017   |   Ankit23690@gmail.com   |   C-59, Sector K, Aliganj, Lucknow',W/2,H-M-22,{align:'center'});
+  doc.setFont('times','italic');doc.setTextColor(...RED);doc.setFontSize(10);
+  doc.text('Thank you for booking with Bhojpatra',W/2,H-M-8,{align:'center'});
+  doc.save('Bhojpatra_Menu_'+(CART.name||'order').replace(/\s/g,'_')+'.pdf');
+  toast(lang==='en'?'Menu PDF downloaded':'मेन्यू PDF डाउनलोड हुई');
+}
+
+/* ============ VENDOR ONBOARDING ============ */
+let vStep=1;
+const NEW_VENDOR={cuisines:[],menu:[],counters:[],occasions:[]};
+const cuisineOptions=['North Indian','South Indian','Chinese','Continental','Mughlai','Punjabi','Bengali'];
+function renderVendorCuisineChips(){
+  const el=document.getElementById('vCuisineChips');if(!el)return;
+  el.innerHTML=cuisineOptions.map(c=>`<span class="fchip ${NEW_VENDOR.cuisines.includes(c)?'on':''}" onclick="toggleVCuisine('${c}')">${c}</span>`).join('');
+  const oc=document.getElementById('vOccChips');
+  if(oc)oc.innerHTML=occasions.map(o=>`<span class="fchip ${(NEW_VENDOR.occasions||[]).includes(o.id)?'on':''}" onclick="toggleVOcc('${o.id}')">${o.name[lang]}</span>`).join('');
+}
+function toggleVCuisine(c){NEW_VENDOR.cuisines.includes(c)?NEW_VENDOR.cuisines=NEW_VENDOR.cuisines.filter(x=>x!==c):NEW_VENDOR.cuisines.push(c);renderVendorCuisineChips();}
+function toggleVOcc(o){if(!NEW_VENDOR.occasions)NEW_VENDOR.occasions=[];NEW_VENDOR.occasions.includes(o)?NEW_VENDOR.occasions=NEW_VENDOR.occasions.filter(x=>x!==o):NEW_VENDOR.occasions.push(o);renderVendorCuisineChips();}
+function addVendorDish(){
+  const n=document.getElementById('vDishName').value.trim();
+  if(!n)return toast(L().fillall);
+  const course=document.getElementById('vDishCourse').value;
+  const diet=document.getElementById('vDishDiet').value;
+  NEW_VENDOR.menu.push({n,course,diet});
+  document.getElementById('vDishName').value='';
+  renderVendorMenu();toast(L().dish_added_dash);
+}
+function renderVendorMenu(){
+  document.getElementById('vMenuList').innerHTML=NEW_VENDOR.menu.map((d,i)=>`
+    <div class="mb-dish"><span class="mb-name">${d.n}</span><span class="mb-meta">${d.course} · ${d.diet==='veg'?L().v3_veg:L().v3_nonveg}</span><span class="mb-rm" onclick="rmVDish(${i})">&times;</span></div>`).join('');
+  const dc=document.getElementById('dashMenuCount');if(dc)dc.textContent=NEW_VENDOR.menu.length;
+}
+function rmVDish(i){NEW_VENDOR.menu.splice(i,1);renderVendorMenu();}
+function renderCounters(){
+  const el=document.getElementById('vCounterList');if(!el)return;
+  el.innerHTML=addonsList.map(a=>`
+    <div class="addon-row ${NEW_VENDOR.counters.includes(a.id)?'sel':''}" onclick="toggleCounter('${a.id}')">
+      <b>${a.name[lang]}</b><span class="box">&#10003;</span></div>`).join('');
+}
+function toggleCounter(id){NEW_VENDOR.counters.includes(id)?NEW_VENDOR.counters=NEW_VENDOR.counters.filter(x=>x!==id):NEW_VENDOR.counters.push(id);renderCounters();}
+function vNext(s){
+  if(s===1){if(!document.getElementById('vBiz').value||!document.getElementById('vPhone').value)return toast(L().fillall);NEW_VENDOR.biz=document.getElementById('vBiz').value;}
+  if(s===3 && NEW_VENDOR.menu.length<3)return toast(lang==='en'?'Add at least 3 dishes.':'कम से कम 3 डिश जोड़ें।');
+  setVStep(s+1);
+}
+function setVStep(s){
+  vStep=s;
+  document.querySelectorAll('.vstep').forEach(el=>el.classList.add('hide'));
+  document.querySelector(`.vstep[data-vs="${s}"]`).classList.remove('hide');
+  document.querySelectorAll('#vSteps .sb').forEach((sb,i)=>{sb.classList.toggle('on',i===s-1);sb.classList.toggle('done',i<s-1);});
+  if(s===5){
+    if(NEW_VENDOR.biz && !vendors.some(v=>v.name.en===NEW_VENDOR.biz)){
+      const vOcc=new Set(NEW_VENDOR.occasions||[]);
+      (NEW_VENDOR.menu||[]).forEach(md=>{const fake={c:NEW_VENDOR.cuisines[0]||'North Indian',course:md.course,diet:md.diet};dishOccasions(fake).forEach(o=>vOcc.add(o));});
+      vendors.push({id:'NEW',name:{en:NEW_VENDOR.biz,hi:NEW_VENDOR.biz},tag:{en:NEW_VENDOR.cuisines.join(', ')||'Multi-cuisine',hi:NEW_VENDOR.cuisines.join(', ')||'मल्टी'},
+        rating:'New',rev:'0',mult:1.0,fee:85,verified:true,img:'https://images.unsplash.com/photo-1555244162-803834f70033?w=400&q=75',
+        serves:NEW_VENDOR.menu.map(d=>d.n),occ:[...vOcc]});
+    }
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function goVendorDash(){
+  document.querySelectorAll('.vstep').forEach(el=>el.classList.add('hide'));
+  document.querySelector('.vstep[data-vs="dash"]').classList.remove('hide');
+  document.getElementById('vSteps').classList.add('hide');
+  document.getElementById('dashName').textContent=(NEW_VENDOR.biz||'Vendor')+' · '+(lang==='en'?'Dashboard':'डैशबोर्ड');
+  renderVendorMenu();renderQuoteReqs();
+}
+function renderQuoteReqs(){
+  const el=document.getElementById('quoteReqList');if(!el)return;
+  if(!quoteRequests.length){
+    el.innerHTML=`<p style="color:var(--muted);font-weight:300">${lang==='en'?'No quote requests yet. When a customer asks you to cover extra dishes, it appears here with full price details.':'अभी कोई कोटेशन अनुरोध नहीं। जब ग्राहक अतिरिक्त डिश के लिए पूछेगा, वह यहां कीमत के साथ दिखेगा।'}</p>`;
+    return;
+  }
+  el.innerHTML=quoteRequests.map((q,i)=>`
+    <div class="req-card">
+      <div class="rc-top">
+        <div><b>${q.customer} · ${q.guests} ${lang==='en'?'guests':'मेहमान'}</b>
+          <div class="rc-meta">${q.occasion} · ${q.date} · ${q.phone}</div></div>
+        <div style="text-align:right"><span class="status new">${lang==='en'?'Needs Quote':'कोटेशन चाहिए'}</span></div>
+      </div>
+      <div style="margin-top:12px;font-size:.8rem;letter-spacing:1px;text-transform:uppercase;color:var(--green);font-weight:700">${lang==='en'?'Already covers':'पहले से बनाते हैं'} (${q.covered.length})</div>
+      <div class="rc-dishes">${q.covered.map(n=>`<i>${n}</i>`).join('')}</div>
+      <div style="margin-top:12px;font-size:.8rem;letter-spacing:1px;text-transform:uppercase;color:var(--red);font-weight:700">${lang==='en'?'Customer wants you to also cover':'ग्राहक चाहता है आप ये भी बनाएं'} (${q.uncovered.length})</div>
+      <div class="rc-dishes">${q.uncovered.map(d=>`<i style="border-color:#f3cfc6;background:#fdeee9;color:var(--red)">${d.n} <small style="color:var(--muted)">(${d.c})</small></i>`).join('')}</div>
+      <div class="rc-top" style="margin-top:14px;align-items:center">
+        <div class="rc-meta">${lang==='en'?'Your listed-dish estimate':'आपका अनुमान'}: <span class="rc-price">&#8377;${q.plate}/plate</span></div>
+        <button class="btn btn-red btn-sm" onclick="quoteRespond(${i})">${lang==='en'?'Send Quote':'कोटेशन भेजें'}</button>
+      </div>
+    </div>`).join('');
+}
+function quoteRespond(i){
+  toast(lang==='en'?'Quote sent to customer with price for all dishes.':'सभी डिश की कीमत के साथ कोटेशन ग्राहक को भेजा गया।');
+}
+
+/* ============ MODE / NAV ============ */
+function setMode(m){
+  document.getElementById('customerMode').classList.toggle('hide',m!=='customer');
+  document.getElementById('vendorMode').classList.toggle('hide',m!=='vendor');
+  document.getElementById('modeCust').classList.toggle('on',m==='customer');
+  document.getElementById('modeVend').classList.toggle('on',m==='vendor');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function goHome(){setMode('customer');showStep('custBuild');}
+
+/* ============ TOAST ============ */
+let toastT;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);}
+
+/* INIT */
+renderDishes();renderTray();renderVendorCuisineChips();renderCounters();renderOccChips();renderOffers();applyLang();
+</script>
+</body>
+</html>

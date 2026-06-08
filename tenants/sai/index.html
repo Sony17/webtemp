@@ -164,9 +164,6 @@
   .pgs-body { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
   .pgs-cat { display: inline-block; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold-deep); font-weight: 600; }
   .pgs-card h3 { margin: 0; font-size: 1.1rem; color: var(--ink); }
-  .pgs-price { display: flex; align-items: baseline; gap: 5px; margin-top: 4px; padding-bottom: 14px; border-bottom: 1px dashed rgba(184,135,70,0.4); }
-  .pgs-price-num { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; color: var(--gold-deep); }
-  .pgs-price-unit { font-size: 0.85rem; color: var(--ink-soft); font-weight: 500; }
   .pgs-cta { margin-top: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 16px; border-radius: 10px; background: var(--gold); color: #fff; font-weight: 600; font-size: 0.92rem; transition: background 0.15s, transform 0.15s; }
   .pgs-cta:hover { background: var(--gold-deep); transform: translateY(-1px); }
   .pgs-cta svg { width: 16px; height: 16px; fill: currentColor; }
@@ -261,6 +258,20 @@
   .chat-options { display: flex; flex-direction: column; gap: 7px; padding: 4px 14px 0; }
   .chat-opt { background: #fff; border: 1px solid rgba(184,135,70,0.4); color: var(--ink); padding: 9px 13px; border-radius: 12px; font-family: inherit; font-size: 0.88rem; cursor: pointer; text-align: left; transition: all 0.15s; }
   .chat-opt:hover { border-color: var(--gold); background: rgba(184,135,70,0.07); }
+  /* Collapsible toggle for the whole question list */
+  .chat-options-wrap { display: flex; flex-direction: column; }
+  .chat-toggle {
+    background: transparent; border: 0; color: var(--ink-soft);
+    padding: 6px 14px 4px; font-family: inherit; font-size: 0.78rem;
+    font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    align-self: flex-start; transition: color 0.15s;
+  }
+  .chat-toggle:hover { color: var(--ink); }
+  .chat-toggle::before { content: '▾'; font-size: 0.7rem; transition: transform 0.2s; }
+  .chat-options-wrap.collapsed .chat-toggle::before { transform: rotate(-90deg); }
+  .chat-options { max-height: 320px; overflow-y: auto; transition: max-height 0.25s ease, padding 0.25s ease; }
+  .chat-options-wrap.collapsed .chat-options { max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; }
   .chat-foot { padding: 12px 16px; border-top: 1px solid rgba(184,135,70,0.25); display: flex; gap: 8px; }
   .chat-wa-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--gold); color: #fff; padding: 10px 14px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; box-shadow: 0 4px 14px rgba(140,99,38,0.3); }
   .chat-wa-btn:hover { background: var(--gold-deep); color: #fff; }
@@ -395,6 +406,23 @@
   .socials a.fb:hover svg { fill: #1877F2; }
   .socials a.yt:hover svg { fill: #FF0000; }
   .socials a.gm:hover svg { fill: #4285F4; }
+
+  /* WhatsApp QR card in footer */
+  .wa-qr {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 8px;
+    margin-top: 16px; padding: 10px; border-radius: 12px;
+    background: #fff; text-decoration: none;
+    width: fit-content; max-width: 100%;
+    transition: transform 0.15s ease;
+  }
+  .wa-qr:hover { transform: translateY(-2px); }
+  .wa-qr img { display: block; border-radius: 6px; width: 140px; height: 140px; max-width: 100%; height: auto; aspect-ratio: 1; }
+  .wa-qr span { font-size: 0.78rem; color: #25D366; font-weight: 600; letter-spacing: 0.02em; text-align: center; }
+  @media (max-width: 600px) {
+    .wa-qr { padding: 8px; }
+    .wa-qr img { width: 120px; }
+    .wa-qr span { font-size: 0.72rem; }
+  }
 
   /* Inline socials (light bg) */
   .socials-light a { background: var(--panel); border-color: var(--line); }
@@ -533,6 +561,7 @@
       <button type="button" class="filter-btn" data-filter="pvc-panels" data-hi="PVC पैनल">PVC Panels</button>
       <button type="button" class="filter-btn" data-filter="blinds" data-hi="विंडो ब्लाइंड्स">Window Blinds</button>
       <button type="button" class="filter-btn" data-filter="sofas" data-hi="लग्ज़री सोफा">Luxury Sofas</button>
+      <button type="button" class="filter-btn" data-filter="wall-frames" data-hi="वॉल फ्रेम">Wall Frames</button>
     </div>
     <div class="pgs-grid">
       <article class="pgs-card" data-cat="wallpapers">
@@ -540,8 +569,7 @@
         <div class="pgs-body">
           <span class="pgs-cat" data-hi="वॉलपेपर">Wallpapers</span>
           <h3 data-hi="प्रीमियम 3D वॉलपेपर">Premium 3D Wallpaper</h3>
-          <div class="pgs-price"><span class="pgs-price-num">₹40</span><span class="pgs-price-unit" data-hi="/वर्ग फुट से (न्यूनतम)">/sq ft onwards</span></div>
-          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%20Premium%203D%20Wallpaper" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Zm-7.08 15.4h-.01a8.3 8.3 0 0 1-4.24-1.16l-.3-.18-2.49.65.66-2.43-.2-.31a8.32 8.32 0 1 1 6.58 3.43Zm4.79-6.22c-.26-.13-1.55-.77-1.79-.86-.24-.09-.42-.13-.6.13s-.69.86-.85 1.04c-.16.18-.31.2-.57.07-.26-.13-1.1-.41-2.1-1.3-.78-.7-1.3-1.55-1.45-1.81-.15-.26-.02-.4.11-.53.12-.12.26-.31.39-.46.13-.16.17-.27.26-.44.09-.18.04-.33-.02-.46-.07-.13-.6-1.43-.82-1.96-.22-.52-.44-.45-.6-.46h-.51c-.18 0-.46.06-.7.32-.24.26-.92.9-.92 2.2 0 1.3.94 2.55 1.07 2.73.13.18 1.85 2.83 4.49 3.97.63.27 1.12.43 1.51.55.63.2 1.21.17 1.66.1.51-.08 1.55-.63 1.77-1.24.22-.61.22-1.13.16-1.24-.07-.11-.24-.18-.5-.31Z"/></svg> Get quote</a>
+          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%20Premium%203D%20Wallpaper" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
         </div>
       </article>
       <article class="pgs-card" data-cat="wallpapers">
@@ -549,44 +577,39 @@
         <div class="pgs-body">
           <span class="pgs-cat" data-hi="वॉलपेपर">Wallpapers</span>
           <h3 data-hi="कस्टम UV प्रिंट वॉलपेपर">Custom UV Print Wallpaper</h3>
-          <div class="pgs-price"><span class="pgs-price-num">₹70</span><span class="pgs-price-unit" data-hi="/वर्ग फुट">/sq ft</span></div>
-          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%20Custom%20UV%20Print%20Wallpaper" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Zm-7.08 15.4h-.01a8.3 8.3 0 0 1-4.24-1.16l-.3-.18-2.49.65.66-2.43-.2-.31a8.32 8.32 0 1 1 6.58 3.43Z"/></svg> Get quote</a>
-        </div>
-      </article>
-      <article class="pgs-card" data-cat="wpc-louvers">
-        <div class="pgs-img"><video src="/demo-wallpaper/videos/sai1.mp4" muted loop playsinline preload="metadata" autoplay></video></div>
-        <div class="pgs-body">
-          <span class="pgs-cat" data-hi="WPC लूवर">WPC Louvers</span>
-          <h3 data-hi="17mm WPC वॉल पैनल">17mm WPC Wall Panel</h3>
-          <div class="pgs-price"><span class="pgs-price-num">₹400</span><span class="pgs-price-unit" data-hi="/पीस">/piece</span></div>
-          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%2017mm%20WPC%20Wall%20Panel" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
-        </div>
-      </article>
-      <article class="pgs-card" data-cat="wpc-louvers">
-        <div class="pgs-img"><video src="/demo-wallpaper/videos/sai2.mp4" muted loop playsinline preload="metadata" autoplay></video></div>
-        <div class="pgs-body">
-          <span class="pgs-cat" data-hi="WPC लूवर">WPC Louvers</span>
-          <h3 data-hi="चारकोल पैनल">Charcoal Panel</h3>
-          <div class="pgs-price"><span class="pgs-price-num">₹550</span><span class="pgs-price-unit" data-hi="/पीस">/piece</span></div>
-          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%20Charcoal%20Panel" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
+          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%20Custom%20UV%20Print%20Wallpaper" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
         </div>
       </article>
       <article class="pgs-card" data-cat="pvc-panels">
-        <div class="pgs-img"><video src="/demo-wallpaper/videos/sai3.mp4" muted loop playsinline preload="metadata" autoplay></video></div>
+        <div class="pgs-img"><video src="/demo-wallpaper/videos/sai1.mp4" muted loop playsinline preload="metadata" autoplay></video></div>
         <div class="pgs-body">
           <span class="pgs-cat" data-hi="PVC पैनल">PVC Panels</span>
-          <h3 data-hi="3D PVC टाइल">3D PVC Tile</h3>
-          <div class="pgs-price"><span class="pgs-price-num">₹200</span><span class="pgs-price-unit" data-hi="/पीस">/piece</span></div>
-          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%203D%20PVC%20Tile" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
+          <h3 data-hi="3D PVC मिरर वॉल पैनल">3D PVC Mirror Wall Panels</h3>
+          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%203D%20PVC%20Mirror%20Wall%20Panels" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
         </div>
       </article>
       <article class="pgs-card" data-cat="blinds">
-        <div class="pgs-img"><img loading="lazy" src="/demo-wallpaper/images/img2.jpeg" alt="Zebra blinds — custom print" /></div>
+        <div class="pgs-img"><video src="/demo-wallpaper/videos/sai2.mp4" muted loop playsinline preload="metadata" autoplay></video></div>
         <div class="pgs-body">
           <span class="pgs-cat" data-hi="विंडो ब्लाइंड्स">Window Blinds</span>
           <h3 data-hi="ज़ीब्रा ब्लाइंड्स">Zebra Blinds</h3>
-          <div class="pgs-price"><span class="pgs-price-num">₹200</span><span class="pgs-price-unit" data-hi="/वर्ग फुट">/sq ft</span></div>
           <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%20Zebra%20Blinds" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
+        </div>
+      </article>
+      <article class="pgs-card" data-cat="wpc-louvers">
+        <div class="pgs-img"><video src="/demo-wallpaper/videos/sai3.mp4" muted loop playsinline preload="metadata" autoplay></video></div>
+        <div class="pgs-body">
+          <span class="pgs-cat" data-hi="WPC लूवर">WPC Louvers</span>
+          <h3 data-hi="17mm WPC वॉल पैनल">17mm WPC Wall Panel</h3>
+          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%2017mm%20WPC%20Wall%20Panel" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
+        </div>
+      </article>
+      <article class="pgs-card" data-cat="wall-frames">
+        <div class="pgs-img"><img loading="lazy" src="/demo-wallpaper/images/img2.jpeg" alt="Decorative wall frame" /></div>
+        <div class="pgs-body">
+          <span class="pgs-cat" data-hi="वॉल फ्रेम">Wall Frames</span>
+          <h3 data-hi="वॉल फ्रेम">Wall Frame</h3>
+          <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%20a%20Wall%20Frame" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
         </div>
       </article>
       <article class="pgs-card" data-cat="sofas">
@@ -594,7 +617,6 @@
         <div class="pgs-body">
           <span class="pgs-cat" data-hi="लग्ज़री सोफा">Luxury Sofas</span>
           <h3 data-hi="कस्टम लग्ज़री सोफा">Luxury Sofa (Made to Order)</h3>
-          <div class="pgs-price"><span class="pgs-price-num" data-hi="कस्टम">Custom</span><span class="pgs-price-unit" data-hi="फैब्रिक, आकार, कुशन">fabric, size, cushions</span></div>
           <a class="pgs-cta" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20a%20quote%20for%20a%20custom%20Luxury%20Sofa" target="_blank" rel="noopener" data-hi="कोटेशन पाएं"><svg viewBox="0 0 24 24"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Z"/></svg> Get quote</a>
         </div>
       </article>
@@ -637,7 +659,7 @@
       <button type="button" class="pgallery-arrow pgallery-next" id="pgallery-next" aria-label="Next slide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
     </div>
     <div class="pgallery-dots" id="pgallery-dots" role="tablist" aria-label="Gallery pages"></div>
-    <div class="pgallery-info" id="pgallery-info">1 – 3 of 81</div>
+    <div class="pgallery-info" id="pgallery-info">1 – 3 of 80</div>
   </div>
 </section>
 
@@ -783,7 +805,7 @@
             loading="lazy"
             allowfullscreen
             referrerpolicy="no-referrer-when-downgrade"
-            src="https://www.google.com/maps?q=27.1694916,78.3939989&z=16&output=embed">
+            src="https://www.google.com/maps?q=Sai+Ram+Handloom+%26+Decor%2C+Buddha+Ashram+Road%2C+Kotla+Chungi%2C+Firozabad+283203&z=17&output=embed">
           </iframe>
         </div>
       </div>
@@ -825,6 +847,7 @@
             <option data-hi="PVC पैनल">PVC Panels</option>
             <option data-hi="WPC लूवर">WPC Louvers</option>
             <option data-hi="लग्ज़री सोफा">Luxury Sofa</option>
+            <option data-hi="वॉल फ्रेम">Wall Frame</option>
             <option data-hi="कई उत्पाद / पूरा कमरा">Multiple products / Whole room</option>
           </select>
         </div>
@@ -849,17 +872,21 @@
       <div>
         <div class="foot-brand"><span><i>Sai Wall</i></span> Decor</div>
         <p style="color: rgba(255,255,255,0.6); font-size: 0.92rem; margin: 0;" data-hi="प्रीमियम वॉलपेपर, विंडो ब्लाइंड्स, PVC पैनल, WPC लूवर और लग्ज़री सोफा — फिरोजाबाद और आसपास के क्षेत्रों में सेवा।">Premium wallpapers, window blinds, PVC panels, WPC louvers and luxury sofas &mdash; serving Firozabad and surrounding areas.</p>
+        <a class="wa-qr" href="https://wa.me/qr/2HEABQIHTXGTM1" target="_blank" rel="noopener" aria-label="Scan QR to chat on WhatsApp">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&amp;margin=8&amp;data=https%3A%2F%2Fwa.me%2Fqr%2F2HEABQIHTXGTM1" alt="WhatsApp QR for Sai Ram Handloom &amp; Decor" width="140" height="140" loading="lazy" />
+          <span data-hi="WhatsApp के लिए स्कैन करें">Scan to chat on WhatsApp</span>
+        </a>
         <div class="socials" aria-label="Follow us">
-          <a class="wa" href="https://wa.me/919760017505" target="_blank" rel="noopener" aria-label="WhatsApp">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Zm-7.08 15.4h-.01a8.3 8.3 0 0 1-4.24-1.16l-.3-.18-2.49.65.66-2.43-.2-.31a8.32 8.32 0 1 1 6.58 3.43Zm4.79-6.22c-.26-.13-1.55-.77-1.79-.86-.24-.09-.42-.13-.6.13s-.69.86-.85 1.04c-.16.18-.31.2-.57.07-.26-.13-1.1-.41-2.1-1.3-.78-.7-1.3-1.55-1.45-1.81-.15-.26-.02-.4.11-.53.12-.12.26-.31.39-.46.13-.16.17-.27.26-.44.09-.18.04-.33-.02-.46-.07-.13-.6-1.43-.82-1.96-.22-.52-.44-.45-.6-.46h-.51c-.18 0-.46.06-.7.32-.24.26-.92.9-.92 2.2 0 1.3.94 2.55 1.07 2.73.13.18 1.85 2.83 4.49 3.97.63.27 1.12.43 1.51.55.63.2 1.21.17 1.66.1.51-.08 1.55-.63 1.77-1.24.22-.61.22-1.13.16-1.24-.07-.11-.24-.18-.5-.31Z"/></svg>
+          <a class="wa" href="https://wa.me/919760017505?text=Hi%2C%20I%27d%20like%20to%20know%20more%20about%20your%20products." target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.05 4.91A10 10 0 0 0 4.06 18.08L2 22l4-1.05a10 10 0 0 0 4.96 1.28h.01A10 10 0 0 0 19.05 4.91Zm-7.08 15.4h-.01a8.3 8.3 0 0 1-4.24-1.16l-.3-.18-2.49.65.66-2.43-.2-.31a8.32 8.32 0 1 1 6.58 3.43Z"/></svg>
           </a>
-          <a class="ig" href="https://instagram.com/" target="_blank" rel="noopener" aria-label="Instagram">
+          <a class="ig" href="https://www.instagram.com/sai_wall_decor_/" target="_blank" rel="noopener" aria-label="Instagram">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.42-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16ZM12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.34 4.14.63a5.85 5.85 0 0 0-2.13 1.38A5.85 5.85 0 0 0 .63 4.14C.34 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12c0 3.26.01 3.67.07 4.95.06 1.27.27 2.15.56 2.91.31.79.72 1.46 1.38 2.13a5.86 5.86 0 0 0 2.13 1.38c.76.29 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24c3.26 0 3.67-.01 4.95-.07 1.27-.06 2.15-.27 2.91-.56a5.86 5.86 0 0 0 2.13-1.38 5.85 5.85 0 0 0 1.38-2.13c.29-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.27-2.15-.56-2.91a5.85 5.85 0 0 0-1.38-2.13A5.85 5.85 0 0 0 19.86.63C19.1.34 18.22.13 16.95.07 15.67.01 15.26 0 12 0Zm0 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32ZM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm6.4-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88Z"/></svg>
           </a>
-          <a class="fb" href="https://facebook.com/" target="_blank" rel="noopener" aria-label="Facebook">
+          <a class="fb" href="https://www.facebook.com/laluprasadlalit" target="_blank" rel="noopener" aria-label="Facebook">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12.07C22 6.51 17.52 2 12 2S2 6.51 2 12.07c0 5 3.66 9.15 8.44 9.93v-7.02H7.9v-2.91h2.54V9.85c0-2.52 1.49-3.91 3.78-3.91 1.09 0 2.24.2 2.24.2v2.47H15.2c-1.24 0-1.63.78-1.63 1.57v1.88h2.78l-.45 2.91h-2.34V22c4.78-.78 8.44-4.93 8.44-9.93Z"/></svg>
           </a>
-          <a class="yt" href="https://youtube.com/" target="_blank" rel="noopener" aria-label="YouTube">
+          <a class="yt" href="https://www.youtube.com/@luxurysofamaker823/shorts" target="_blank" rel="noopener" aria-label="YouTube">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.5 6.2a3.02 3.02 0 0 0-2.13-2.13C19.46 3.5 12 3.5 12 3.5s-7.46 0-9.37.57A3.02 3.02 0 0 0 .5 6.2 31.43 31.43 0 0 0 0 12a31.43 31.43 0 0 0 .5 5.8 3.02 3.02 0 0 0 2.13 2.13C4.54 20.5 12 20.5 12 20.5s7.46 0 9.37-.57a3.02 3.02 0 0 0 2.13-2.13A31.43 31.43 0 0 0 24 12a31.43 31.43 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.24 3.6L9.6 15.6Z"/></svg>
           </a>
           <a class="gm" href="https://maps.google.com/?cid=4738395756158602651" target="_blank" rel="noopener" aria-label="Google Maps">
@@ -889,6 +916,7 @@
     <div class="foot-copy">
       <span data-hi-html="&copy; <span id=&quot;yr&quot;>2026</span> साईं वॉल डेकोर। सर्वाधिकार सुरक्षित।">&copy; <span id="yr">2026</span> Sai Wall Decor. All rights reserved.</span>
       <span data-hi="फिरोजाबाद, उत्तर प्रदेश · भारत">Firozabad, Uttar Pradesh &middot; India</span>
+      <span data-hi-html="विकसित द्वारा <a href=&quot;https://openidea.world/form&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot; style=&quot;color: inherit; text-decoration: underline;&quot;>ओपन आइडिया</a>">Developed by <a href="https://openidea.world/form" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Open Idea</a></span>
     </div>
   </div>
 </footer>
@@ -899,7 +927,7 @@
   <button type="button" class="pgallery-lightbox-nav pgallery-lightbox-prev" id="pgallery-lightbox-prev" aria-label="Previous photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
   <img id="pgallery-lightbox-img" alt="" />
   <button type="button" class="pgallery-lightbox-nav pgallery-lightbox-next" id="pgallery-lightbox-next" aria-label="Next photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
-  <div class="pgallery-lightbox-counter" id="pgallery-lightbox-counter">1 / 81</div>
+  <div class="pgallery-lightbox-counter" id="pgallery-lightbox-counter">1 / 80</div>
 </div>
 
 <!-- Sai chatbot widget -->
@@ -921,7 +949,10 @@
   <div class="chat-body" id="chat-body">
     <div class="chat-msg bot" data-hi="नमस्ते! साईं वॉल डेकोर में आपका स्वागत है। मैं वॉलपेपर, पैनल, ब्लाइंड्स और सोफा के बारे में सवालों के जवाब दे सकता हूँ। कोई सवाल चुनें:">Hi! Welcome to Sai Wall Decor. I can answer questions about wallpapers, panels, blinds, and sofas. Pick a question:</div>
   </div>
-  <div class="chat-options" id="chat-options"></div>
+  <div class="chat-options-wrap" id="chat-options-wrap">
+    <button type="button" class="chat-toggle" id="chat-toggle" data-hi="सुझाए गए सवाल छुपाएं">Hide suggested questions</button>
+    <div class="chat-options" id="chat-options"></div>
+  </div>
   <div class="chat-foot">
     <button type="button" class="chat-back" id="chat-back" style="display: none;" data-hi="← सवाल देखें">&larr; Questions</button>
     <a class="chat-wa-btn" href="https://wa.me/919760017505?text=Hi%2C%20I%20have%20a%20question%20about%20your%20products." target="_blank" rel="noopener" data-hi="WhatsApp पर बात करें">
@@ -975,7 +1006,7 @@
     var lbCounter = document.getElementById('pgallery-lightbox-counter');
     if (!track || !prev || !next) return;
 
-    var TOTAL = 81;
+    var TOTAL = 80;
     var pos = 0;          // current first-visible slide (0-indexed)
     var lbIndex = 1;
 
@@ -1147,8 +1178,19 @@
     function isHi() { return document.body.classList.contains('lang-hi'); }
     function currentFaqs() { return isHi() ? faqsHi : faqsEn; }
 
+    var wrap = document.getElementById('chat-options-wrap');
+    var toggle = document.getElementById('chat-toggle');
+
+    function setCollapsed(state) {
+      if (!wrap) return;
+      wrap.classList.toggle('collapsed', state);
+      if (toggle) {
+        toggle.textContent = state ? 'Show suggested questions' : 'Hide suggested questions';
+        toggle.setAttribute('data-hi', state ? 'सुझाए गए सवाल दिखाएं' : 'सुझाए गए सवाल छुपाएं');
+      }
+    }
+
     function showOptions() {
-      backBtn.style.display = 'none';
       options.innerHTML = '';
       currentFaqs().forEach(function (f, i) {
         var b = document.createElement('button');
@@ -1158,6 +1200,7 @@
         b.addEventListener('click', function () { showAnswer(i); });
         options.appendChild(b);
       });
+      setCollapsed(false);
     }
 
     function showAnswer(i) {
@@ -1171,8 +1214,14 @@
       botMsg.textContent = f.a;
       body.appendChild(botMsg);
       body.scrollTop = body.scrollHeight;
-      options.innerHTML = '';
-      backBtn.style.display = '';
+      // Auto-collapse the question list so the chat owns the visible space
+      setCollapsed(true);
+    }
+
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        setCollapsed(!wrap.classList.contains('collapsed'));
+      });
     }
 
     fab.addEventListener('click', function () {
@@ -1180,7 +1229,7 @@
       if (panel.classList.contains('open') && !options.children.length) showOptions();
     });
     closeBtn.addEventListener('click', function () { panel.classList.remove('open'); });
-    backBtn.addEventListener('click', showOptions);
+    if (backBtn) backBtn.addEventListener('click', function () { setCollapsed(false); });
   })();
 
   // Products & Services filter chips
