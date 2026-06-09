@@ -70,6 +70,7 @@ type OnConfirmContext = {
 type OnConfirmOrder = {
   id?: unknown;
   state?: unknown;
+  payments?: unknown;
   fulfillments?: unknown;
 };
 
@@ -89,6 +90,7 @@ type ExtractedOnConfirm = {
   // The full placed order, retained opaquely for later stages (state, quote,
   // payments echoed back, plus everything below).
   order: OnConfirmOrder;
+  payments: unknown;
   fulfillments: unknown;
 };
 
@@ -174,6 +176,7 @@ function extractAndValidate(
       orderId: order.id,
       // Keep the whole order so status/track can read state/quote/payments.
       order,
+      payments: order.payments,
       // fulfillments are optional in the shapes networks send; pass through
       // whatever the BPP included (assigned agent / tracking / delivery state)
       // for later stages, or undefined when absent.
@@ -203,6 +206,7 @@ async function persistOnConfirmOrder(data: ExtractedOnConfirm): Promise<void> {
     orderId: data.orderId,
     state: data.order.state,
     order: data.order,
+    payments: data.payments,
     fulfillments: data.fulfillments,
   });
   // Structured, no-secrets log — keeps the flow observable end-to-end in dev.

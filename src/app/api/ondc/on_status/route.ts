@@ -71,6 +71,7 @@ type OnStatusContext = {
 type OnStatusOrder = {
   id?: unknown;
   state?: unknown;
+  payments?: unknown;
   fulfillments?: unknown;
 };
 
@@ -90,6 +91,7 @@ type ExtractedOnStatus = {
   // The full order snapshot, retained opaquely for later reads (state, quote,
   // payments echoed back, plus everything below).
   order: OnStatusOrder;
+  payments: unknown;
   fulfillments: unknown;
 };
 
@@ -175,6 +177,7 @@ function extractAndValidate(
       orderId: order.id,
       // Keep the whole order so later reads can see state/quote/payments.
       order,
+      payments: order.payments,
       // fulfillments carry the tracking/delivery progress on_status exists to
       // report; pass through whatever the BPP included (assigned agent /
       // tracking / delivery state) for later stages, or undefined when absent.
@@ -204,6 +207,7 @@ async function persistOnStatusOrder(data: ExtractedOnStatus): Promise<void> {
     orderId: data.orderId,
     state: data.order.state,
     order: data.order,
+    payments: data.payments,
     fulfillments: data.fulfillments,
   });
   // Structured, no-secrets log — keeps the flow observable end-to-end in dev.

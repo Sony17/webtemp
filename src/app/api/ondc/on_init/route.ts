@@ -66,6 +66,7 @@ type OnInitContext = {
 // downstream confirm, and otherwise treat the order opaquely.
 type OnInitOrder = {
   quote?: unknown;
+  payments?: unknown;
   fulfillments?: unknown;
 };
 
@@ -84,6 +85,7 @@ type ExtractedOnInit = {
   // echoed back, plus everything below).
   order: OnInitOrder;
   quote: unknown;
+  payments: unknown;
   fulfillments: unknown;
 };
 
@@ -169,6 +171,7 @@ function extractAndValidate(
       // Keep the whole order so confirm can read billing/payments echoed back.
       order,
       quote,
+      payments: order.payments,
       // fulfillments are optional in the shapes networks send; pass through
       // whatever the BPP included (confirmed serviceability/delivery) for later
       // stages, or undefined when absent.
@@ -195,6 +198,7 @@ async function persistOnInitOrder(data: ExtractedOnInit): Promise<void> {
     bppUri: data.bppUri,
     order: data.order,
     quote: data.quote,
+    payments: data.payments,
     fulfillments: data.fulfillments,
   });
   // Structured, no-secrets log — keeps the flow observable end-to-end in dev.

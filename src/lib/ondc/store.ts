@@ -207,6 +207,7 @@ export type SaveInitOrderInput = {
   bppUri: string;
   order: unknown;
   quote: unknown;
+  payments?: unknown;
   fulfillments: unknown;
 };
 
@@ -221,6 +222,7 @@ export type SaveConfirmOrderInput = {
   // on_confirm carries the final quote inside the opaque order; pass it through
   // when the route has it, otherwise the prior (init) quote is retained.
   quote?: unknown;
+  payments?: unknown;
   fulfillments: unknown;
 };
 
@@ -232,6 +234,7 @@ export type SaveStatusUpdateInput = {
   orderId: string;
   state: unknown;
   order: unknown;
+  payments?: unknown;
   fulfillments: unknown;
 };
 
@@ -587,7 +590,7 @@ export async function saveInitOrder(input: SaveInitOrderInput): Promise<void> {
       state: existing?.state,
       order: input.order,
       quote: input.quote,
-      payments: existing?.payments,
+      payments: input.payments ?? existing?.payments,
       fulfillments: input.fulfillments,
       tracking: existing?.tracking,
       cancellation: existing?.cancellation,
@@ -621,7 +624,7 @@ export async function saveConfirmOrder(
       state: input.state,
       order: input.order,
       quote: input.quote ?? existing?.quote,
-      payments: existing?.payments,
+      payments: input.payments ?? existing?.payments,
       fulfillments: input.fulfillments,
       tracking: existing?.tracking,
       cancellation: existing?.cancellation,
@@ -659,7 +662,7 @@ export async function saveStatusUpdate(
       state: input.state,
       order: input.order,
       quote: existing?.quote,
-      payments: existing?.payments,
+      payments: input.payments ?? existing?.payments,
       fulfillments: input.fulfillments,
       tracking: existing?.tracking,
       cancellation: existing?.cancellation,
