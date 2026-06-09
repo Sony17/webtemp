@@ -265,6 +265,7 @@ export type SaveCancelInput = {
   state: unknown;
   order: unknown;
   cancellation: unknown;
+  payments?: unknown;
   fulfillments: unknown;
 };
 
@@ -741,7 +742,7 @@ export async function saveCancelUpdate(
       state: input.state,
       order: input.order,
       quote: existing?.quote,
-      payments: existing?.payments,
+      payments: input.payments ?? existing?.payments,
       fulfillments: input.fulfillments,
       tracking: existing?.tracking,
       cancellation: input.cancellation,

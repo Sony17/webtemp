@@ -43,6 +43,7 @@ import {
 } from "@/lib/ondc/auth";
 import type { OndcAckResponse, OndcError } from "@/lib/ondc/client";
 import { saveCancelUpdate } from "@/lib/ondc/store";
+import { validatePayments } from "@/lib/ondc/payment";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -71,6 +72,7 @@ type OnCancelOrder = {
   id?: unknown;
   state?: unknown;
   cancellation?: unknown;
+  payments?: unknown;
   fulfillments?: unknown;
 };
 
@@ -92,6 +94,9 @@ type ExtractedOnCancel = {
   order: OnCancelOrder;
   // The cancellation block (cancelled_by / reason.id / …), retained opaquely.
   cancellation: unknown;
+  // The updated payment terms / status (cancellation charges / refund),
+  // retained opaquely.
+  payments: unknown;
   fulfillments: unknown;
 };
 
@@ -167,6 +172,11 @@ function extractAndValidate(
   if (!isNonEmptyString(order.id)) {
     return { ok: false, reason: "missing message.order.id" };
   }
+  // Payment metadata validation (shared, enum-aware). Absent payments → valid.
+  const paymentsCheck = validatePayments(order.payments);
+  if (!paymentsCheck.ok) {
+    return { ok: false, reason: paymentsCheck.reason };
+  }
 
   return {
     ok: true,
@@ -181,6 +191,9 @@ function extractAndValidate(
       // The cancellation block (cancelled_by / reason.id) — pass through whatever
       // the BPP included, or undefined when absent.
       cancellation: order.cancellation,
+      // payments reflect cancellation charges / refund; pass through whatever the
+      // BPP included, or undefined when absent.
+      payments: order.payments,
       // fulfillments carry any RTO / refund-related fulfillment state; pass
       // through whatever the BPP included for later reads, or undefined.
       fulfillments: order.fulfillments,
@@ -210,6 +223,7 @@ async function persistOnCancel(data: ExtractedOnCancel): Promise<void> {
     state: data.order.state,
     order: data.order,
     cancellation: data.cancellation,
+    payments: data.payments,
     fulfillments: data.fulfillments,
   });
   // Structured, no-secrets log — keeps the flow observable end-to-end in dev.
