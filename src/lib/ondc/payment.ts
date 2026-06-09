@@ -51,6 +51,7 @@ export function validatePayments(value: unknown): ValidationResult {
       type?: unknown;
       collected_by?: unknown;
       status?: unknown;
+      params?: unknown;
     };
     if (!includes(PAYMENT_TYPES, payment.type)) {
       return { ok: false, reason: "invalid payment type" };
@@ -64,6 +65,25 @@ export function validatePayments(value: unknown): ValidationResult {
       !includes(PAYMENT_STATUS, payment.status)
     ) {
       return { ok: false, reason: "invalid payment status" };
+    }
+    // params, when present, carries the monetary detail. Absent/null params
+    // preserves prior behavior; a present params must name a numeric amount and
+    // a non-empty currency (no currency enum enforced here).
+    if (payment.params !== undefined && payment.params !== null) {
+      if (typeof payment.params !== "object") {
+        return { ok: false, reason: "invalid payment params" };
+      }
+      const params = payment.params as { amount?: unknown; currency?: unknown };
+      if (
+        typeof params.amount !== "string" ||
+        params.amount.trim().length === 0 ||
+        Number.isNaN(Number(params.amount))
+      ) {
+        return { ok: false, reason: "invalid payment params.amount" };
+      }
+      if (typeof params.currency !== "string" || params.currency.trim().length === 0) {
+        return { ok: false, reason: "invalid payment params.currency" };
+      }
     }
   }
   return { ok: true };
