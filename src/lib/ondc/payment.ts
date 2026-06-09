@@ -77,7 +77,8 @@ export function validatePayments(value: unknown): ValidationResult {
       if (
         typeof params.amount !== "string" ||
         params.amount.trim().length === 0 ||
-        Number.isNaN(Number(params.amount))
+        Number.isNaN(Number(params.amount)) ||
+        Number(params.amount) <= 0
       ) {
         return { ok: false, reason: "invalid payment params.amount" };
       }

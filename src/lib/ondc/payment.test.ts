@@ -71,25 +71,26 @@ describe("validatePayments", () => {
     );
   });
 
-  // KNOWN GAP: the validator has no `> 0` guard, so a zero amount is accepted
-  // today. Flip this to expect ok:false once that guard is added.
-  it("currently accepts amount = 0 (documents the known gap)", () => {
-    expect(
-      validatePayments({
-        ...validPayment,
-        params: { amount: "0", currency: "INR" },
-      })
-    ).toEqual({ ok: true });
+  it("rejects amount = 0", () => {
+    const r = validatePayments({
+      ...validPayment,
+      params: { amount: "0", currency: "INR" },
+    });
+    expect(r.ok).toBe(false);
+    expect((r as { reason: string }).reason).toBe(
+      "invalid payment params.amount"
+    );
   });
 
-  // KNOWN GAP: Number("-50") is not NaN, so a negative amount is accepted today.
-  it("currently accepts amount < 0 (documents the known gap)", () => {
-    expect(
-      validatePayments({
-        ...validPayment,
-        params: { amount: "-50", currency: "INR" },
-      })
-    ).toEqual({ ok: true });
+  it("rejects amount < 0", () => {
+    const r = validatePayments({
+      ...validPayment,
+      params: { amount: "-50", currency: "INR" },
+    });
+    expect(r.ok).toBe(false);
+    expect((r as { reason: string }).reason).toBe(
+      "invalid payment params.amount"
+    );
   });
 
   it("treats null payments as valid (absent payments)", () => {
