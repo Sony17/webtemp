@@ -74,14 +74,16 @@ export function validatePayments(value: unknown): ValidationResult {
         return { ok: false, reason: "invalid payment params" };
       }
       const params = payment.params as { amount?: unknown; currency?: unknown };
+      const amount = Number(params.amount);
+
       if (
         typeof params.amount !== "string" ||
         params.amount.trim().length === 0 ||
-        Number.isNaN(Number(params.amount)) ||
-        Number(params.amount) <= 0
+        !Number.isFinite(amount) ||
+        amount <= 0
       ) {
         return { ok: false, reason: "invalid payment params.amount" };
-      }
+}
       if (typeof params.currency !== "string" || params.currency.trim().length === 0) {
         return { ok: false, reason: "invalid payment params.currency" };
       }

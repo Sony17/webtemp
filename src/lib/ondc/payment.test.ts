@@ -93,6 +93,30 @@ describe("validatePayments", () => {
     );
   });
 
+  it("rejects amount = Infinity", () => {
+  const r = validatePayments({
+    ...validPayment,
+    params: { amount: "Infinity", currency: "INR" },
+  });
+
+  expect(r.ok).toBe(false);
+  expect((r as { reason: string }).reason).toBe(
+    "invalid payment params.amount"
+  );
+});
+
+it("rejects overflowing exponential amounts", () => {
+  const r = validatePayments({
+    ...validPayment,
+    params: { amount: "1e999", currency: "INR" },
+  });
+
+  expect(r.ok).toBe(false);
+  expect((r as { reason: string }).reason).toBe(
+    "invalid payment params.amount"
+  );
+});
+
   it("treats null payments as valid (absent payments)", () => {
     expect(validatePayments(null)).toEqual({ ok: true });
   });
