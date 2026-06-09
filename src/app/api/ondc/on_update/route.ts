@@ -49,6 +49,7 @@ import {
 } from "@/lib/ondc/auth";
 import type { OndcAckResponse, OndcError } from "@/lib/ondc/client";
 import { saveUpdateOrder } from "@/lib/ondc/store";
+import { validatePayments } from "@/lib/ondc/payment";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -172,6 +173,11 @@ function extractAndValidate(
   // every action references it. A valid on_update must carry one.
   if (!isNonEmptyString(order.id)) {
     return { ok: false, reason: "missing message.order.id" };
+  }
+  // Payment metadata validation (shared, enum-aware). Absent payments → valid.
+  const paymentsCheck = validatePayments(order.payments);
+  if (!paymentsCheck.ok) {
+    return { ok: false, reason: paymentsCheck.reason };
   }
 
   return {
