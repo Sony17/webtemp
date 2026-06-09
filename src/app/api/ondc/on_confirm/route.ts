@@ -43,6 +43,7 @@ import {
 } from "@/lib/ondc/auth";
 import type { OndcAckResponse, OndcError } from "@/lib/ondc/client";
 import { saveConfirmOrder } from "@/lib/ondc/store";
+import { validatePayments } from "@/lib/ondc/payment";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -165,28 +166,11 @@ function extractAndValidate(
   if (!isNonEmptyString(order.id)) {
     return { ok: false, reason: "missing message.order.id" };
   }
-  // Minimal payment metadata validation: only when the BPP echoes payment terms.
-  // ONDC 1.2.x sends payments[]; tolerate a singular object too. Each must name
-  // its type and who collects it. Absent payments keeps prior behavior.
-  if (order.payments !== undefined && order.payments !== null) {
-    const payments = Array.isArray(order.payments)
-      ? order.payments
-      : [order.payments];
-    for (const p of payments) {
-      const payment = p as { type?: unknown; collected_by?: unknown } | null;
-      if (!payment || typeof payment !== "object") {
-        return { ok: false, reason: "invalid message.order.payments" };
-      }
-      if (!isNonEmptyString(payment.type)) {
-        return { ok: false, reason: "missing message.order.payments.type" };
-      }
-      if (!isNonEmptyString(payment.collected_by)) {
-        return {
-          ok: false,
-          reason: "missing message.order.payments.collected_by",
-        };
-      }
-    }
+  // Payment metadata validation (shared, enum-aware). Absent payments → valid,
+  // preserving prior behavior. See lib/ondc/payment.ts.
+  const paymentsCheck = validatePayments(order.payments);
+  if (!paymentsCheck.ok) {
+    return { ok: false, reason: paymentsCheck.reason };
   }
 
   return {
