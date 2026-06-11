@@ -39,6 +39,19 @@ import {
   verifyOndcSignature,
 } from "@/lib/ondc/auth";
 import type { OndcAckResponse, OndcError } from "@/lib/ondc/client";
+import { validateContextFreshness } from "@/lib/ondc/context";
+import {
+  ONDC_ERROR,
+  contextError,
+  coreError,
+  freshnessError,
+} from "@/lib/ondc/errors";
+import {
+  annotateTrace,
+  beginAuditTrace,
+  finalizeAuditTrace,
+  type AuditTrace,
+} from "@/lib/ondc/audit";
 import { saveCatalog } from "@/lib/ondc/store";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
@@ -61,6 +74,8 @@ type OnSearchContext = {
   message_id?: string;
   bpp_id?: string;
   bpp_uri?: string;
+  timestamp?: string;
+  ttl?: string;
 };
 
 type OnSearchCallback = {
@@ -84,19 +99,25 @@ type ExtractedOnSearch = {
 // ACK / NACK responses (BAP → caller, the sync reply ONDC expects)
 // ---------------------------------------------------------------------------
 
-function ack(): NextResponse {
+function ack(trace?: AuditTrace): NextResponse {
   const body: OndcAckResponse = { message: { ack: { status: "ACK" } } };
+  if (trace) finalizeAuditTrace(trace, { status: 200, body });
   return NextResponse.json(body, { status: 200 });
 }
 
 // A NACK carries an error block and a non-2xx status so the sender can tell it
 // apart. We keep `error.message` terse on auth failures — never echo back *why*
 // a signature failed (don't coach a forger); the real reason is logged instead.
-function nack(httpStatus: number, error: OndcError): NextResponse {
+function nack(
+  httpStatus: number,
+  error: OndcError,
+  trace?: AuditTrace
+): NextResponse {
   const body: OndcAckResponse = {
     message: { ack: { status: "NACK" } },
     error,
   };
+  if (trace) finalizeAuditTrace(trace, { status: httpStatus, body });
   return NextResponse.json(body, { status: httpStatus });
 }
 
@@ -248,26 +269,40 @@ export async function POST(req: Request) {
     headers: [...req.headers.keys()],
   });
 
+  const trace = beginAuditTrace({
+    action: "on_search",
+    requestHeaders: Object.fromEntries(req.headers),
+  });
+
   // Can't verify signatures without our network config loaded.
   // server fault, not the sender's — NACK 500.
   if (!isOndcConfigured()) {
-    return nack(500, { type: "CORE-ERROR", message: "BAP not configured" });
+    return nack(500, coreError("BAP not configured"), trace);
   }
   const config = getOndcConfig();
 
   // (b-i) Authorization header must be present and parseable.
   const authHeader = req.headers.get("authorization");
   if (!authHeader) {
-    return nack(401, { type: "CONTEXT-ERROR", message: "missing signature" });
+    return nack(
+      401,
+      contextError(ONDC_ERROR.INVALID_SIGNATURE, "missing signature"),
+      trace
+    );
   }
   const parsed = parseAuthorizationHeader(authHeader);
   if (!parsed) {
-    return nack(401, { type: "CONTEXT-ERROR", message: "invalid signature" });
+    return nack(
+      401,
+      contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"),
+      trace
+    );
   }
 
   // (a) Read the EXACT raw bytes — the digest is computed over these, so
   // re-serializing the parsed object would break verification.
   const rawBody = await req.text();
+  annotateTrace(trace, { rawBody });
 
   // (c-pre) Tolerantly parse the JSON ONLY to lift `context.city` for the
   // registry lookup — preprod's /lookup is city-scoped and a wrong city
@@ -298,7 +333,11 @@ export async function POST(req: Request) {
       uniqueKeyId: parsed.uniqueKeyId,
       city: tentativeCity,
     });
-    return nack(401, { type: "CONTEXT-ERROR", message: "unauthorized" });
+    return nack(
+      401,
+      contextError(ONDC_ERROR.INVALID_KEY, "unauthorized"),
+      trace
+    );
   }
 
   const verdict = verifyOndcSignature({
@@ -312,13 +351,21 @@ export async function POST(req: Request) {
       subscriberId: parsed.subscriberId,
       reason: verdict.reason,
     });
-    return nack(401, { type: "CONTEXT-ERROR", message: "unauthorized" });
+    return nack(
+      401,
+      contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"),
+      trace
+    );
   }
 
   // (c) Body is trusted — now demand a parseable shape (we could not 400 on
   // bad JSON earlier without leaking which-stage-failed signal to forgers).
   if (!tentativePayload) {
-    return nack(400, { type: "CONTEXT-ERROR", message: "invalid JSON" });
+    return nack(
+      400,
+      contextError(ONDC_ERROR.CONTEXT_GENERIC, "invalid JSON"),
+      trace
+    );
   }
 
   // (c/d) Full structural + identity validation. bap_id/bap_uri/domain must
@@ -329,7 +376,30 @@ export async function POST(req: Request) {
     domain: config.domain,
   });
   if (!result.ok) {
-    return nack(400, { type: "CONTEXT-ERROR", message: result.reason });
+    return nack(
+      400,
+      contextError(ONDC_ERROR.CONTEXT_GENERIC, result.reason),
+      trace
+    );
+  }
+  annotateTrace(trace, {
+    transactionId: result.data.transactionId,
+    messageId: result.data.messageId,
+    bppId: result.data.bppId,
+  });
+
+  // Envelope freshness: context.timestamp must be within skew, and
+  // context.timestamp + context.ttl must not have elapsed. Separate from the
+  // HTTP-signature freshness checked above — that covers the signing string,
+  // this covers the Beckn envelope.
+  const fresh = validateContextFreshness(tentativePayload.context);
+  if (!fresh.ok) {
+    console.warn("ondc.on_search freshness rejected", {
+      kind: fresh.failure.kind,
+      transactionId: result.data.transactionId,
+      bppId: result.data.bppId,
+    });
+    return nack(400, freshnessError(fresh.failure), trace);
   }
 
   // Defense in depth: the signer (keyId.subscriber_id) should be the BPP that
@@ -340,7 +410,11 @@ export async function POST(req: Request) {
       signer: parsed.subscriberId,
       bppId: result.data.bppId,
     });
-    return nack(401, { type: "CONTEXT-ERROR", message: "unauthorized" });
+    return nack(
+      401,
+      contextError(ONDC_ERROR.IDENTITY_MISMATCH, "unauthorized"),
+      trace
+    );
   }
 
   // (e) Hand off to persistence (currently a logging no-op). We await it so a
@@ -360,10 +434,10 @@ export async function POST(req: Request) {
       transactionId: result.data.transactionId,
       bppId: result.data.bppId,
     });
-    return nack(500, { type: "CORE-ERROR", message: "could not store catalog" });
+    return nack(500, coreError("could not store catalog"), trace);
   }
 
   // (f) Accept. The aggregated catalogs are now (will be) available for the
   // future Select API to read by transaction_id.
-  return ack();
+  return ack(trace);
 }

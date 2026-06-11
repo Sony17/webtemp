@@ -39,6 +39,19 @@ import {
   verifyOndcSignature,
 } from "@/lib/ondc/auth";
 import type { OndcAckResponse, OndcError } from "@/lib/ondc/client";
+import { validateContextFreshness } from "@/lib/ondc/context";
+import {
+  ONDC_ERROR,
+  contextError,
+  coreError,
+  freshnessError,
+} from "@/lib/ondc/errors";
+import {
+  annotateTrace,
+  beginAuditTrace,
+  finalizeAuditTrace,
+  type AuditTrace,
+} from "@/lib/ondc/audit";
 import { saveTrackingUpdate } from "@/lib/ondc/store";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
@@ -59,6 +72,8 @@ type OnTrackContext = {
   message_id?: string;
   bpp_id?: string;
   bpp_uri?: string;
+  timestamp?: string;
+  ttl?: string;
 };
 
 // The BPP returns a tracking handle. We keep the whole `tracking` object opaque
@@ -89,19 +104,25 @@ type ExtractedOnTrack = {
 // ACK / NACK responses (BAP → caller, the sync reply ONDC expects)
 // ---------------------------------------------------------------------------
 
-function ack(): NextResponse {
+function ack(trace?: AuditTrace): NextResponse {
   const body: OndcAckResponse = { message: { ack: { status: "ACK" } } };
+  if (trace) finalizeAuditTrace(trace, { status: 200, body });
   return NextResponse.json(body, { status: 200 });
 }
 
 // A NACK carries an error block and a non-2xx status so the sender can tell it
 // apart. We keep `error.message` terse on auth failures — never echo back *why*
 // a signature failed (don't coach a forger); the real reason is logged instead.
-function nack(httpStatus: number, error: OndcError): NextResponse {
+function nack(
+  httpStatus: number,
+  error: OndcError,
+  trace?: AuditTrace
+): NextResponse {
   const body: OndcAckResponse = {
     message: { ack: { status: "NACK" } },
     error,
   };
+  if (trace) finalizeAuditTrace(trace, { status: httpStatus, body });
   return NextResponse.json(body, { status: httpStatus });
 }
 
@@ -199,25 +220,31 @@ async function persistOnTrack(data: ExtractedOnTrack): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
+  const trace = beginAuditTrace({
+    action: "on_track",
+    requestHeaders: Object.fromEntries(req.headers),
+  });
+
   // Can't verify signatures without our network config loaded. A misconfig is a
   // server fault, not the sender's — NACK 500.
   if (!isOndcConfigured()) {
-    return nack(500, { type: "CORE-ERROR", message: "BAP not configured" });
+    return nack(500, coreError("BAP not configured"), trace);
   }
 
   // (b-i) Authorization header must be present and parseable.
   const authHeader = req.headers.get("authorization");
   if (!authHeader) {
-    return nack(401, { type: "CONTEXT-ERROR", message: "missing signature" });
+    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "missing signature"), trace);
   }
   const parsed = parseAuthorizationHeader(authHeader);
   if (!parsed) {
-    return nack(401, { type: "CONTEXT-ERROR", message: "invalid signature" });
+    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"), trace);
   }
 
   // (a) Read the EXACT raw bytes BEFORE parsing JSON — the digest is computed
   // over these bytes, so re-serializing would break verification.
   const rawBody = await req.text();
+  annotateTrace(trace, { rawBody });
 
   // (b-ii) Resolve the sender's registry public key and verify the signature.
   const publicKey = await resolveBppSigningPublicKey(
@@ -229,7 +256,7 @@ export async function POST(req: Request) {
       subscriberId: parsed.subscriberId,
       uniqueKeyId: parsed.uniqueKeyId,
     });
-    return nack(401, { type: "CONTEXT-ERROR", message: "unauthorized" });
+    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
   }
 
   const verdict = verifyOndcSignature({
@@ -243,7 +270,7 @@ export async function POST(req: Request) {
       subscriberId: parsed.subscriberId,
       reason: verdict.reason,
     });
-    return nack(401, { type: "CONTEXT-ERROR", message: "unauthorized" });
+    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
   }
 
   // (c) Now that the body is trusted, parse it as JSON.
@@ -251,14 +278,34 @@ export async function POST(req: Request) {
   try {
     payload = JSON.parse(rawBody) as OnTrackCallback;
   } catch {
-    return nack(400, { type: "CONTEXT-ERROR", message: "invalid JSON" });
+    return nack(400, contextError(ONDC_ERROR.CONTEXT_GENERIC, "invalid JSON"), trace);
   }
 
   // (c/d) Structural validation + field extraction.
   const result = extractAndValidate(payload);
   if (!result.ok) {
-    return nack(400, { type: "CONTEXT-ERROR", message: result.reason });
+    return nack(400, contextError(ONDC_ERROR.CONTEXT_GENERIC, result.reason), trace);
   }
+  annotateTrace(trace, {
+    transactionId: result.data.transactionId,
+    messageId: result.data.messageId,
+    bppId: result.data.bppId,
+  });
+
+  // Envelope freshness: context.timestamp must be within skew, and
+  // context.timestamp + context.ttl must not have elapsed. Separate from the
+  // HTTP-signature freshness — that covers the signing string, this covers the
+  // Beckn envelope.
+  const fresh = validateContextFreshness(payload.context);
+  if (!fresh.ok) {
+    console.warn("ondc.on_track freshness rejected", {
+      kind: fresh.failure.kind,
+      transactionId: result.data.transactionId,
+      bppId: result.data.bppId,
+    });
+    return nack(400, freshnessError(fresh.failure), trace);
+  }
+
 
   // Defense in depth: the signer (keyId.subscriber_id) should be the BPP that
   // owns this order. A mismatch means a valid participant is posting under
@@ -268,7 +315,7 @@ export async function POST(req: Request) {
       signer: parsed.subscriberId,
       bppId: result.data.bppId,
     });
-    return nack(401, { type: "CONTEXT-ERROR", message: "unauthorized" });
+    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
   }
 
   // (e) Hand off to persistence. We await it so a store failure can downgrade to
@@ -278,10 +325,10 @@ export async function POST(req: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : "persistence error";
     console.error("ondc.on_track persist failed", { msg });
-    return nack(500, { type: "CORE-ERROR", message: "could not store tracking" });
+    return nack(500, coreError("could not store tracking"), trace);
   }
 
   // (f) Accept. The latest tracking snapshot is now available for the Track/
   // Status APIs to read by transaction_id (+ bpp_id).
-  return ack();
+  return ack(trace);
 }

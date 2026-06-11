@@ -101,16 +101,11 @@ type CacheEntry =
 
 const cache = new Map<string, CacheEntry>();
 
-// Cache key includes the city: a /lookup filter is city-scoped, so a "no
-// record" answer in city A says nothing about whether the same (subscriber,
-// ukId) registers in city B. Without the city in the key, a negative entry
-// from one city would shadow a real key from another.
-function cacheKey(
-  subscriberId: string,
-  uniqueKeyId: string,
-  city: string
-): string {
-  return `${subscriberId}|${uniqueKeyId}|${city}`;
+// Cache key is just the identity tuple. Since /lookup no longer filters by
+// city/domain/country, an answer applies network-wide for that (subscriber,
+// ukId) — no need to partition the cache by city.
+function cacheKey(subscriberId: string, uniqueKeyId: string): string {
+  return `${subscriberId}|${uniqueKeyId}`;
 }
 
 function readCache(key: string, nowSec: number): CacheEntry | null {
@@ -315,34 +310,32 @@ export function validateRegistryRecord(
 // response. Kept fail-soft (no throws) so the caller can NACK cleanly.
 // ---------------------------------------------------------------------------
 
-// /lookup query body per the v2.0 spec — flat, six optional filters. Sending
-// all six scopes the answer to exactly the (subscriber, key, role) record we
-// need to verify. Wildcard city because BPPs typically serve many cities.
+// /lookup query body. The (subscriber_id, ukId) pair is already unique in the
+// registry — domain / country / city would be additional AND-narrowing that
+// excludes valid BPPs registered under sibling domains or different city
+// codes. We send only the identity tuple + the sellerApp role and rely on the
+// post-fetch validator (strict subscriber_id + ukId + SUBSCRIBED + validity
+// window match) for correctness. The previous strict 6-field query was
+// returning zero records for workbench's mock seller; this single targeted
+// lookup is the simpler answer.
+//
+// If preprod's /lookup ever responds NACK 151 ("city is required") to this
+// shape, that surfaces as a clean error in extractNackError below — at which
+// point add fields back deliberately, instead of guessing.
 type LookupQuery = {
   subscriber_id: string;
   ukId: string;
   type: string;
-  domain: string;
-  country: string;
-  city: string;
 };
 
-function buildLookupQuery(
-  expected: { subscriberId: string; uniqueKeyId: string; city?: string }
-): LookupQuery {
-  const config = getOndcConfig();
+function buildLookupQuery(expected: {
+  subscriberId: string;
+  uniqueKeyId: string;
+}): LookupQuery {
   return {
     subscriber_id: expected.subscriberId,
     ukId: expected.uniqueKeyId,
     type: LOOKUP_FILTER_PARTICIPANT_TYPE,
-    domain: config.domain,
-    country: config.countryCode,
-    // preprod's /v2.0/lookup rejects city="*" with NACK 151 ("city: is
-    // required or Invalid"). Prefer the city the caller passes in (the
-    // inbound context.city, so cross-city BPPs resolve correctly); fall
-    // back to our configured city when the caller has nothing to offer
-    // (diagnostic or test paths).
-    city: expected.city ?? config.cityCode,
   };
 }
 
@@ -376,8 +369,13 @@ function extractNackError(raw: unknown): string | null {
   return `NACK ${code}: ${msg}`;
 }
 
+// Signed POST /lookup with the identity-only query, then validate the records
+// against our (subscriber_id, ukId, SUBSCRIBED, validity-window) expectation.
+// Single round-trip. If preprod ever NACKs the schema (e.g. demands a city
+// field), the NACK text surfaces verbatim in the result `detail` so we add the
+// field back deliberately rather than guessing.
 async function fetchAndValidate(
-  expected: { subscriberId: string; uniqueKeyId: string; city?: string },
+  expected: { subscriberId: string; uniqueKeyId: string },
   nowSec: number
 ): Promise<RegistryResolveResult> {
   const config = getOndcConfig();
@@ -401,10 +399,9 @@ async function fetchAndValidate(
       detail: err instanceof Error ? err.message : "signing failed",
     };
   }
-  console.log("ondc.registry lookup request", {
-    url,
-    expected,
-  });
+
+  console.log("ondc.registry lookup request", { url, expected });
+
   let res: Response;
   try {
     res = await fetch(url, {
@@ -425,20 +422,18 @@ async function fetchAndValidate(
   }
 
   if (!res.ok) {
-  const text = await res.text();
-
-  console.warn("ondc.registry lookup failed", {
-    url,
-    status: res.status,
-    body: text,
-  });
-
-  return {
-    ok: false,
-    reason: "registry_http_error",
-    detail: `HTTP ${res.status}`,
-  };
-}
+    const text = await res.text();
+    console.warn("ondc.registry lookup http error", {
+      url,
+      status: res.status,
+      body: text,
+    });
+    return {
+      ok: false,
+      reason: "registry_http_error",
+      detail: `HTTP ${res.status}`,
+    };
+  }
 
   let parsed: unknown;
   try {
@@ -449,35 +444,38 @@ async function fetchAndValidate(
 
   const records = extractRecords(parsed);
   if (!records) {
-    // Most common non-array shape on preprod is a Beckn NACK envelope returned
-    // with HTTP 200 when the request schema was rejected. Surface its error
-    // text so the operator can diagnose the request shape (e.g. bad city).
+    // preprod returns HTTP 200 with a Beckn NACK envelope when it rejects the
+    // request schema (e.g. demands a city/domain field we omitted). Surface
+    // the registry's own error so we can fix the query shape deliberately.
     const nack = extractNackError(parsed);
-    if (nack) {
-      return { ok: false, reason: "registry_http_error", detail: nack };
-    }
+    if (nack) return { ok: false, reason: "registry_http_error", detail: nack };
     return { ok: false, reason: "registry_malformed_response" };
   }
 
-  // The registry can return multiple records per subscriber (one per key).
-  // Walk them and accept the first that fully validates against our
-  // expectation; collect the LAST rejection reason for diagnostics so the
-  // operator can see *why* nothing matched, not just "no match".
+  // Walk records; take the first that validates. Collect the LAST rejection
+  // reason so a "registry returned 3 records but none SUBSCRIBED" answer is
+  // visible instead of a vague "key_not_found".
   let lastFail: ValidationFail | null = null;
   for (const record of records) {
     const verdict = validateRegistryRecord(record, expected, nowSec);
     if (verdict.ok) {
-      return { ok: true, signingPublicKey: verdict.signingPublicKey, cached: false };
+      return {
+        ok: true,
+        signingPublicKey: verdict.signingPublicKey,
+        cached: false,
+      };
     }
     lastFail = verdict;
   }
 
-  // No matching/validated record. Surface the most informative reason we saw.
   if (lastFail) {
     return { ok: false, reason: lastFail.reason, detail: lastFail.detail };
   }
-  // Empty array — record genuinely absent.
-  return { ok: false, reason: "key_not_found", detail: "registry returned no records" };
+  return {
+    ok: false,
+    reason: "key_not_found",
+    detail: "registry returned no records",
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -490,16 +488,15 @@ async function fetchAndValidate(
 export async function resolveBppSigningKey(
   subscriberId: string,
   uniqueKeyId: string,
+  // `city` is accepted but ignored — kept for call-site compatibility with the
+  // on_* routes that still pass context.city through. /lookup is no longer
+  // city-scoped, so the field has no effect on resolution.
   options?: { city?: string; now?: number }
 ): Promise<RegistryResolveResult> {
   const nowMs = options?.now ?? Date.now();
   const nowSec = Math.floor(nowMs / 1000);
-  // City defaults to the configured city only when the caller has nothing to
-  // pass in. Inbound on_search callbacks should pass context.city through to
-  // resolve cross-city BPPs correctly.
-  const city = options?.city ?? getOndcConfig().cityCode;
 
-  const key = cacheKey(subscriberId, uniqueKeyId, city);
+  const key = cacheKey(subscriberId, uniqueKeyId);
   const cached = readCache(key, nowSec);
   if (cached) {
     if (cached.kind === "positive") {
@@ -508,10 +505,7 @@ export async function resolveBppSigningKey(
     return { ok: false, reason: cached.reason, detail: "cached negative" };
   }
 
-  const result = await fetchAndValidate(
-    { subscriberId, uniqueKeyId, city },
-    nowSec
-  );
+  const result = await fetchAndValidate({ subscriberId, uniqueKeyId }, nowSec);
 
   // Only cache TERMINAL outcomes. A transient network/HTTP fault is NOT cached
   // — caching "registry was down" would extend the outage past its real end.

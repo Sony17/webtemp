@@ -98,6 +98,108 @@ export function newMessageId(): string {
   return randomUUID();
 }
 
+// ---------------------------------------------------------------------------
+// Inbound freshness validation — applied to every on_* callback we receive.
+// ---------------------------------------------------------------------------
+//
+// ONDC requires the envelope itself (NOT just the HTTP signature window) to be
+// fresh:
+//   * context.timestamp must be within a small skew of wall-clock now
+//   * context.timestamp + context.ttl must not be in the past
+// Workbench probes both with timestamps shifted ±10 min and with TTLs of "PT1S"
+// followed by a delayed resend; expects a NACK with the matching error code.
+//
+// Pure: no I/O, no config — caller injects `now` for deterministic tests. The
+// auth/signature freshness check in auth.ts covers the HTTP signing string;
+// this covers the Beckn envelope. The two are independent.
+
+// How far context.timestamp may drift from wall-clock now, in either direction,
+// before we reject it as stale/future. ONDC RET preprod commonly tolerates ~5
+// minutes; 5 min here matches their public guidance. Tweak if a counterparty's
+// clock drift trips this in practice.
+const DEFAULT_CONTEXT_SKEW_SECONDS = 5 * 60;
+
+// Parse an ISO-8601 duration (e.g. "PT30S", "PT5M", "P1D") into seconds. We
+// intentionally only support the day/hour/minute/second forms ONDC uses; weeks/
+// months/years are rejected (their length is calendar-dependent). Returns null
+// on malformed input so the caller can NACK with INVALID_TTL.
+function parseIsoDurationSeconds(iso: string): number | null {
+  const m = /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/.exec(
+    iso.trim()
+  );
+  if (!m) return null;
+  const [, d, h, mi, s] = m;
+  if (!d && !h && !mi && !s) return null;
+  const days = d ? Number(d) : 0;
+  const hours = h ? Number(h) : 0;
+  const minutes = mi ? Number(mi) : 0;
+  const seconds = s ? Number(s) : 0;
+  const total = days * 86400 + hours * 3600 + minutes * 60 + seconds;
+  if (!Number.isFinite(total) || total <= 0) return null;
+  return total;
+}
+
+export type ContextFreshnessFailure =
+  | { kind: "missing_timestamp" }
+  | { kind: "invalid_timestamp"; got: string }
+  | { kind: "missing_ttl" }
+  | { kind: "invalid_ttl"; got: string }
+  | { kind: "timestamp_skew"; driftSeconds: number }
+  | { kind: "expired_ttl"; expiredAgoSeconds: number };
+
+export type ContextFreshnessResult =
+  | { ok: true }
+  | { ok: false; failure: ContextFreshnessFailure };
+
+// Validate that an inbound context's timestamp + ttl are fresh. Tolerates a
+// small clock skew in either direction (DEFAULT_CONTEXT_SKEW_SECONDS) for honest
+// drift. Returns a structured failure the route maps to a NACK code.
+export function validateContextFreshness(
+  ctx: { timestamp?: string; ttl?: string } | undefined | null,
+  options: { now?: number; skewSeconds?: number } = {}
+): ContextFreshnessResult {
+  const skew = options.skewSeconds ?? DEFAULT_CONTEXT_SKEW_SECONDS;
+  const nowMs = options.now ?? Date.now();
+
+  const tsRaw = ctx?.timestamp;
+  if (typeof tsRaw !== "string" || tsRaw.trim().length === 0) {
+    return { ok: false, failure: { kind: "missing_timestamp" } };
+  }
+  const tsMs = Date.parse(tsRaw);
+  if (!Number.isFinite(tsMs)) {
+    return { ok: false, failure: { kind: "invalid_timestamp", got: tsRaw } };
+  }
+
+  const driftMs = nowMs - tsMs;
+  const driftSeconds = Math.round(driftMs / 1000);
+  if (Math.abs(driftMs) > skew * 1000) {
+    return { ok: false, failure: { kind: "timestamp_skew", driftSeconds } };
+  }
+
+  const ttlRaw = ctx?.ttl;
+  if (typeof ttlRaw !== "string" || ttlRaw.trim().length === 0) {
+    return { ok: false, failure: { kind: "missing_ttl" } };
+  }
+  const ttlSeconds = parseIsoDurationSeconds(ttlRaw);
+  if (ttlSeconds === null) {
+    return { ok: false, failure: { kind: "invalid_ttl", got: ttlRaw } };
+  }
+
+  const expiresAtMs = tsMs + ttlSeconds * 1000;
+  const expiredAgoMs = nowMs - expiresAtMs;
+  if (expiredAgoMs > skew * 1000) {
+    return {
+      ok: false,
+      failure: {
+        kind: "expired_ttl",
+        expiredAgoSeconds: Math.round(expiredAgoMs / 1000),
+      },
+    };
+  }
+
+  return { ok: true };
+}
+
 // Build an ONDC-compliant context envelope for the given action.
 export function buildContext(params: BuildContextParams): OndcContext {
   const config = getOndcConfig();
