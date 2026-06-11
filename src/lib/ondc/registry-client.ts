@@ -60,7 +60,13 @@ const CLOCK_SKEW_SECONDS = 5;
 // inbound callbacks from sellerApp (BPP) — buyer-side actions, by definition,
 // originate FROM us, not TO us. Making this a constant guards against ever
 // accidentally accepting a key belonging to a gateway/LSP record.
-const EXPECTED_PARTICIPANT_TYPE = "sellerApp";
+//
+// The /lookup request FILTER uses the ONDC name "sellerApp". The /lookup
+// RESPONSE record's `type` field uses Beckn's acronym "BPP" for the same role.
+// We accept either on the response side; we only send "sellerApp" as the
+// filter.
+const LOOKUP_FILTER_PARTICIPANT_TYPE = "sellerApp";
+const ACCEPTED_RESPONSE_PARTICIPANT_TYPES = new Set(["sellerApp", "BPP"]);
 
 // ---------------------------------------------------------------------------
 // Result types. Every reason a verification can fail has a distinct tag so the
@@ -212,13 +218,14 @@ export function validateRegistryRecord(
     };
   }
 
-  // 3. Participant type. The registry surfaces buyerApp/sellerApp/gateway/LSP;
-  //    we're verifying inbound seller callbacks, so anything else is wrong.
-  if (record.type && record.type !== EXPECTED_PARTICIPANT_TYPE) {
+  // 3. Participant type. The registry surfaces buyerApp/sellerApp/gateway/LSP
+  //    on input, and the response field uses Beckn's "BPP"/"BAP" acronyms; we
+  //    accept either spelling for the seller role. Anything else is wrong.
+  if (record.type && !ACCEPTED_RESPONSE_PARTICIPANT_TYPES.has(record.type)) {
     return {
       ok: false,
       reason: "subscriber_mismatch",
-      detail: `expected type ${EXPECTED_PARTICIPANT_TYPE}, got ${record.type}`,
+      detail: `expected one of [${[...ACCEPTED_RESPONSE_PARTICIPANT_TYPES].join(", ")}], got ${record.type}`,
     };
   }
 
@@ -319,15 +326,19 @@ function buildLookupQuery(
   return {
     subscriber_id: expected.subscriberId,
     ukId: expected.uniqueKeyId,
-    type: EXPECTED_PARTICIPANT_TYPE,
+    type: LOOKUP_FILTER_PARTICIPANT_TYPE,
     domain: config.domain,
     country: config.countryCode,
-    city: "*",
+    // preprod's /v2.0/lookup rejects city="*" with NACK 151 ("city: is
+    // required or Invalid"). Use the configured city code; the BPPs we
+    // verify are responding to OUR search and therefore must serve our city.
+    city: config.cityCode,
   };
 }
 
-// /vlookup returns either an array (most versions) or a wrapper with an array
-// under `subscribers`. We tolerate both because preprod and prod have drifted.
+// /lookup returns either a bare array of records (preprod v2.0) or a wrapper
+// with the array under `subscribers` (some other registry versions). We
+// tolerate both because preprod and prod have drifted.
 function extractRecords(raw: unknown): RegistryRecord[] | null {
   if (Array.isArray(raw)) return raw as RegistryRecord[];
   if (raw && typeof raw === "object") {
@@ -339,6 +350,22 @@ function extractRecords(raw: unknown): RegistryRecord[] | null {
   return null;
 }
 
+// preprod /lookup returns HTTP 200 with a Beckn NACK envelope when the request
+// schema is rejected (e.g. missing/invalid city). We surface the registry's
+// own error message rather than the generic "malformed" reason — the operator
+// needs to see the actual NACK code/text to diagnose the request shape.
+function extractNackError(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object") return null;
+  const env = raw as {
+    message?: { ack?: { status?: string } };
+    error?: { code?: string; message?: string; type?: string };
+  };
+  if (env.message?.ack?.status !== "NACK") return null;
+  const code = env.error?.code ?? "?";
+  const msg = env.error?.message ?? "<no message>";
+  return `NACK ${code}: ${msg}`;
+}
+
 async function fetchAndValidate(
   expected: { subscriberId: string; uniqueKeyId: string },
   nowSec: number
@@ -347,7 +374,8 @@ async function fetchAndValidate(
   const url = `${config.registryBaseUrl}/lookup`;
   const body = JSON.stringify(buildLookupQuery(expected));
 
-  // Sign the body — preprod/prod /vlookup requires it. Catch the auth path's
+  // Sign the body — preprod/prod /lookup accepts the same Beckn Authorization
+  // + Digest headers that every other ONDC call uses. Catch the auth path's
   // typed error here so it's reported as a resolve reason instead of throwing
   // up into the callback route (which would 500 instead of cleanly NACKing).
   let authorization: string;
@@ -411,6 +439,13 @@ async function fetchAndValidate(
 
   const records = extractRecords(parsed);
   if (!records) {
+    // Most common non-array shape on preprod is a Beckn NACK envelope returned
+    // with HTTP 200 when the request schema was rejected. Surface its error
+    // text so the operator can diagnose the request shape (e.g. bad city).
+    const nack = extractNackError(parsed);
+    if (nack) {
+      return { ok: false, reason: "registry_http_error", detail: nack };
+    }
     return { ok: false, reason: "registry_malformed_response" };
   }
 
