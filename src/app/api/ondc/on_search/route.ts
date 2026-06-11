@@ -184,7 +184,13 @@ async function persistOnSearchCatalog(data: ExtractedOnSearch): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
-  // Can't verify signatures without our network config loaded. A misconfig is a
+  console.log("ondc.on_search ENTER", {
+    ts: new Date().toISOString(),
+    url: req.url,
+    headers: [...req.headers.keys()],
+  });
+
+  // Can't verify signatures without our network config loaded.
   // server fault, not the sender's — NACK 500.
   if (!isOndcConfigured()) {
     return nack(500, { type: "CORE-ERROR", message: "BAP not configured" });
