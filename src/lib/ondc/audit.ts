@@ -74,7 +74,13 @@ export type AuditTrace = {
 // Backend — JSONL file (dev) or single blob (prod).
 // ---------------------------------------------------------------------------
 
-const DATA_FILE = path.join(process.cwd(), "data", "ondc", "audit.jsonl");
+// Vercel's project filesystem is READ-ONLY at runtime — only /tmp is writable
+// per invocation. Match store-json.ts's pattern: /tmp on Vercel, project-rooted
+// `data/` locally. /tmp is ephemeral per cold-start, so for durable audit you
+// must set BLOB_READ_WRITE_TOKEN on Vercel — that flips to blob persistence.
+const DATA_FILE = process.env.VERCEL
+  ? path.join("/tmp", "ondc", "audit.jsonl")
+  : path.join(process.cwd(), "data", "ondc", "audit.jsonl");
 const BLOB_KEY = "system/ondc/audit.jsonl";
 const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
 
