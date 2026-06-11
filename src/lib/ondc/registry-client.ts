@@ -376,7 +376,10 @@ async function fetchAndValidate(
       detail: err instanceof Error ? err.message : "signing failed",
     };
   }
-
+  console.log("ondc.registry vlookup request", {
+  url,
+  expected,
+  });
   let res: Response;
   try {
     res = await fetch(url, {
@@ -397,12 +400,20 @@ async function fetchAndValidate(
   }
 
   if (!res.ok) {
-    return {
-      ok: false,
-      reason: "registry_http_error",
-      detail: `HTTP ${res.status}`,
-    };
-  }
+  const text = await res.text();
+
+  console.warn("ondc.registry vlookup failed", {
+    url,
+    status: res.status,
+    body: text,
+  });
+
+  return {
+    ok: false,
+    reason: "registry_http_error",
+    detail: `HTTP ${res.status}`,
+  };
+}
 
   let parsed: unknown;
   try {
