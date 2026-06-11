@@ -203,6 +203,10 @@ export async function POST(req: Request) {
       action: "search",
       context,
       message,
+      // Workbench/gateway requires the Digest header as a precondition (returns
+      // HTTP 428 without it); the registry path already sends it. See auth.ts
+      // SIGNED_HEADERS, which lists `digest`.
+      sendDigestHeader: true,
     });
 
     // The synchronous reply is only ACK/NACK. On ACK the search is accepted and
@@ -230,6 +234,13 @@ export async function POST(req: Request) {
           error: err.message,
           transactionId: context.transaction_id,
           messageId: context.message_id,
+          // DEBUG (temporary): expose the raw Workbench rejection so we can read
+          // why it returned 428. Remove after debugging.
+          debug: {
+            httpStatus: err.httpStatus,
+            responseHeaders: err.responseHeaders,
+            responseBody: err.responseBody,
+          },
         },
         { status: err.timeout ? 504 : 502 }
       );

@@ -332,7 +332,7 @@ function buildVlookupQuery(
       unique_key_id: expected.uniqueKeyId,
       domain: config.domain,
       country: config.countryCode,
-      city: config.cityCode,
+      city: "*",
       type: EXPECTED_PARTICIPANT_TYPE,
     },
   };

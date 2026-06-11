@@ -38,6 +38,9 @@ export class OndcClientError extends Error {
   // The raw (text or parsed) response body, when we got one but couldn't use
   // it — invaluable when a gateway returns an HTML error page or odd JSON.
   readonly responseBody?: unknown;
+  // DEBUG (temporary): response headers when we got a response but couldn't use
+  // it. Lets us see Workbench's 428 reason headers. Safe to remove.
+  readonly responseHeaders?: Record<string, string>;
 
   constructor(
     message: string,
@@ -46,6 +49,7 @@ export class OndcClientError extends Error {
       httpStatus?: number;
       timeout?: boolean;
       responseBody?: unknown;
+      responseHeaders?: Record<string, string>;
       cause?: unknown;
     } = {}
   ) {
@@ -55,6 +59,7 @@ export class OndcClientError extends Error {
     this.httpStatus = options.httpStatus;
     this.timeout = options.timeout ?? false;
     this.responseBody = options.responseBody;
+    this.responseHeaders = options.responseHeaders;
   }
 }
 
@@ -304,7 +309,14 @@ export async function sendOndcRequest<TMessage = unknown>(
     } catch {
       throw new OndcClientError(
         `response was not valid JSON (HTTP ${res.status}).`,
-        { action, httpStatus: res.status, responseBody: text }
+        {
+          action,
+          httpStatus: res.status,
+          responseBody: text,
+          // DEBUG (temporary): capture headers so we can read Workbench's 428
+          // rejection reason. Safe to remove.
+          responseHeaders: Object.fromEntries(res.headers.entries()),
+        }
       );
     }
 
