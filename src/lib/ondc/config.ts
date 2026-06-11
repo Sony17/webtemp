@@ -39,6 +39,11 @@ export type OndcPublicContext = {
   registryBaseUrl: string;
   gatewayUrl: string;
 
+  // The ONDC registry's X25519 public key for this environment, used by the
+  // /on_subscribe handler to derive the AES key that decrypts the challenge.
+  // Sourced from NETWORK_DEFAULTS — not env-overridable (a network-wide ID).
+  registryEncryptionPublicKey: string;
+
   // Catalog / search context defaults sent on ONDC actions.
   domain: string; // e.g. "ONDC:RET10"
   countryCode: string; // ISO-3166 alpha-3, e.g. "IND"
@@ -68,19 +73,35 @@ const VALID_ENVS = new Set<OndcEnvironment>(["staging", "preprod", "prod"]);
 // not pin an explicit URL via env. See https://github.com/ONDC-Official.
 const NETWORK_DEFAULTS: Record<
   OndcEnvironment,
-  { registryBaseUrl: string; gatewayUrl: string }
+  {
+    registryBaseUrl: string;
+    gatewayUrl: string;
+    // Per-environment X25519 public key the ONDC registry uses to send the
+    // /on_subscribe encrypted challenge. We ECDH it with our encryption
+    // private key to derive the AES-256-ECB key that decrypts the challenge.
+    // These are well-known constants — see ONDC's developer-docs registration
+    // section. Hardcoded here (not env-overridable) because they're a
+    // network-wide identity, not a per-deployment knob.
+    registryEncryptionPublicKey: string;
+  }
 > = {
   staging: {
     registryBaseUrl: "https://staging.registry.ondc.org",
     gatewayUrl: "https://staging.gateway.proteantech.in",
+    registryEncryptionPublicKey:
+      "MCowBQYDK2VuAyEAduMuZgmtpjdCuxv+Nc49K0cUtoQNiBhrjsCsBXVtgaM=",
   },
   preprod: {
     registryBaseUrl: "https://preprod.registry.ondc.org/v2.0",
     gatewayUrl: "https://preprod.gateway.ondc.org",
+    registryEncryptionPublicKey:
+      "MCowBQYDK2VuAyEAa9Wbpvc9HnEpKZdSXh6+UdN6sZkrz9o1u3WP7lWlYxQ=",
   },
   prod: {
     registryBaseUrl: "https://prod.registry.ondc.org",
     gatewayUrl: "https://prod.gateway.ondc.org",
+    registryEncryptionPublicKey:
+      "MCowBQYDK2VuAyEAvVEyZY91O2yV8w8/CAwVDAnqIZDJJUPdLUUKwLo3K0M=",
   },
 };
 
@@ -218,6 +239,7 @@ function buildConfig(): OndcConfig {
     uniqueKeyId,
     registryBaseUrl: normalizeUrl("ONDC_REGISTRY_BASE_URL", registryBaseUrl),
     gatewayUrl: normalizeUrl("ONDC_GATEWAY_URL", gatewayUrl),
+    registryEncryptionPublicKey: defaults.registryEncryptionPublicKey,
     domain: trimmed(process.env.ONDC_DOMAIN) ?? "ONDC:RET10",
     countryCode: trimmed(process.env.ONDC_COUNTRY_CODE) ?? "IND",
     cityCode: trimmed(process.env.ONDC_CITY_CODE) ?? "std:080",

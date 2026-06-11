@@ -240,6 +240,23 @@ export function signRequest(
   return { authorization, digest, created, expires };
 }
 
+// Ed25519-sign an opaque string with the BAP's configured signing private key
+// and return the base64 signature. Used for the registry's domain-ownership
+// proof at /ondc-site-verification.html: the registry returns a `request_id`
+// during /subscribe, you sign it with this helper, and the registry
+// re-verifies against your subscribed public key.
+//
+// This is NOT the same as signRequest above — there's no digest or
+// created/expires envelope, just raw ed25519 over the UTF-8 bytes of the
+// request_id. The registry's site-verification check expects exactly that.
+export function signRequestId(requestId: string): string {
+  const config = getOndcConfig();
+  const privateKey = normalizeEd25519PrivateKey(config.secrets.signingPrivateKey);
+  return edSign(null, Buffer.from(requestId, "utf8"), privateKey).toString(
+    "base64"
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Inbound verification — the symmetric counterpart of the signing path above.
 // Used by callback routes (on_search/on_select/…) to prove an inbound request

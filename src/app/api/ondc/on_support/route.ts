@@ -52,6 +52,7 @@ import {
   finalizeAuditTrace,
   type AuditTrace,
 } from "@/lib/ondc/audit";
+import { recordMessageId } from "@/lib/ondc/idempotency";
 import { saveSupport } from "@/lib/ondc/store";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
@@ -334,6 +335,24 @@ export async function POST(req: Request) {
       bppId: result.data.bppId,
     });
     return nack(400, freshnessError(fresh.failure), trace);
+  }
+
+  // Idempotency: a same (action, txn, msg) re-send is workbench/BPP retrying
+  // because they didn't get our prior ACK. Treat as success — skip persist,
+  // ACK so the sender stops retrying. The protocol expects identical behavior
+  // on identical input.
+  const seen = recordMessageId(
+    "on_support",
+    result.data.transactionId,
+    result.data.messageId
+  );
+  if (seen.status === "replay") {
+    console.log("ondc.on_support idempotent replay", {
+      transactionId: result.data.transactionId,
+      messageId: result.data.messageId,
+      firstSeenAt: new Date(seen.firstSeenAt).toISOString(),
+    });
+    return ack(trace);
   }
 
 
