@@ -56,7 +56,16 @@ import { OndcStoreError } from "@/lib/ondc/store-types";
 // older file simply loads with no supports/ratings (backward compatible).
 const SNAPSHOT_VERSION = 3 as const;
 
-const DATA_FILE = path.join(process.cwd(), "data", "ondc", "store.json");
+// On Vercel (and most serverless platforms) the function bundle directory is
+// READ-ONLY; only `/tmp` is writable per invocation. Without this branch a
+// deployment that hasn't provisioned BLOB_READ_WRITE_TOKEN crashes every
+// callback with EROFS on the first `fs.writeFile`. `/tmp` is ephemeral
+// across cold starts — production deployments should still wire Blob (or set
+// DATABASE_URL to switch to the Postgres backend) — but this lets traffic
+// flow with at-least-in-process durability instead of NACKing every callback.
+const DATA_FILE = process.env.VERCEL
+  ? path.join("/tmp", "ondc", "store.json")
+  : path.join(process.cwd(), "data", "ondc", "store.json");
 const BLOB_KEY = "system/ondc/store.json";
 const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
 

@@ -348,8 +348,18 @@ export async function POST(req: Request) {
   try {
     await persistOnSearchCatalog(result.data);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "persistence error";
-    console.error("ondc.on_search persist failed", { msg });
+    const e = err instanceof Error ? err : null;
+    // Surface the wrapped CAUSE so we can tell EROFS / EACCES (Vercel read-only
+    // FS) from a Blob auth failure from a real bug. Without this the route was
+    // logging only the wrapper message ("failed to persist snapshot").
+    const cause = e && "cause" in e ? (e.cause as Error | undefined) : undefined;
+    console.error("ondc.on_search persist failed", {
+      msg: e?.message ?? "persistence error",
+      causeMessage: cause?.message,
+      causeCode: (cause as NodeJS.ErrnoException | undefined)?.code,
+      transactionId: result.data.transactionId,
+      bppId: result.data.bppId,
+    });
     return nack(500, { type: "CORE-ERROR", message: "could not store catalog" });
   }
 
