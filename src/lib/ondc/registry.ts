@@ -38,5 +38,15 @@ export async function resolveBppSigningPublicKey(
   uniqueKeyId: string
 ): Promise<string | null> {
   const result = await resolveBppSigningKey(subscriberId, uniqueKeyId);
+
+  if (!result.ok) {
+    console.warn("ondc.registry resolve failed", {
+      subscriberId,
+      uniqueKeyId,
+      reason: result.reason,
+      detail: result.detail,
+    });
+  }
+
   return result.ok ? result.signingPublicKey : null;
 }
