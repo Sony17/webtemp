@@ -50,6 +50,12 @@ type SearchRequestBody = {
   deliveryGps?: string;
   deliveryAreaCode?: string;
   transactionId?: string;
+  // Optional override of the dispatch target. Default is `${gatewayUrl}/search`
+  // (broadcast to the network via the preprod/prod gateway). Override when
+  // probing a specific BPP directly — e.g. ONDC Workbench's seller surface:
+  //   "targetUrl": "https://workbench.ondc.tech/api-service/ONDC:RET10/1.2.5/seller/search"
+  // Must be a parseable absolute https URL pointing at a `/search` endpoint.
+  targetUrl?: string;
 };
 
 // The ONDC `search` message payload: a Beckn `intent`. Only the sub-objects we
@@ -166,6 +172,7 @@ export async function POST(req: Request) {
   const deliveryGps = str(body.deliveryGps);
   const deliveryAreaCode = str(body.deliveryAreaCode);
   const transactionId = str(body.transactionId);
+  const targetUrl = str(body.targetUrl);
 
   // Require at least one discovery criterion — a broadcast with an empty intent
   // is a misuse (and would flood the network for nothing).
@@ -181,6 +188,25 @@ export async function POST(req: Request) {
       { error: "'deliveryGps' must be 'lat,long' (decimal degrees)." },
       { status: 400 }
     );
+  }
+
+  // Validate the optional dispatch override up-front so a typo returns a clear
+  // 400 instead of a confusing transport error from sendOndcRequest.
+  if (targetUrl) {
+    try {
+      const u = new URL(targetUrl);
+      if (u.protocol !== "https:") {
+        return NextResponse.json(
+          { error: "'targetUrl' must be an https URL." },
+          { status: 400 }
+        );
+      }
+    } catch {
+      return NextResponse.json(
+        { error: "'targetUrl' must be a parseable absolute URL." },
+        { status: 400 }
+      );
+    }
   }
 
   const config = getOndcConfig();
@@ -200,8 +226,10 @@ export async function POST(req: Request) {
     deliveryAreaCode,
   });
 
-  // Search is the one action directed at the gateway's /search, not a BPP.
-  const url = `${config.gatewayUrl}/search`;
+  // Search is the one action directed at the gateway's /search, not a BPP —
+  // except when the caller pins `targetUrl` to probe a specific BPP/Workbench
+  // seller endpoint directly.
+  const url = targetUrl ?? `${config.gatewayUrl}/search`;
 
   console.log("ondc.search dispatch", {
     url,
