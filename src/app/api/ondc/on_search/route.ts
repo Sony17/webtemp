@@ -31,7 +31,7 @@
 //
 // Mirrors the existing route conventions (NextResponse, runtime = "nodejs").
 import { NextResponse } from "next/server";
-import { isOndcConfigured } from "@/lib/ondc/config";
+import { getOndcConfig, isOndcConfigured } from "@/lib/ondc/config";
 import { resolveBppSigningPublicKey } from "@/lib/ondc/registry";
 import {
   parseAuthorizationHeader,
@@ -54,6 +54,9 @@ export const runtime = "nodejs";
 type OnSearchContext = {
   domain?: string;
   action?: string; // must be "on_search"
+  city?: string; // city scope of the discovery — used for registry /lookup
+  bap_id?: string; // must echo OUR bapId
+  bap_uri?: string; // must echo OUR bapUri
   transaction_id?: string;
   message_id?: string;
   bpp_id?: string;
@@ -71,6 +74,9 @@ type ExtractedOnSearch = {
   messageId: string;
   bppId: string;
   bppUri: string;
+  // City passes through to the registry resolver so cross-city BPPs are
+  // looked up with the city they served, not our home city.
+  city: string;
   catalog: unknown;
 };
 
@@ -113,8 +119,11 @@ function isNonEmptyString(v: unknown): v is string {
 
 // Pull out the required fields, or return an error string naming the first
 // problem. Keeps the handler linear and the rules in one auditable place.
+// `expected` carries OUR identity so we can reject callbacks that don't quote
+// us as the BAP (defense in depth on top of the signature check).
 function extractAndValidate(
-  payload: OnSearchCallback
+  payload: OnSearchCallback,
+  expected: { bapId: string; bapUri: string; domain: string }
 ): { ok: true; data: ExtractedOnSearch } | { ok: false; reason: string } {
   const ctx = payload.context;
   if (!ctx) return { ok: false, reason: "missing context" };
@@ -135,6 +144,33 @@ function extractAndValidate(
   if (!isNonEmptyString(ctx.bpp_uri)) {
     return { ok: false, reason: "missing bpp_uri" };
   }
+  // Domain / bap identity must echo what WE sent. A RET10 BAP must not silently
+  // accept a LOG10 callback, and a callback that quotes someone else's bap_id
+  // is at best confused routing, at worst an attempt to misroute responses.
+  if (!isNonEmptyString(ctx.domain) || ctx.domain !== expected.domain) {
+    return {
+      ok: false,
+      reason: `unexpected domain "${ctx.domain ?? ""}"`,
+    };
+  }
+  if (!isNonEmptyString(ctx.bap_id) || ctx.bap_id !== expected.bapId) {
+    return {
+      ok: false,
+      reason: `bap_id mismatch (got "${ctx.bap_id ?? ""}")`,
+    };
+  }
+  if (!isNonEmptyString(ctx.bap_uri) || ctx.bap_uri !== expected.bapUri) {
+    return {
+      ok: false,
+      reason: `bap_uri mismatch (got "${ctx.bap_uri ?? ""}")`,
+    };
+  }
+  // city is required for the registry /lookup that resolves the BPP's signing
+  // key — preprod rejects a missing/invalid city with NACK 151. Refuse here
+  // rather than guess our home city and silently miss cross-city records.
+  if (!isNonEmptyString(ctx.city)) {
+    return { ok: false, reason: "missing city" };
+  }
   const catalog = payload.message?.catalog;
   if (catalog === null || typeof catalog !== "object") {
     return { ok: false, reason: "missing message.catalog" };
@@ -147,6 +183,7 @@ function extractAndValidate(
       messageId: ctx.message_id,
       bppId: ctx.bpp_id,
       bppUri: ctx.bpp_uri,
+      city: ctx.city,
       catalog,
     },
   };
@@ -195,6 +232,7 @@ export async function POST(req: Request) {
   if (!isOndcConfigured()) {
     return nack(500, { type: "CORE-ERROR", message: "BAP not configured" });
   }
+  const config = getOndcConfig();
 
   // (b-i) Authorization header must be present and parseable.
   const authHeader = req.headers.get("authorization");
@@ -206,19 +244,38 @@ export async function POST(req: Request) {
     return nack(401, { type: "CONTEXT-ERROR", message: "invalid signature" });
   }
 
-  // (a) Read the EXACT raw bytes BEFORE parsing JSON — the digest is computed
-  // over these bytes, so re-serializing would break verification.
+  // (a) Read the EXACT raw bytes — the digest is computed over these, so
+  // re-serializing the parsed object would break verification.
   const rawBody = await req.text();
 
-  // (b-ii) Resolve the sender's registry public key and verify the signature.
+  // (c-pre) Tolerantly parse the JSON ONLY to lift `context.city` for the
+  // registry lookup — preprod's /lookup is city-scoped and a wrong city
+  // returns zero records. If parsing fails we fall back to our city and
+  // let the signature verification handle the rejection (a body that
+  // doesn't parse won't verify either). We do NOT trust any of the parsed
+  // values for validation until the signature is checked.
+  let tentativePayload: OnSearchCallback | null = null;
+  try {
+    tentativePayload = JSON.parse(rawBody) as OnSearchCallback;
+  } catch {
+    // intentional: deferred to the post-verify parse below.
+  }
+  const tentativeCity = tentativePayload?.context?.city;
+
+  // (b-ii) Resolve the sender's registry public key (scoped to the city the
+  // BPP served) and verify the signature.
   const publicKey = await resolveBppSigningPublicKey(
     parsed.subscriberId,
-    parsed.uniqueKeyId
+    parsed.uniqueKeyId,
+    typeof tentativeCity === "string" && tentativeCity.trim().length > 0
+      ? tentativeCity
+      : undefined
   );
   if (!publicKey) {
     console.warn("ondc.on_search key resolution failed", {
       subscriberId: parsed.subscriberId,
       uniqueKeyId: parsed.uniqueKeyId,
+      city: tentativeCity,
     });
     return nack(401, { type: "CONTEXT-ERROR", message: "unauthorized" });
   }
@@ -237,16 +294,19 @@ export async function POST(req: Request) {
     return nack(401, { type: "CONTEXT-ERROR", message: "unauthorized" });
   }
 
-  // (c) Now that the body is trusted, parse it as JSON.
-  let payload: OnSearchCallback;
-  try {
-    payload = JSON.parse(rawBody) as OnSearchCallback;
-  } catch {
+  // (c) Body is trusted — now demand a parseable shape (we could not 400 on
+  // bad JSON earlier without leaking which-stage-failed signal to forgers).
+  if (!tentativePayload) {
     return nack(400, { type: "CONTEXT-ERROR", message: "invalid JSON" });
   }
 
-  // (c/d) Structural validation + field extraction.
-  const result = extractAndValidate(payload);
+  // (c/d) Full structural + identity validation. bap_id/bap_uri/domain must
+  // echo OUR identity (defense in depth on top of the signature check).
+  const result = extractAndValidate(tentativePayload, {
+    bapId: config.bapId,
+    bapUri: config.bapUri,
+    domain: config.domain,
+  });
   if (!result.ok) {
     return nack(400, { type: "CONTEXT-ERROR", message: result.reason });
   }

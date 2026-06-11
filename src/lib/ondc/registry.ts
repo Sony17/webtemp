@@ -28,16 +28,20 @@ import "server-only";
 import { resolveBppSigningKey } from "@/lib/ondc/registry-client";
 
 // Resolve the SENDER's base64 Ed25519 signing public key from the ONDC registry,
-// or null when it cannot be resolved / does not pass hardening checks. The
-// signature is preserved exactly from the original per-route implementation so
-// callers change by import only. A null return drives a NACK 401 at the call
-// site — the callback route should NEVER differentiate failure reasons to the
-// remote side.
+// or null when it cannot be resolved / does not pass hardening checks. A null
+// return drives a NACK 401 at the call site — the callback route should NEVER
+// differentiate failure reasons to the remote side.
+//
+// `city` should be the inbound callback's `context.city`: /lookup is city-scoped
+// on preprod, so a BPP that serves a different city than ours will return empty
+// records if we filter by our configured city. Falling back to config.cityCode
+// is fine for tests / diagnostic callers that have nothing better.
 export async function resolveBppSigningPublicKey(
   subscriberId: string,
-  uniqueKeyId: string
+  uniqueKeyId: string,
+  city?: string
 ): Promise<string | null> {
-  const result = await resolveBppSigningKey(subscriberId, uniqueKeyId);
+  const result = await resolveBppSigningKey(subscriberId, uniqueKeyId, { city });
 
   if (!result.ok) {
     console.warn("ondc.registry resolve failed", {

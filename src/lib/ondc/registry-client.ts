@@ -101,8 +101,16 @@ type CacheEntry =
 
 const cache = new Map<string, CacheEntry>();
 
-function cacheKey(subscriberId: string, uniqueKeyId: string): string {
-  return `${subscriberId}|${uniqueKeyId}`;
+// Cache key includes the city: a /lookup filter is city-scoped, so a "no
+// record" answer in city A says nothing about whether the same (subscriber,
+// ukId) registers in city B. Without the city in the key, a negative entry
+// from one city would shadow a real key from another.
+function cacheKey(
+  subscriberId: string,
+  uniqueKeyId: string,
+  city: string
+): string {
+  return `${subscriberId}|${uniqueKeyId}|${city}`;
 }
 
 function readCache(key: string, nowSec: number): CacheEntry | null {
@@ -320,7 +328,7 @@ type LookupQuery = {
 };
 
 function buildLookupQuery(
-  expected: { subscriberId: string; uniqueKeyId: string }
+  expected: { subscriberId: string; uniqueKeyId: string; city?: string }
 ): LookupQuery {
   const config = getOndcConfig();
   return {
@@ -330,9 +338,11 @@ function buildLookupQuery(
     domain: config.domain,
     country: config.countryCode,
     // preprod's /v2.0/lookup rejects city="*" with NACK 151 ("city: is
-    // required or Invalid"). Use the configured city code; the BPPs we
-    // verify are responding to OUR search and therefore must serve our city.
-    city: config.cityCode,
+    // required or Invalid"). Prefer the city the caller passes in (the
+    // inbound context.city, so cross-city BPPs resolve correctly); fall
+    // back to our configured city when the caller has nothing to offer
+    // (diagnostic or test paths).
+    city: expected.city ?? config.cityCode,
   };
 }
 
@@ -367,7 +377,7 @@ function extractNackError(raw: unknown): string | null {
 }
 
 async function fetchAndValidate(
-  expected: { subscriberId: string; uniqueKeyId: string },
+  expected: { subscriberId: string; uniqueKeyId: string; city?: string },
   nowSec: number
 ): Promise<RegistryResolveResult> {
   const config = getOndcConfig();
@@ -480,12 +490,16 @@ async function fetchAndValidate(
 export async function resolveBppSigningKey(
   subscriberId: string,
   uniqueKeyId: string,
-  now?: number
+  options?: { city?: string; now?: number }
 ): Promise<RegistryResolveResult> {
-  const nowMs = now ?? Date.now();
+  const nowMs = options?.now ?? Date.now();
   const nowSec = Math.floor(nowMs / 1000);
+  // City defaults to the configured city only when the caller has nothing to
+  // pass in. Inbound on_search callbacks should pass context.city through to
+  // resolve cross-city BPPs correctly.
+  const city = options?.city ?? getOndcConfig().cityCode;
 
-  const key = cacheKey(subscriberId, uniqueKeyId);
+  const key = cacheKey(subscriberId, uniqueKeyId, city);
   const cached = readCache(key, nowSec);
   if (cached) {
     if (cached.kind === "positive") {
@@ -495,7 +509,7 @@ export async function resolveBppSigningKey(
   }
 
   const result = await fetchAndValidate(
-    { subscriberId, uniqueKeyId },
+    { subscriberId, uniqueKeyId, city },
     nowSec
   );
 
