@@ -5,9 +5,11 @@
 // sender's Ed25519 signing public key, with the safeguards the network actually
 // requires:
 //
-//   1. Signed POST /vlookup (not the unsigned /lookup) — the registry will only
-//      answer authenticated queries on preprod/prod, and its response is bound
-//      to OUR request id, so an attacker can't replay an answer to us.
+//   1. Signed POST /lookup — preprod's v2.0 registry does not expose /vlookup
+//      (Spring 404 on /v2.0/vlookup, CDN 403 on bare /vlookup). /lookup at v2.0
+//      accepts the same signed Authorization + Digest headers and returns the
+//      subscriber records we need. Anti-replay / identity safety comes from
+//      the strict (subscriber_id, ukId) match in validation below, not the URL.
 //   2. Strict (subscriber_id, unique_key_id) match — never positional fallback.
 //   3. Subscriber validation — the returned record's subscriber_id/domain/type
 //      must match what we asked for; a mismatch is a forgery signal, not data.
@@ -298,43 +300,29 @@ export function validateRegistryRecord(
 // response. Kept fail-soft (no throws) so the caller can NACK cleanly.
 // ---------------------------------------------------------------------------
 
-// /vlookup query envelope per the v2.0 spec. Sending the same six filters that
-// /lookup accepts scopes the answer to exactly the record we're verifying.
-type VlookupQuery = {
-  sender_subscriber_id: string; // who is asking — us
-  request_id: string; // freshness binder, included in the registry's reply
-  timestamp: string; // ISO-8601 — registry rejects skewed timestamps
-  search_parameters: {
-    subscriber_id: string;
-    unique_key_id: string;
-    domain: string;
-    country: string;
-    city: string;
-    type: string;
-  };
+// /lookup query body per the v2.0 spec — flat, six optional filters. Sending
+// all six scopes the answer to exactly the (subscriber, key, role) record we
+// need to verify. Wildcard city because BPPs typically serve many cities.
+type LookupQuery = {
+  subscriber_id: string;
+  ukId: string;
+  type: string;
+  domain: string;
+  country: string;
+  city: string;
 };
 
-function buildVlookupQuery(
-  expected: { subscriberId: string; uniqueKeyId: string },
-  nowMs: number
-): VlookupQuery {
+function buildLookupQuery(
+  expected: { subscriberId: string; uniqueKeyId: string }
+): LookupQuery {
   const config = getOndcConfig();
-  // Deterministic request_id: subscriber|ukId|nowMs — unique enough for ONDC's
-  // dedup, traceable in logs, and we don't need crypto-random here (the value
-  // is bound to the signature, not the secret).
-  const requestId = `${config.subscriberId}-${expected.uniqueKeyId}-${nowMs}`;
   return {
-    sender_subscriber_id: config.subscriberId,
-    request_id: requestId,
-    timestamp: new Date(nowMs).toISOString(),
-    search_parameters: {
-      subscriber_id: expected.subscriberId,
-      unique_key_id: expected.uniqueKeyId,
-      domain: config.domain,
-      country: config.countryCode,
-      city: "*",
-      type: EXPECTED_PARTICIPANT_TYPE,
-    },
+    subscriber_id: expected.subscriberId,
+    ukId: expected.uniqueKeyId,
+    type: EXPECTED_PARTICIPANT_TYPE,
+    domain: config.domain,
+    country: config.countryCode,
+    city: "*",
   };
 }
 
@@ -353,12 +341,11 @@ function extractRecords(raw: unknown): RegistryRecord[] | null {
 
 async function fetchAndValidate(
   expected: { subscriberId: string; uniqueKeyId: string },
-  nowSec: number,
-  nowMs: number
+  nowSec: number
 ): Promise<RegistryResolveResult> {
   const config = getOndcConfig();
-  const url = `${config.registryBaseUrl}/vlookup`;
-  const body = JSON.stringify(buildVlookupQuery(expected, nowMs));
+  const url = `${config.registryBaseUrl}/lookup`;
+  const body = JSON.stringify(buildLookupQuery(expected));
 
   // Sign the body — preprod/prod /vlookup requires it. Catch the auth path's
   // typed error here so it's reported as a resolve reason instead of throwing
@@ -376,9 +363,9 @@ async function fetchAndValidate(
       detail: err instanceof Error ? err.message : "signing failed",
     };
   }
-  console.log("ondc.registry vlookup request", {
-  url,
-  expected,
+  console.log("ondc.registry lookup request", {
+    url,
+    expected,
   });
   let res: Response;
   try {
@@ -402,7 +389,7 @@ async function fetchAndValidate(
   if (!res.ok) {
   const text = await res.text();
 
-  console.warn("ondc.registry vlookup failed", {
+  console.warn("ondc.registry lookup failed", {
     url,
     status: res.status,
     body: text,
@@ -474,8 +461,7 @@ export async function resolveBppSigningKey(
 
   const result = await fetchAndValidate(
     { subscriberId, uniqueKeyId },
-    nowSec,
-    nowMs
+    nowSec
   );
 
   // Only cache TERMINAL outcomes. A transient network/HTTP fault is NOT cached
