@@ -117,6 +117,24 @@ function isNonEmptyString(v: unknown): v is string {
   return typeof v === "string" && v.trim().length > 0;
 }
 
+// Normalize an ONDC URI for tolerant equality: trim whitespace, lowercase the
+// scheme+host, strip trailing slashes from the path. ONDC participants and
+// gateways disagree on trailing slashes and host casing; without normalization
+// "https://openidea.co.in/ondc" vs "https://openidea.co.in/ondc/" will compare
+// unequal even though they identify the same endpoint.
+function normalizeOndcUri(value: string): string {
+  const trimmed = value.trim();
+  try {
+    const u = new URL(trimmed);
+    const pathname = u.pathname.replace(/\/+$/, "") || "/";
+    return `${u.protocol}//${u.host.toLowerCase()}${pathname}${u.search}`;
+  } catch {
+    // Not a parseable URL — fall back to trim + trailing-slash strip so at
+    // least the obvious cosmetic differences don't trip the check.
+    return trimmed.replace(/\/+$/, "");
+  }
+}
+
 // Pull out the required fields, or return an error string naming the first
 // problem. Keeps the handler linear and the rules in one auditable place.
 // `expected` carries OUR identity so we can reject callbacks that don't quote
@@ -159,7 +177,10 @@ function extractAndValidate(
       reason: `bap_id mismatch (got "${ctx.bap_id ?? ""}")`,
     };
   }
-  if (!isNonEmptyString(ctx.bap_uri) || ctx.bap_uri !== expected.bapUri) {
+  if (
+    !isNonEmptyString(ctx.bap_uri) ||
+    normalizeOndcUri(ctx.bap_uri) !== normalizeOndcUri(expected.bapUri)
+  ) {
     return {
       ok: false,
       reason: `bap_uri mismatch (got "${ctx.bap_uri ?? ""}")`,
