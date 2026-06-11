@@ -176,25 +176,30 @@ export function validateContextFreshness(
     return { ok: false, failure: { kind: "timestamp_skew", driftSeconds } };
   }
 
+  // ttl is OPTIONAL on inbound callbacks. Several real-network BPPs (incl.
+  // Workbench's `ushopmicro-stage.hulcd.com`) omit `context.ttl` on
+  // `on_search`. We still validate it when present (invalid format and
+  // already-expired both NACK), but treat absence as "no expiration declared"
+  // rather than refusing the callback. The timestamp skew check above and the
+  // HTTP-signature freshness check in auth.ts cover liveness regardless.
   const ttlRaw = ctx?.ttl;
-  if (typeof ttlRaw !== "string" || ttlRaw.trim().length === 0) {
-    return { ok: false, failure: { kind: "missing_ttl" } };
-  }
-  const ttlSeconds = parseIsoDurationSeconds(ttlRaw);
-  if (ttlSeconds === null) {
-    return { ok: false, failure: { kind: "invalid_ttl", got: ttlRaw } };
-  }
+  if (typeof ttlRaw === "string" && ttlRaw.trim().length > 0) {
+    const ttlSeconds = parseIsoDurationSeconds(ttlRaw);
+    if (ttlSeconds === null) {
+      return { ok: false, failure: { kind: "invalid_ttl", got: ttlRaw } };
+    }
 
-  const expiresAtMs = tsMs + ttlSeconds * 1000;
-  const expiredAgoMs = nowMs - expiresAtMs;
-  if (expiredAgoMs > skew * 1000) {
-    return {
-      ok: false,
-      failure: {
-        kind: "expired_ttl",
-        expiredAgoSeconds: Math.round(expiredAgoMs / 1000),
-      },
-    };
+    const expiresAtMs = tsMs + ttlSeconds * 1000;
+    const expiredAgoMs = nowMs - expiresAtMs;
+    if (expiredAgoMs > skew * 1000) {
+      return {
+        ok: false,
+        failure: {
+          kind: "expired_ttl",
+          expiredAgoSeconds: Math.round(expiredAgoMs / 1000),
+        },
+      };
+    }
   }
 
   return { ok: true };
