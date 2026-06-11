@@ -136,11 +136,17 @@ function buildSearchMessage(input: {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
+  console.log("ondc.search ENTER", {
+    ts: new Date().toISOString(),
+    url: req.url,
+  });
+
   // Fail fast (and clearly) when ONDC credentials aren't set up, rather than
   // deep inside signing. isOndcConfigured() returns false only for "not set up
   // yet"; a present-but-INVALID config rethrows (OndcConfigError) and surfaces
   // as the 500 below — exactly the loud failure a misconfig deserves.
   if (!isOndcConfigured()) {
+    console.warn("ondc.search unconfigured → 503");
     return NextResponse.json(
       { error: "ONDC is not configured on this server." },
       { status: 503 }
@@ -197,6 +203,16 @@ export async function POST(req: Request) {
   // Search is the one action directed at the gateway's /search, not a BPP.
   const url = `${config.gatewayUrl}/search`;
 
+  console.log("ondc.search dispatch", {
+    url,
+    transactionId: context.transaction_id,
+    messageId: context.message_id,
+    domain: context.domain,
+    city: context.city,
+    query,
+    category,
+  });
+
   try {
     const result = await sendOndcRequest<OndcSearchMessage>({
       url,
@@ -207,6 +223,11 @@ export async function POST(req: Request) {
       // HTTP 428 without it); the registry path already sends it. See auth.ts
       // SIGNED_HEADERS, which lists `digest`.
       sendDigestHeader: true,
+    });
+    console.log("ondc.search result", {
+      transactionId: context.transaction_id,
+      status: result.status,
+      ...(result.status === "NACK" ? { error: result.error } : {}),
     });
 
     // The synchronous reply is only ACK/NACK. On ACK the search is accepted and
@@ -229,6 +250,12 @@ export async function POST(req: Request) {
     // failed (timeout / network / unreadable response) — a NACK is data, not a
     // throw. Map a timeout to 504, any other transport fault to 502.
     if (err instanceof OndcClientError) {
+      console.error("ondc.search client error", {
+        transactionId: context.transaction_id,
+        message: err.message,
+        httpStatus: err.httpStatus,
+        timeout: err.timeout,
+      });
       return NextResponse.json(
         {
           error: err.message,
@@ -249,6 +276,10 @@ export async function POST(req: Request) {
     // An unexpected fault (e.g. OndcConfigError / OndcAuthError from signing) —
     // a real server-side problem the operator must fix.
     const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error("ondc.search fault", {
+      transactionId: context.transaction_id,
+      message: msg,
+    });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
