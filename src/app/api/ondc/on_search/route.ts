@@ -377,6 +377,20 @@ export async function POST(req: Request) {
     domain: config.domain,
   });
   if (!result.ok) {
+    // Surface the rejected field in logs. The NACK body already carries this
+    // reason, but Vercel's runtime log view shows only the ENTER line, so
+    // without an explicit warn we can't tell which echo (bap_id, bap_uri,
+    // domain, city, catalog) Workbench/BPP is sending wrong.
+    console.warn("ondc.on_search rejected", {
+      reason: result.reason,
+      receivedBapId: tentativePayload.context?.bap_id,
+      receivedBapUri: tentativePayload.context?.bap_uri,
+      receivedDomain: tentativePayload.context?.domain,
+      receivedCity: tentativePayload.context?.city,
+      expectedBapId: config.bapId,
+      expectedBapUri: config.bapUri,
+      expectedDomain: config.domain,
+    });
     return nack(
       400,
       contextError(ONDC_ERROR.CONTEXT_GENERIC, result.reason),
