@@ -55,9 +55,70 @@ export type IdempotencyVerdict =
   | { status: "new" }
   | { status: "replay"; firstSeenAt: number };
 
-// Record (action, txn, msg) and report whether it's the first time we've seen
-// this tuple. Side-effect: prunes expired entries lazily and bounds size to
+// Capacity eviction: drop oldest entries until we're under cap. Map keeps
+// insertion order, so the first key is the oldest. Shared by the writers below.
+function evictToCapacity(s: State): void {
+  while (s.seen.size > CAPACITY) {
+    const firstKey = s.seen.keys().next().value;
+    if (firstKey === undefined) break;
+    s.seen.delete(firstKey);
+  }
+}
+
+// Check whether (action, txn, msg) has already been COMMITTED — WITHOUT
+// recording it. This is the READ half of the two-phase idempotency guard:
+// call it BEFORE processing to short-circuit a confirmed replay, then call
+// commitMessageId() only AFTER the side effect (persist) succeeds.
+//
+// Why split read from write? If we recorded on read (as recordMessageId does),
+// a first attempt that fails to persist would still mark the tuple as seen, so
+// the sender's retry would replay-ACK without ever persisting — an ACK-without-
+// persistence data loss. Peeking leaves the tuple unrecorded until the persist
+// actually succeeds, so a failed attempt is correctly retried. NEVER throws.
+export function peekMessageId(
+  action: string,
+  transactionId: string,
+  messageId: string
+): IdempotencyVerdict {
+  const s = getState();
+  const existing = s.seen.get(key(action, transactionId, messageId));
+  if (existing && existing.expiresAt > Date.now()) {
+    return { status: "replay", firstSeenAt: existing.firstSeenAt };
+  }
+  return { status: "new" };
+}
+
+// Commit (action, txn, msg) as SUCCESSFULLY PROCESSED — the WRITE half of the
+// guard. Call this ONLY after the side effect (persist) has completed, so a
+// failed attempt never masks a later retry. Idempotent: re-committing the same
+// tuple refreshes its TTL and preserves the original firstSeenAt. Prunes to
 // CAPACITY (oldest evicted first). NEVER throws.
+export function commitMessageId(
+  action: string,
+  transactionId: string,
+  messageId: string
+): void {
+  const s = getState();
+  const k = key(action, transactionId, messageId);
+  const now = Date.now();
+
+  // Re-insert moves the entry to the LRU tail, which matters for capacity-based
+  // eviction below. Preserve the original firstSeenAt when one already exists.
+  const existing = s.seen.get(k);
+  if (existing) s.seen.delete(k);
+  s.seen.set(k, {
+    firstSeenAt: existing?.firstSeenAt ?? now,
+    expiresAt: now + TTL_MS,
+  });
+
+  evictToCapacity(s);
+}
+
+// DEPRECATED — fused check+record. Kept temporarily for backward compatibility
+// while the 10 callback routes migrate to peekMessageId() + commitMessageId().
+// Do NOT use in new code: recording before the side effect succeeds is exactly
+// the ACK-without-persistence bug the peek/commit split fixes. Remove once no
+// route imports it. NEVER throws.
 export function recordMessageId(
   action: string,
   transactionId: string,
@@ -77,13 +138,7 @@ export function recordMessageId(
   if (existing) s.seen.delete(k);
   s.seen.set(k, { firstSeenAt: now, expiresAt: now + TTL_MS });
 
-  // Capacity eviction: drop oldest entries until we're under cap. Map keeps
-  // insertion order, so the first key is the oldest.
-  while (s.seen.size > CAPACITY) {
-    const firstKey = s.seen.keys().next().value;
-    if (firstKey === undefined) break;
-    s.seen.delete(firstKey);
-  }
+  evictToCapacity(s);
 
   return { status: "new" };
 }

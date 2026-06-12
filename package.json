@@ -7,6 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
     "test:ondc": "node scripts/ondc-test-suite.mjs",
     "postinstall": "prisma generate"
   },

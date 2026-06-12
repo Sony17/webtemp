@@ -52,7 +52,7 @@ import {
   finalizeAuditTrace,
   type AuditTrace,
 } from "@/lib/ondc/audit";
-import { recordMessageId } from "@/lib/ondc/idempotency";
+import { peekMessageId, commitMessageId } from "@/lib/ondc/idempotency";
 import { saveTrackingUpdate } from "@/lib/ondc/store";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
@@ -307,11 +307,13 @@ export async function POST(req: Request) {
     return nack(400, freshnessError(fresh.failure), trace);
   }
 
-  // Idempotency: a same (action, txn, msg) re-send is workbench/BPP retrying
-  // because they didn't get our prior ACK. Treat as success — skip persist,
-  // ACK so the sender stops retrying. The protocol expects identical behavior
-  // on identical input.
-  const seen = recordMessageId(
+  // Idempotency CHECK (read-only): a same (action, txn, msg) re-send is
+  // workbench/BPP retrying because they didn't get our prior ACK. If this tuple
+  // was already COMMITTED (a prior attempt persisted successfully), replay-ACK
+  // without persisting again. We only PEEK here — the tuple is committed AFTER
+  // persist succeeds (see commitMessageId below), so a failed persist is
+  // correctly retried instead of being masked as success.
+  const seen = peekMessageId(
     "on_track",
     result.data.transactionId,
     result.data.messageId
@@ -346,6 +348,16 @@ export async function POST(req: Request) {
     console.error("ondc.on_track persist failed", { msg });
     return nack(500, coreError("could not store tracking"), trace);
   }
+
+  // Commit idempotency ONLY now that persistence has succeeded. Committing
+  // after persist (not before) is what prevents the ACK-without-persistence
+  // bug: the failed-persist branch above returned NACK 500 WITHOUT committing,
+  // so the sender's retry re-attempts persistence instead of replay-ACKing.
+  commitMessageId(
+    "on_track",
+    result.data.transactionId,
+    result.data.messageId
+  );
 
   // (f) Accept. The latest tracking snapshot is now available for the Track/
   // Status APIs to read by transaction_id (+ bpp_id).
