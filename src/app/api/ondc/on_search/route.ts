@@ -52,7 +52,12 @@ import {
   finalizeAuditTrace,
   type AuditTrace,
 } from "@/lib/ondc/audit";
-import { peekMessageId, commitMessageId } from "@/lib/ondc/idempotency";
+import {
+  peekMessageId,
+  commitMessageId,
+  lookupRejection,
+  recordRejection,
+} from "@/lib/ondc/idempotency";
 import { saveCatalog } from "@/lib/ondc/store";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
@@ -109,15 +114,23 @@ function ack(trace?: AuditTrace): NextResponse {
 // A NACK carries an error block and a non-2xx status so the sender can tell it
 // apart. We keep `error.message` terse on auth failures — never echo back *why*
 // a signature failed (don't coach a forger); the real reason is logged instead.
+//
+// When `cacheKey` is provided, the (httpStatus, error) pair is stashed in the
+// short-TTL negative cache so an identical retry (same Authorization header)
+// short-circuits at the top of the handler — no registry lookup, no signature
+// verify. Caller passes cacheKey ONLY for rejections that happen AFTER the
+// expensive verify pipeline; auth-stage failures aren't worth caching.
 function nack(
   httpStatus: number,
   error: OndcError,
-  trace?: AuditTrace
+  trace?: AuditTrace,
+  cacheKey?: string
 ): NextResponse {
   const body: OndcAckResponse = {
     message: { ack: { status: "NACK" } },
     error,
   };
+  if (cacheKey) recordRejection(cacheKey, { httpStatus, error });
   if (trace) finalizeAuditTrace(trace, { status: httpStatus, body });
   return NextResponse.json(body, { status: httpStatus });
 }
@@ -267,7 +280,8 @@ export async function POST(req: Request) {
   console.log("ondc.on_search ENTER", {
     ts: new Date().toISOString(),
     url: req.url,
-    headers: [...req.headers.keys()],
+    hasAuth: req.headers.has("authorization"),
+    contentLength: req.headers.get("content-length"),
   });
 
   const trace = beginAuditTrace({
@@ -298,6 +312,20 @@ export async function POST(req: Request) {
       contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"),
       trace
     );
+  }
+
+  // Negative cache: an identical retry (same Authorization header, same body
+  // digest) within the short TTL replays the prior NACK without re-running the
+  // registry lookup or signature verify. Preprod BPPs retry busted requests
+  // dozens of times; this trims that cost without changing what we tell them.
+  const cached = lookupRejection(authHeader);
+  if (cached) {
+    console.log("ondc.on_search negative cache hit", {
+      subscriberId: parsed.subscriberId,
+      httpStatus: cached.httpStatus,
+      code: cached.error.code,
+    });
+    return nack(cached.httpStatus, cached.error, trace);
   }
 
   // (a) Read the EXACT raw bytes — the digest is computed over these, so
@@ -365,7 +393,8 @@ export async function POST(req: Request) {
     return nack(
       400,
       contextError(ONDC_ERROR.CONTEXT_GENERIC, "invalid JSON"),
-      trace
+      trace,
+      authHeader
     );
   }
 
@@ -394,7 +423,8 @@ export async function POST(req: Request) {
     return nack(
       400,
       contextError(ONDC_ERROR.CONTEXT_GENERIC, result.reason),
-      trace
+      trace,
+      authHeader
     );
   }
   annotateTrace(trace, {
@@ -414,7 +444,7 @@ export async function POST(req: Request) {
       transactionId: result.data.transactionId,
       bppId: result.data.bppId,
     });
-    return nack(400, freshnessError(fresh.failure), trace);
+    return nack(400, freshnessError(fresh.failure), trace, authHeader);
   }
 
   // Idempotency CHECK (read-only): a same (action, txn, msg) re-send is
@@ -448,7 +478,8 @@ export async function POST(req: Request) {
     return nack(
       401,
       contextError(ONDC_ERROR.IDENTITY_MISMATCH, "unauthorized"),
-      trace
+      trace,
+      authHeader
     );
   }
 

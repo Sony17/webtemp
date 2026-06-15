@@ -147,3 +147,78 @@ export function recordMessageId(
 export function clearIdempotencyCache(): void {
   getState().seen.clear();
 }
+
+// ---------------------------------------------------------------------------
+// Negative cache — short-circuit retries of an identical bad request.
+// ---------------------------------------------------------------------------
+//
+// Different from the success-replay path above. ONDC retries the SAME message
+// when an ACK is slow; if our first response was a NACK (missing_ttl, expired
+// signature, etc.), each retry re-runs the full pipeline — registry /lookup,
+// Ed25519 verify, structural validation — before issuing the same NACK again.
+// During a preprod retry storm from one non-compliant BPP this costs us tens
+// of redundant registry hits.
+//
+// We key on the inbound Authorization header. The header binds (method, path,
+// host, body digest, date) into the signing string — same header bytes within
+// the cache TTL = the same client retrying the same request, so replaying the
+// same NACK is safe. We deliberately key on the raw header (not parsed values)
+// so a forger who guessed a victim's keyId can't poison the cache: a different
+// signature → different header → different cache slot.
+//
+// The cached entry stores ONLY what's needed to re-emit a NACK envelope: the
+// HTTP status and the ONDC error block. No request body, no signing material.
+const NEG_CAPACITY = 5_000;
+const NEG_TTL_MS = 60 * 1000;
+
+export type CachedNack = {
+  httpStatus: number;
+  error: {
+    type?: string;
+    code?: string;
+    path?: string;
+    message?: string;
+  };
+};
+
+type NegEntry = { nack: CachedNack; expiresAt: number };
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __ondcNegCache__: Map<string, NegEntry> | undefined;
+}
+
+function getNegState(): Map<string, NegEntry> {
+  if (!globalThis.__ondcNegCache__) globalThis.__ondcNegCache__ = new Map();
+  return globalThis.__ondcNegCache__;
+}
+
+// Look up a prior rejection for this Authorization header. Returns the cached
+// NACK if still fresh, or null. Lazily prunes the exact key on expiry.
+export function lookupRejection(authHeader: string): CachedNack | null {
+  const m = getNegState();
+  const entry = m.get(authHeader);
+  if (!entry) return null;
+  if (entry.expiresAt <= Date.now()) {
+    m.delete(authHeader);
+    return null;
+  }
+  return entry.nack;
+}
+
+// Remember that this Authorization header was rejected with this NACK so that
+// an identical retry within the TTL window can skip the verify pipeline.
+// Bounded by NEG_CAPACITY with oldest-first eviction (same pattern as `seen`).
+export function recordRejection(authHeader: string, nack: CachedNack): void {
+  const m = getNegState();
+  m.set(authHeader, { nack, expiresAt: Date.now() + NEG_TTL_MS });
+  while (m.size > NEG_CAPACITY) {
+    const firstKey = m.keys().next().value;
+    if (firstKey === undefined) break;
+    m.delete(firstKey);
+  }
+}
+
+export function clearNegativeCache(): void {
+  getNegState().clear();
+}
