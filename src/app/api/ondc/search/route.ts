@@ -56,6 +56,13 @@ type SearchRequestBody = {
   //   "targetUrl": "https://workbench.ondc.tech/api-service/ONDC:RET10/1.2.5/seller/search"
   // Must be a parseable absolute https URL pointing at a `/search` endpoint.
   targetUrl?: string;
+  // When true, emit an INCREMENTAL refresh search: adds the RET10 1.2.5
+  // `catalog_inc` tag group carrying start_time/end_time, so BPPs return only
+  // catalog deltas since the last refresh. Used by Workbench's "Discovery Flow
+  // incremental catalog" test (final step). Default false = full-catalog search.
+  // Optional `incrementalStart` overrides start_time; default is now-1h.
+  incremental?: boolean;
+  incrementalStart?: string;
 };
 
 // The ONDC `search` message payload: a Beckn `intent`. Only the sub-objects we
@@ -140,6 +147,8 @@ function buildSearchMessage(input: {
   category?: string;
   deliveryGps?: string;
   deliveryAreaCode?: string;
+  incremental?: boolean;
+  incrementalStart?: string;
 }): OndcSearchMessage {
   const intent: OndcSearchIntent = {
     payment: {
@@ -167,6 +176,23 @@ function buildSearchMessage(input: {
       },
     ],
   };
+
+  // Incremental refresh: append the RET10 1.2.5 `catalog_inc` tag group so the
+  // request is treated as a delta refresh instead of a full-catalog pull. The
+  // window is [start_time, now]; start defaults to now - 1h when not supplied.
+  if (input.incremental) {
+    const end = new Date();
+    const start = input.incrementalStart
+      ? input.incrementalStart
+      : new Date(end.getTime() - 60 * 60 * 1000).toISOString();
+    intent.tags!.push({
+      code: "catalog_inc",
+      list: [
+        { code: "start_time", value: start },
+        { code: "end_time", value: end.toISOString() },
+      ],
+    });
+  }
 
   if (input.query) intent.item = { descriptor: { name: input.query } };
   if (input.category) intent.category = { id: input.category };
@@ -227,6 +253,8 @@ export async function POST(req: Request) {
   const deliveryAreaCode = str(body.deliveryAreaCode);
   const transactionId = str(body.transactionId);
   const targetUrl = str(body.targetUrl);
+  const incremental = body.incremental === true;
+  const incrementalStart = str(body.incrementalStart);
 
   // Require at least one discovery criterion — a broadcast with an empty intent
   // is a misuse (and would flood the network for nothing).
@@ -278,6 +306,8 @@ export async function POST(req: Request) {
     category,
     deliveryGps,
     deliveryAreaCode,
+    incremental,
+    incrementalStart,
   });
 
   // Search is the one action directed at the gateway's /search, not a BPP —

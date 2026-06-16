@@ -120,7 +120,7 @@ type OndcInitOrder = {
     name: string;
     phone: string;
     email?: string;
-    address?: { full?: string; area_code?: string };
+    address?: { name?: string; area_code?: string };
   };
   fulfillments?: Array<{
     type: "Delivery";
@@ -234,7 +234,7 @@ function buildInitMessage(input: {
   const billingAddress =
     input.billing.address || input.billing.areaCode
       ? {
-          ...(input.billing.address ? { full: input.billing.address } : {}),
+          ...(input.billing.address ? { name: input.billing.address } : {}),
           ...(input.billing.areaCode ? { area_code: input.billing.areaCode } : {}),
         }
       : undefined;

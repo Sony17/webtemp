@@ -339,11 +339,23 @@ export async function POST(req: Request) {
     // failed (timeout / network / unreadable response) — a NACK is data, not a
     // throw. Map a timeout to 504, any other transport fault to 502.
     if (err instanceof OndcClientError) {
+      console.error("ondc.select client error", {
+        transactionId: context.transaction_id,
+        message: err.message,
+        httpStatus: err.httpStatus,
+        responseHeaders: err.responseHeaders,
+        responseBody: err.responseBody,
+      });
       return NextResponse.json(
         {
           error: err.message,
           transactionId: context.transaction_id,
           messageId: context.message_id,
+          debug: {
+            httpStatus: err.httpStatus,
+            responseHeaders: err.responseHeaders,
+            responseBody: err.responseBody,
+          },
         },
         { status: err.timeout ? 504 : 502 }
       );
