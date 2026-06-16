@@ -181,12 +181,15 @@ function normalizeOndcUri(value: string): string {
 // harness does NOT echo our bap_id in on_search callbacks — it stamps its OWN
 // subscriber id here (identical to the bpp_id it signs with). That is technically
 // non-compliant, but it blocks Workbench certification because the bap_id echo gate
-// below would NACK it. We allowlist ONLY this one well-known automation id: a match
-// is logged and allowed to proceed; every other non-echoed bap_id still NACKs.
-// The authoritative controls (signature verification, signer == bpp_id, bap_uri and
-// domain echoes) are all unchanged, so authenticity and routing are unaffected.
-// Remove once ONDC fixes the harness / after certification.
+// below would NACK it. When ONDC_ALLOW_WORKBENCH_BAP_MISMATCH=1, we allowlist ONLY
+// this one well-known automation id; without the flag, every non-echoed bap_id
+// NACKs as before. The authoritative controls (signature verification, signer ==
+// bpp_id, bap_uri and domain echoes) are all unchanged, so authenticity and routing
+// are unaffected. Remove the flag once ONDC fixes the harness / after certification.
 const STAGING_AUTOMATION_BAP_ID = "staging-automation.ondc.org";
+function isWorkbenchBapMismatchAllowed(): boolean {
+  return process.env.ONDC_ALLOW_WORKBENCH_BAP_MISMATCH === "1";
+}
 
 // Pull out the required fields, or return an error string naming the first
 // problem. Keeps the handler linear and the rules in one auditable place.
@@ -225,10 +228,15 @@ function extractAndValidate(
     };
   }
   // bap_id echo: a compliant BPP echoes back the bap_id we sent in /search.
-  // EXCEPTION (Workbench / staging only): the ONDC staging-automation harness sends
-  // STAGING_AUTOMATION_BAP_ID here instead of echoing ours. Allow ONLY that exact
-  // value — warn and continue. Every other non-echoed bap_id NACKs as before.
-  if (isNonEmptyString(ctx.bap_id) && ctx.bap_id === STAGING_AUTOMATION_BAP_ID) {
+  // EXCEPTION (Workbench / staging only, opt-in via ONDC_ALLOW_WORKBENCH_BAP_MISMATCH=1):
+  // the ONDC staging-automation harness sends STAGING_AUTOMATION_BAP_ID here instead of
+  // echoing ours. When the flag is set we allow ONLY that exact value — warn and continue.
+  // Without the flag, or for any other non-echoed bap_id, we NACK as before.
+  if (
+    isWorkbenchBapMismatchAllowed() &&
+    isNonEmptyString(ctx.bap_id) &&
+    ctx.bap_id === STAGING_AUTOMATION_BAP_ID
+  ) {
     console.warn("ondc.on_search bap_id allowlisted (staging automation)", {
       incomingBapId: ctx.bap_id,
       configuredBapId: expected.bapId,

@@ -313,6 +313,9 @@ export async function POST(req: Request) {
       action: "select",
       context,
       message,
+      // Workbench/seller requires the Digest header as a precondition (returns
+      // HTTP 428 without it). Same as search/route.ts.
+      sendDigestHeader: true,
     });
 
     // The synchronous reply is only ACK/NACK. On ACK the BPP accepted the select

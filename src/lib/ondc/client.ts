@@ -180,7 +180,7 @@ export type SendOndcRequestParams<TMessage = unknown> = {
   timeoutMs?: number; // defaults to DEFAULT_TIMEOUT_MS
   ttl?: string; // ISO-8601 duration forwarded to signRequest; defaults to config.ttl
   signal?: AbortSignal; // caller cancellation, combined with the timeout
-  sendDigestHeader?: boolean; // also send the `Digest` header (verifiers recompute it)
+  sendDigestHeader?: boolean; // also send the `Digest` header; defaults to true (Workbench/seller endpoints require it)
   logger?: OndcLogger;
 };
 
@@ -227,7 +227,7 @@ export async function sendOndcRequest<TMessage = unknown>(
     timeoutMs = DEFAULT_TIMEOUT_MS,
     ttl,
     signal,
-    sendDigestHeader = false,
+    sendDigestHeader = true,
     logger,
   } = params;
 
