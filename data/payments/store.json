@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "payments": [
+    {
+      "transactionId": "txn-test-001",
+      "amount": 499,
+      "paymentReference": "PAY-2579425A7BB97FFA",
+      "status": "PAID",
+      "createdAt": 1781609801960,
+      "updatedAt": 1781609843606,
+      "bankReference": "BANK123456"
+    }
+  ]
+}

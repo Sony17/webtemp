@@ -75,6 +75,11 @@ type OndcSearchIntent = {
     "@ondc/org/buyer_app_finder_fee_type": "percent" | "amount";
     "@ondc/org/buyer_app_finder_fee_amount": string;
   };
+  // ONDC `tags` groups. RET10 1.2.5 publishes the BAP's transaction-level data
+  // here via two groups: `bap_terms` (static terms) and `bap_features` (the
+  // optional protocol features this BAP supports). This generic `code`/`list`
+  // shape already models both groups verbatim, so no per-group typing is needed.
+  tags?: { code: string; list: { code: string; value: string }[] }[];
 };
 
 type OndcSearchMessage = { intent: OndcSearchIntent };
@@ -82,6 +87,35 @@ type OndcSearchMessage = { intent: OndcSearchIntent };
 // Default BAP finder fee. See payment note above.
 const FINDER_FEE_TYPE = "percent" as const;
 const FINDER_FEE_AMOUNT = "3";
+
+// TEMPORARY: using RET10 1.2.5 contract example values until
+// OpenIdea-specific static terms URL/effective date are confirmed.
+const BAP_STATIC_TERMS_NEW =
+  "https://github.com/ONDC-Official/NP-Static-Terms/buyerNP_BNP/1.0/tc.pdf";
+
+const BAP_TERMS_EFFECTIVE_DATE =
+  "2025-02-01T00:00:00.000Z";
+
+// ONDC `bap_features` — the second tag group RET10 1.2.5 requires on `search`
+// alongside `bap_terms`.
+//
+// WHAT it is: the buyer app's declaration of which optional protocol features
+// it supports, expressed as a list of feature codes each flagged "yes".
+//
+// WHY it is here: ONDC clarified (guidance received 2026-06-16) that RET10
+// 1.2.5 search requests must carry BOTH `bap_terms` AND `bap_features`; without
+// this group the search is non-compliant.
+//
+// WHERE the values came from: taken VERBATIM from the RET10 1.2.5 contract
+// snippet ONDC shared on 2026-06-16 — codes 003, 005 and 006, each value "yes".
+// No feature codes are invented: these are exactly the three the snippet lists,
+// and no additional bap_features codes are present in any contract/docs
+// available in this repo, so only these three are advertised.
+const BAP_FEATURES: { code: string; value: string }[] = [
+  { code: "003", value: "yes" },
+  { code: "005", value: "yes" },
+  { code: "006", value: "yes" },
+];
 
 // "lat,long" with decimal degrees — ONDC expects GPS as a comma-joined pair.
 const GPS_RE = /^-?\d{1,3}(\.\d+)?,\s*-?\d{1,3}(\.\d+)?$/;
@@ -112,6 +146,26 @@ function buildSearchMessage(input: {
       "@ondc/org/buyer_app_finder_fee_type": FINDER_FEE_TYPE,
       "@ondc/org/buyer_app_finder_fee_amount": FINDER_FEE_AMOUNT,
     },
+    // Publish the BAP's transaction-level tags on every search, as required by
+    // RET10 1.2.5. Two groups are emitted (per ONDC guidance 2026-06-16):
+    //   1. bap_terms    — the BAP's static terms (unchanged).
+    //   2. bap_features — the optional protocol features this BAP supports
+    //                     (see BAP_FEATURES above for codes + provenance).
+    // No other tag groups are added.
+    tags: [
+      {
+        code: "bap_terms",
+        list: [
+          { code: "static_terms", value: "" },
+          { code: "static_terms_new", value: BAP_STATIC_TERMS_NEW },
+          { code: "effective_date", value: BAP_TERMS_EFFECTIVE_DATE },
+        ],
+      },
+      {
+        code: "bap_features",
+        list: BAP_FEATURES,
+      },
+    ],
   };
 
   if (input.query) intent.item = { descriptor: { name: input.query } };
@@ -231,6 +285,17 @@ export async function POST(req: Request) {
   // seller endpoint directly.
   const url = targetUrl ?? `${config.gatewayUrl}/search`;
 
+  // DEBUG (temporary): confirm which identity + gateway are actually in effect
+  // at runtime and the exact URL we are about to POST to. Remove after debugging.
+  console.log("ondc.search DEBUG config+target", {
+    bapUri: config.bapUri,
+    subscriberUri: config.subscriberUri,
+    gatewayUrl: config.gatewayUrl,
+    outboundUrl: url,
+    targetUrlOverride: targetUrl ?? null,
+    transactionId: context.transaction_id,
+  });
+
   console.log("ondc.search dispatch", {
     url,
     transactionId: context.transaction_id,
@@ -240,6 +305,11 @@ export async function POST(req: Request) {
     query,
     category,
   });
+
+  console.log(
+    "ondc.search payload",
+    JSON.stringify({ context, message }, null, 2)
+  );
 
   try {
     const result = await sendOndcRequest<OndcSearchMessage>({
