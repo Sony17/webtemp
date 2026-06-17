@@ -84,6 +84,11 @@ type InitRequestBody = {
     phone?: string;
     email?: string;
     address?: string;
+    building?: string;
+    locality?: string;
+    city?: string;
+    state?: string;
+    country?: string;
     areaCode?: string;
   };
   fulfillment?: { gps?: string; areaCode?: string };
@@ -103,6 +108,11 @@ type InitBilling = {
   phone: string;
   email?: string;
   address?: string;
+  building?: string;
+  locality?: string;
+  city?: string;
+  state?: string;
+  country?: string;
   areaCode?: string;
 };
 
@@ -121,12 +131,36 @@ type OndcInitOrder = {
     name: string;
     phone: string;
     email?: string;
-    address?: { name?: string; area_code?: string };
+    address?: {
+      name?: string;
+      building?: string;
+      locality?: string;
+      city?: string;
+      state?: string;
+      country?: string;
+      area_code?: string;
+    };
+    created_at?: string;
+    updated_at?: string;
   };
   fulfillments?: Array<{
     id: string;
     type: "Delivery";
-    end?: { location: { gps?: string; address?: { area_code: string } } };
+    end?: {
+      location: {
+        gps?: string;
+        address?: {
+          name?: string;
+          building?: string;
+          locality?: string;
+          city?: string;
+          state?: string;
+          country?: string;
+          area_code?: string;
+        };
+      };
+      contact?: { phone: string };
+    };
   }>;
 };
 
@@ -200,6 +234,11 @@ function validateBilling(
   }
   const email = str(b?.email);
   const address = str(b?.address);
+  const building = str(b?.building);
+  const locality = str(b?.locality);
+  const city = str(b?.city);
+  const state = str(b?.state);
+  const country = str(b?.country);
   const areaCode = str(b?.areaCode);
   return {
     ok: true,
@@ -208,6 +247,11 @@ function validateBilling(
       phone,
       ...(email ? { email } : {}),
       ...(address ? { address } : {}),
+      ...(building ? { building } : {}),
+      ...(locality ? { locality } : {}),
+      ...(city ? { city } : {}),
+      ...(state ? { state } : {}),
+      ...(country ? { country } : {}),
       ...(areaCode ? { areaCode } : {}),
     },
   };
@@ -221,6 +265,7 @@ function buildInitMessage(input: {
   providerId: string;
   items: InitItem[];
   billing: InitBilling;
+  timestamp: string;
   deliveryGps?: string;
   deliveryAreaCode?: string;
 }): OndcInitMessage {
@@ -234,9 +279,20 @@ function buildInitMessage(input: {
   // Compose the billing address sub-object only from the parts we have, so we
   // never emit an empty `address` object when the caller gave neither field.
   const billingAddress =
-    input.billing.address || input.billing.areaCode
+    input.billing.address ||
+    input.billing.building ||
+    input.billing.locality ||
+    input.billing.city ||
+    input.billing.state ||
+    input.billing.country ||
+    input.billing.areaCode
       ? {
           ...(input.billing.address ? { name: input.billing.address } : {}),
+          ...(input.billing.building ? { building: input.billing.building } : {}),
+          ...(input.billing.locality ? { locality: input.billing.locality } : {}),
+          ...(input.billing.city ? { city: input.billing.city } : {}),
+          ...(input.billing.state ? { state: input.billing.state } : {}),
+          ...(input.billing.country ? { country: input.billing.country } : {}),
           ...(input.billing.areaCode ? { area_code: input.billing.areaCode } : {}),
         }
       : undefined;
@@ -261,6 +317,8 @@ function buildInitMessage(input: {
       phone: input.billing.phone,
       ...(input.billing.email ? { email: input.billing.email } : {}),
       ...(billingAddress ? { address: billingAddress } : {}),
+      created_at: input.timestamp,
+      updated_at: input.timestamp,
     },
   };
 
@@ -275,10 +333,19 @@ function buildInitMessage(input: {
         end: {
           location: {
             ...(input.deliveryGps ? { gps: input.deliveryGps } : {}),
-            ...(input.deliveryAreaCode
-              ? { address: { area_code: input.deliveryAreaCode } }
-              : {}),
+            address: {
+              ...(input.billing.address ? { name: input.billing.address } : {}),
+              ...(input.billing.building ? { building: input.billing.building } : {}),
+              ...(input.billing.locality ? { locality: input.billing.locality } : {}),
+              ...(input.billing.city ? { city: input.billing.city } : {}),
+              ...(input.billing.state ? { state: input.billing.state } : {}),
+              ...(input.billing.country ? { country: input.billing.country } : {}),
+              ...(input.deliveryAreaCode ?? input.billing.areaCode
+                ? { area_code: input.deliveryAreaCode ?? input.billing.areaCode }
+                : {}),
+            },
           },
+          contact: { phone: input.billing.phone },
         },
       },
     ];
@@ -388,6 +455,7 @@ export async function POST(req: Request) {
     providerId,
     items: itemsResult.items,
     billing: billingResult.billing,
+    timestamp: context.timestamp,
     deliveryGps,
     deliveryAreaCode,
   });

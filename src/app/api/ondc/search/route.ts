@@ -194,8 +194,17 @@ function buildSearchMessage(input: {
     });
   }
 
-  if (input.query) intent.item = { descriptor: { name: input.query } };
-  if (input.category) intent.category = { id: input.category };
+  // ONDC RET10 1.2.5 rejects an intent that carries BOTH `item` and `category`
+  // (error 40000: "/message/intent cannot have both properties item and
+  // category"). They are mutually exclusive: a free-text item search sets ONLY
+  // `item`; a category search sets ONLY `category` — never both. When a caller
+  // supplies both (e.g. the incremental Discovery flow trigger sends `query` +
+  // `category`), `query` takes precedence and `category` is omitted.
+  if (input.query) {
+    intent.item = { descriptor: { name: input.query } };
+  } else if (input.category) {
+    intent.category = { id: input.category };
+  }
 
   // Attach a delivery fulfillment only when we have a destination; some BPPs
   // narrow their catalog by serviceability, so passing the buyer's location

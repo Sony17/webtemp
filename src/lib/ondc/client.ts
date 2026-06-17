@@ -245,6 +245,11 @@ export async function sendOndcRequest<TMessage = unknown>(
   // (see auth.ts). Everything downstream operates on `rawBody`.
   const rawBody = JSON.stringify({ context, message });
 
+  // TEMP DEBUG — remove. Prints the exact outbound ONDC bytes before signing.
+  if (action === "init") {
+    console.log("[ONDC INIT OUTBOUND]", JSON.stringify({ context, message }, null, 2));
+  }
+
   // Sign the body. Surface signing faults (OndcAuthError) untouched — they are
   // a distinct, already-named failure class; we only wrap transport faults.
   const signed = signRequest(rawBody, ttl ? { ttl } : {});
