@@ -1,0 +1,20 @@
+{
+  "context": {
+    "domain": "ONDC:RET10",
+    "action": "status",
+    "core_version": "1.2.5",
+    "bap_id": "bnp.com",
+    "bap_uri": "https://bnp.com/ondc",
+    "bpp_id": "snp.com",
+    "bpp_uri": "https://snp.com/ondc",
+    "transaction_id": "T2",
+    "message_id": "M5",
+    "city": "std:080",
+    "country": "IND",
+    "timestamp": "2025-01-08T10:00:00.000Z",
+    "ttl": "PT30S"
+  },
+  "message": {
+    "order_id": "O1"
+  }
+}
