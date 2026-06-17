@@ -57,6 +57,7 @@ export const runtime = "nodejs";
 //       { "id": "I1", "quantity": 2, "locationId": "L1" }
 //     ],
 //     "fulfillment": {                       // optional — buyer's delivery target
+//       "type": "Delivery",                  // optional — "Delivery" (default) or "Self-Pickup"
 //       "gps": "12.9716,77.5946",
 //       "areaCode": "560001"
 //     }
@@ -74,8 +75,14 @@ type SelectRequestBody = {
   bppUri?: string;
   providerId?: string;
   items?: unknown;
-  fulfillment?: { gps?: string; areaCode?: string };
+  fulfillment?: { type?: string; gps?: string; areaCode?: string };
 };
+
+// ONDC RET10 fulfillment types we support driving from the BAP. "Delivery" is
+// the default; "Self-Pickup" lets the buyer collect the items from the seller's
+// store (same GPS as the provider's location, no last-mile delivery charges).
+const SUPPORTED_FULFILLMENT_TYPES = ["Delivery", "Self-Pickup"] as const;
+type FulfillmentType = (typeof SUPPORTED_FULFILLMENT_TYPES)[number];
 
 // One chosen line item, after validation.
 type SelectItem = {
@@ -97,7 +104,7 @@ type OndcSelectOrder = {
   }>;
   fulfillments?: Array<{
     id: string;
-    type: "Delivery";
+    type: FulfillmentType;
     end?: { location: { gps?: string; address?: { area_code: string } } };
   }>;
 };
@@ -159,6 +166,7 @@ function validateItems(
 function buildSelectMessage(input: {
   providerId: string;
   items: SelectItem[];
+  fulfillmentType: FulfillmentType;
   deliveryGps?: string;
   deliveryAreaCode?: string;
 }): OndcSelectMessage {
@@ -186,14 +194,14 @@ function buildSelectMessage(input: {
     })),
   };
 
-  // Attach a delivery fulfillment only when we have a destination — same pattern
-  // as search: BPPs use it to compute serviceability and delivery charges in the
-  // returned quote.
-  if (input.deliveryGps || input.deliveryAreaCode) {
+  // Attach a fulfillment when we have a destination OR when the buyer chose
+  // Self-Pickup (the BPP needs to see the type to skip last-mile pricing and
+  // emit pickup-store details on the quote).
+  if (input.deliveryGps || input.deliveryAreaCode || input.fulfillmentType !== "Delivery") {
     order.fulfillments = [
       {
         id: FULFILLMENT_ID,
-        type: "Delivery",
+        type: input.fulfillmentType,
         end: {
           location: {
             ...(input.deliveryGps ? { gps: input.deliveryGps } : {}),
@@ -239,6 +247,9 @@ export async function POST(req: Request) {
   const providerId = str(body.providerId);
   const deliveryGps = str(body.fulfillment?.gps);
   const deliveryAreaCode = str(body.fulfillment?.areaCode);
+  const fulfillmentTypeRaw = str(body.fulfillment?.type);
+  const fulfillmentType: FulfillmentType =
+    (fulfillmentTypeRaw as FulfillmentType | undefined) ?? "Delivery";
 
   // transaction_id is the spine of the lifecycle: select MUST continue the same
   // discovery session, so unlike search (where it's optional / minted fresh) it
@@ -290,6 +301,18 @@ export async function POST(req: Request) {
     );
   }
 
+  if (
+    fulfillmentTypeRaw &&
+    !SUPPORTED_FULFILLMENT_TYPES.includes(fulfillmentTypeRaw as FulfillmentType)
+  ) {
+    return NextResponse.json(
+      {
+        error: `'fulfillment.type' must be one of ${SUPPORTED_FULFILLMENT_TYPES.join(", ")}.`,
+      },
+      { status: 400 }
+    );
+  }
+
   // Build the `context` envelope. Unlike search, select is directed: we reuse
   // the caller's transaction_id and thread bppId/bppUri through so buildContext
   // attaches bpp_id/bpp_uri (required for every non-search action). message_id
@@ -304,6 +327,7 @@ export async function POST(req: Request) {
   const message = buildSelectMessage({
     providerId,
     items: itemsResult.items,
+    fulfillmentType,
     deliveryGps,
     deliveryAreaCode,
   });
