@@ -115,6 +115,7 @@ type OndcInitOrder = {
     id: string;
     quantity: { count: number };
     location_id?: string;
+    fulfillment_id?: string;
   }>;
   billing: {
     name: string;
@@ -123,6 +124,7 @@ type OndcInitOrder = {
     address?: { name?: string; area_code?: string };
   };
   fulfillments?: Array<{
+    id: string;
     type: "Delivery";
     end?: { location: { gps?: string; address?: { area_code: string } } };
   }>;
@@ -239,6 +241,8 @@ function buildInitMessage(input: {
         }
       : undefined;
 
+  const FULFILLMENT_ID = "F1";
+
   const order: OndcInitOrder = {
     provider: {
       id: input.providerId,
@@ -250,6 +254,7 @@ function buildInitMessage(input: {
       id: it.id,
       quantity: { count: it.quantity },
       ...(it.locationId ? { location_id: it.locationId } : {}),
+      fulfillment_id: FULFILLMENT_ID,
     })),
     billing: {
       name: input.billing.name,
@@ -265,6 +270,7 @@ function buildInitMessage(input: {
   if (input.deliveryGps || input.deliveryAreaCode) {
     order.fulfillments = [
       {
+        id: FULFILLMENT_ID,
         type: "Delivery",
         end: {
           location: {

@@ -93,8 +93,10 @@ type OndcSelectOrder = {
     id: string;
     quantity: { count: number };
     location_id?: string;
+    fulfillment_id?: string;
   }>;
   fulfillments?: Array<{
+    id: string;
     type: "Delivery";
     end?: { location: { gps?: string; address?: { area_code: string } } };
   }>;
@@ -167,6 +169,8 @@ function buildSelectMessage(input: {
     ...new Set(input.items.map((it) => it.locationId).filter((id): id is string => Boolean(id))),
   ];
 
+  const FULFILLMENT_ID = "F1";
+
   const order: OndcSelectOrder = {
     provider: {
       id: input.providerId,
@@ -178,6 +182,7 @@ function buildSelectMessage(input: {
       id: it.id,
       quantity: { count: it.quantity },
       ...(it.locationId ? { location_id: it.locationId } : {}),
+      fulfillment_id: FULFILLMENT_ID,
     })),
   };
 
@@ -187,6 +192,7 @@ function buildSelectMessage(input: {
   if (input.deliveryGps || input.deliveryAreaCode) {
     order.fulfillments = [
       {
+        id: FULFILLMENT_ID,
         type: "Delivery",
         end: {
           location: {

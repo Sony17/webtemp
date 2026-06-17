@@ -37,6 +37,7 @@ import { NextResponse } from "next/server";
 import { isOndcConfigured } from "@/lib/ondc/config";
 import { buildContext } from "@/lib/ondc/context";
 import { sendOndcRequest, OndcClientError } from "@/lib/ondc/client";
+import { getOrder } from "@/lib/ondc/store";
 
 // ONDC signing uses node:crypto (via auth.ts), and the whole ondc/* stack is
 // `import "server-only"` — so this handler must run on the Node runtime, not
@@ -210,7 +211,31 @@ export async function POST(req: Request) {
     );
   }
 
-  const orderResult = validateOrder(body.order);
+  // Fall back to the persisted on_init order when the caller omits it — the
+  // store holds the BPP's finalized order, keyed by (transaction_id, bpp_id).
+  let orderInput: unknown = body.order;
+  if (orderInput == null) {
+    const stored = await getOrder(transactionId, bppId);
+    console.log("ondc.confirm.lookup", {
+      transactionId,
+      bppId,
+      found: !!stored,
+      hasOrder: !!stored?.order,
+      stage: stored?.stage,
+    });
+    if (!stored?.order) {
+      return NextResponse.json(
+        {
+          error: "no on_init order persisted for this transaction; pass 'order' in the body.",
+          debug: { found: !!stored, stage: stored?.stage ?? null },
+        },
+        { status: 409 }
+      );
+    }
+    orderInput = stored.order;
+  }
+
+  const orderResult = validateOrder(orderInput);
   if (!orderResult.ok) {
     return NextResponse.json({ error: orderResult.reason }, { status: 400 });
   }

@@ -1,0 +1,537 @@
+
+> webtemp@0.1.0 test:ondc
+> node scripts/ondc-test-suite.mjs
+
+ONDC test suite — 259 scenarios → http://localhost:3000
+Preflight: registry-status 200 (ONDC configured)
+
+  [PASS] registry             /api/ondc/registry-status    registry-status: GET self → 200 (configured) or 503 (unconfigured)
+         200 (130ms)
+  [PASS] registry             /api/ondc/registry-status    registry-status: ?subscriberId passthrough
+         200 (115ms)
+  [PASS] registry             /api/ondc/registry-status    registry-status: POST is rejected
+         405 (5ms)
+  [PASS] method               /api/ondc/search             search: GET is rejected
+         405 (4ms)
+  [PASS] parsing              /api/ondc/search             search: malformed JSON body → 400 or 503 unconfigured
+         400 (3ms)
+  [PASS] config-or-validation /api/ondc/search             search: empty body → 400 missing fields OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/search             search: malformed GPS rejected → 400
+         400 (3ms)
+  [PASS] happy-path-probe     /api/ondc/search             search: valid body → route progresses past validation
+         200 (168ms)
+  [PASS] method               /api/ondc/select             select: GET is rejected
+         405 (7ms)
+  [PASS] parsing              /api/ondc/select             select: malformed JSON body → 400 or 503 unconfigured
+         400 (3ms)
+  [PASS] config-or-validation /api/ondc/select             select: empty body → 400 missing fields OR 503 unconfigured
+         400 (4ms)
+  [PASS] required-field       /api/ondc/select             select: missing 'transactionId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/select             select: missing 'bppId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/select             select: missing 'bppUri' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/select             select: missing 'providerId' → 400 OR 503 unconfigured
+         400 (10ms)
+  [PASS] required-field       /api/ondc/select             select: missing 'items' → 400 OR 503 unconfigured
+         400 (4ms)
+  [PASS] format               /api/ondc/select             select: non-https bppUri → 400 OR 503 unconfigured
+         400 (4ms)
+  [PASS] format               /api/ondc/select             select: empty items array → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/select             select: items[].quantity ≤ 0 → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/select             select: items[].quantity non-integer → 400 OR 503 unconfigured
+         400 (4ms)
+  [PASS] happy-path-probe     /api/ondc/select             select: valid body → route progresses past validation
+         502 (6ms)
+  [PASS] method               /api/ondc/init               init: GET is rejected
+         405 (3ms)
+  [PASS] parsing              /api/ondc/init               init: malformed JSON body → 400 or 503 unconfigured
+         400 (2ms)
+  [PASS] config-or-validation /api/ondc/init               init: empty body → 400 missing fields OR 503 unconfigured
+         400 (2ms)
+  [PASS] required-field       /api/ondc/init               init: missing 'transactionId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/init               init: missing 'bppId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/init               init: missing 'bppUri' → 400 OR 503 unconfigured
+         400 (2ms)
+  [PASS] required-field       /api/ondc/init               init: missing 'providerId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/init               init: missing 'items' → 400 OR 503 unconfigured
+         400 (2ms)
+  [PASS] required-field       /api/ondc/init               init: missing 'billing' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/init               init: non-https bppUri → 400 OR 503 unconfigured
+         400 (4ms)
+  [PASS] format               /api/ondc/init               init: empty items array → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/init               init: items[].quantity ≤ 0 → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/init               init: items[].quantity non-integer → 400 OR 503 unconfigured
+         400 (4ms)
+  [PASS] format               /api/ondc/init               init: billing.name missing → 400 OR 503 unconfigured
+         400 (11ms)
+  [PASS] format               /api/ondc/init               init: billing.phone missing → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] happy-path-probe     /api/ondc/init               init: valid body → route progresses past validation
+         502 (7ms)
+  [PASS] method               /api/ondc/confirm            confirm: GET is rejected
+         405 (5ms)
+  [PASS] parsing              /api/ondc/confirm            confirm: malformed JSON body → 400 or 503 unconfigured
+         400 (2ms)
+  [PASS] config-or-validation /api/ondc/confirm            confirm: empty body → 400 missing fields OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/confirm            confirm: missing 'transactionId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/confirm            confirm: missing 'bppId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/confirm            confirm: missing 'bppUri' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/confirm            confirm: missing 'order' → 400 OR 503 unconfigured
+         400 (2ms)
+  [PASS] format               /api/ondc/confirm            confirm: non-https bppUri → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/confirm            confirm: order.quote missing → 400 OR 503 unconfigured
+         400 (2ms)
+  [PASS] format               /api/ondc/confirm            confirm: order.payments missing → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/confirm            confirm: order.provider missing → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] happy-path-probe     /api/ondc/confirm            confirm: valid body → route progresses past validation
+         502 (7ms)
+  [PASS] method               /api/ondc/status             status: GET is rejected
+         405 (3ms)
+  [PASS] parsing              /api/ondc/status             status: malformed JSON body → 400 or 503 unconfigured
+         400 (2ms)
+  [PASS] config-or-validation /api/ondc/status             status: empty body → 400 missing fields OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/status             status: missing 'transactionId' → 400 OR 503 unconfigured
+         400 (2ms)
+  [PASS] required-field       /api/ondc/status             status: missing 'bppId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/status             status: missing 'bppUri' → 400 OR 503 unconfigured
+         400 (4ms)
+  [PASS] required-field       /api/ondc/status             status: missing 'orderId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/status             status: non-https bppUri → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] happy-path-probe     /api/ondc/status             status: valid body → route progresses past validation
+         502 (6ms)
+  [PASS] method               /api/ondc/track              track: GET is rejected
+         405 (5ms)
+  [PASS] parsing              /api/ondc/track              track: malformed JSON body → 400 or 503 unconfigured
+         400 (3ms)
+  [PASS] config-or-validation /api/ondc/track              track: empty body → 400 missing fields OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/track              track: missing 'transactionId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/track              track: missing 'bppId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/track              track: missing 'bppUri' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/track              track: missing 'orderId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/track              track: non-https bppUri → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] happy-path-probe     /api/ondc/track              track: valid body → route progresses past validation
+         502 (7ms)
+  [PASS] method               /api/ondc/cancel             cancel: GET is rejected
+         405 (4ms)
+  [PASS] parsing              /api/ondc/cancel             cancel: malformed JSON body → 400 or 503 unconfigured
+         400 (3ms)
+  [PASS] config-or-validation /api/ondc/cancel             cancel: empty body → 400 missing fields OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/cancel             cancel: missing 'transactionId' → 400 OR 503 unconfigured
+         400 (4ms)
+  [PASS] required-field       /api/ondc/cancel             cancel: missing 'bppId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/cancel             cancel: missing 'bppUri' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/cancel             cancel: missing 'orderId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/cancel             cancel: missing 'cancellationReasonId' → 400 OR 503 unconfigured
+         400 (2ms)
+  [PASS] format               /api/ondc/cancel             cancel: non-https bppUri → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] happy-path-probe     /api/ondc/cancel             cancel: valid body → route progresses past validation
+         502 (5ms)
+  [PASS] method               /api/ondc/update             update: GET is rejected
+         405 (4ms)
+  [PASS] parsing              /api/ondc/update             update: malformed JSON body → 400 or 503 unconfigured
+         400 (3ms)
+  [PASS] config-or-validation /api/ondc/update             update: empty body → 400 missing fields OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/update             update: missing 'transactionId' → 400 OR 503 unconfigured
+         400 (2ms)
+  [PASS] required-field       /api/ondc/update             update: missing 'bppId' → 400 OR 503 unconfigured
+         400 (5ms)
+  [PASS] required-field       /api/ondc/update             update: missing 'bppUri' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/update             update: missing 'updateTarget' → 400 OR 503 unconfigured
+         400 (2ms)
+  [PASS] required-field       /api/ondc/update             update: missing 'order' → 400 OR 503 unconfigured
+         400 (4ms)
+  [PASS] format               /api/ondc/update             update: non-https bppUri → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] happy-path-probe     /api/ondc/update             update: valid body → route progresses past validation
+         502 (6ms)
+  [PASS] method               /api/ondc/rating             rating: GET is rejected
+         405 (4ms)
+  [PASS] parsing              /api/ondc/rating             rating: malformed JSON body → 400 or 503 unconfigured
+         400 (5ms)
+  [PASS] config-or-validation /api/ondc/rating             rating: empty body → 400 missing fields OR 503 unconfigured
+         400 (5ms)
+  [PASS] required-field       /api/ondc/rating             rating: missing 'transactionId' → 400 OR 503 unconfigured
+         400 (5ms)
+  [PASS] required-field       /api/ondc/rating             rating: missing 'bppId' → 400 OR 503 unconfigured
+         400 (9ms)
+  [PASS] required-field       /api/ondc/rating             rating: missing 'bppUri' → 400 OR 503 unconfigured
+         400 (5ms)
+  [PASS] required-field       /api/ondc/rating             rating: missing 'ratings' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/rating             rating: non-https bppUri → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/rating             rating: invalid value "0" → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/rating             rating: invalid value "6" → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/rating             rating: invalid value "x" → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/rating             rating: invalid value "-1" → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] happy-path-probe     /api/ondc/rating             rating: valid body → route progresses past validation
+         502 (5ms)
+  [PASS] method               /api/ondc/support            support: GET is rejected
+         405 (3ms)
+  [PASS] parsing              /api/ondc/support            support: malformed JSON body → 400 or 503 unconfigured
+         400 (3ms)
+  [PASS] config-or-validation /api/ondc/support            support: empty body → 400 missing fields OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/support            support: missing 'transactionId' → 400 OR 503 unconfigured
+         400 (2ms)
+  [PASS] required-field       /api/ondc/support            support: missing 'bppId' → 400 OR 503 unconfigured
+         400 (1ms)
+  [PASS] required-field       /api/ondc/support            support: missing 'bppUri' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] required-field       /api/ondc/support            support: missing 'refId' → 400 OR 503 unconfigured
+         400 (3ms)
+  [PASS] format               /api/ondc/support            support: non-https bppUri → 400 OR 503 unconfigured
+         400 (4ms)
+  [PASS] happy-path-probe     /api/ondc/support            support: valid body → route progresses past validation
+         502 (5ms)
+  [PASS] method               /api/ondc/on_search          on_search: GET is rejected
+         405 (2ms)
+  [PASS] auth                 /api/ondc/on_search          on_search: missing Authorization → 401 NACK or 503
+         401 (3ms)
+  [PASS] auth                 /api/ondc/on_search          on_search: malformed Authorization "totally not a header" → 401 NACK or 503
+         401 (2ms)
+  [PASS] auth                 /api/ondc/on_search          on_search: malformed Authorization "Bearer abc" → 401 NACK or 503
+         401 (2ms)
+  [PASS] auth                 /api/ondc/on_search          on_search: malformed Authorization "Signature keyId="x"" → 401 NACK or 503
+         401 (3ms)
+  [PASS] auth                 /api/ondc/on_search          on_search: well-formed header w/ random signature → 401 NACK or 503
+         401 (101ms)
+  [PASS] auth                 /api/ondc/on_search          on_search: ed25519-signed body, unpublished key → 401 NACK or 503
+         401 (89ms)
+  [PASS] structural           /api/ondc/on_search          on_search: missing context → 401 (auth gate) or 400
+         401 (83ms)
+  [PASS] structural           /api/ondc/on_search          on_search: wrong action → 401 (auth gate) or 400
+         401 (177ms)
+  [PASS] structural           /api/ondc/on_search          on_search: missing transaction_id → 401 (auth gate) or 400
+         401 (128ms)
+  [PASS] structural           /api/ondc/on_search          on_search: missing message_id → 401 (auth gate) or 400
+         401 (87ms)
+  [PASS] structural           /api/ondc/on_search          on_search: missing bpp_id → 401 (auth gate) or 400
+         401 (384ms)
+  [PASS] structural           /api/ondc/on_search          on_search: missing bpp_uri → 401 (auth gate) or 400
+         401 (309ms)
+  [PASS] structural           /api/ondc/on_search          on_search: missing message → 401 (auth gate) or 400
+         401 (85ms)
+  [PASS] ack-shape            /api/ondc/on_search          on_search: error responses carry a NACK ack envelope (or 503 unconfigured)
+         401 (6ms)
+  [PASS] method               /api/ondc/on_select          on_select: GET is rejected
+         405 (6ms)
+  [PASS] auth                 /api/ondc/on_select          on_select: missing Authorization → 401 NACK or 503
+         401 (5ms)
+  [PASS] auth                 /api/ondc/on_select          on_select: malformed Authorization "totally not a header" → 401 NACK or 503
+         401 (6ms)
+  [PASS] auth                 /api/ondc/on_select          on_select: malformed Authorization "Bearer abc" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_select          on_select: malformed Authorization "Signature keyId="x"" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_select          on_select: well-formed header w/ random signature → 401 NACK or 503
+         401 (119ms)
+  [PASS] auth                 /api/ondc/on_select          on_select: ed25519-signed body, unpublished key → 401 NACK or 503
+         401 (89ms)
+  [PASS] structural           /api/ondc/on_select          on_select: missing context → 401 (auth gate) or 400
+         401 (115ms)
+  [PASS] structural           /api/ondc/on_select          on_select: wrong action → 401 (auth gate) or 400
+         401 (106ms)
+  [PASS] structural           /api/ondc/on_select          on_select: missing transaction_id → 401 (auth gate) or 400
+         401 (109ms)
+  [PASS] structural           /api/ondc/on_select          on_select: missing message_id → 401 (auth gate) or 400
+         401 (93ms)
+  [PASS] structural           /api/ondc/on_select          on_select: missing bpp_id → 401 (auth gate) or 400
+         401 (75ms)
+  [PASS] structural           /api/ondc/on_select          on_select: missing bpp_uri → 401 (auth gate) or 400
+         401 (92ms)
+  [PASS] structural           /api/ondc/on_select          on_select: missing message → 401 (auth gate) or 400
+         401 (97ms)
+  [PASS] ack-shape            /api/ondc/on_select          on_select: error responses carry a NACK ack envelope (or 503 unconfigured)
+         401 (7ms)
+  [PASS] method               /api/ondc/on_init            on_init: GET is rejected
+         405 (6ms)
+  [PASS] auth                 /api/ondc/on_init            on_init: missing Authorization → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_init            on_init: malformed Authorization "totally not a header" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_init            on_init: malformed Authorization "Bearer abc" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_init            on_init: malformed Authorization "Signature keyId="x"" → 401 NACK or 503
+         401 (3ms)
+  [PASS] auth                 /api/ondc/on_init            on_init: well-formed header w/ random signature → 401 NACK or 503
+         401 (93ms)
+  [PASS] auth                 /api/ondc/on_init            on_init: ed25519-signed body, unpublished key → 401 NACK or 503
+         401 (81ms)
+  [PASS] structural           /api/ondc/on_init            on_init: missing context → 401 (auth gate) or 400
+         401 (98ms)
+  [PASS] structural           /api/ondc/on_init            on_init: wrong action → 401 (auth gate) or 400
+         401 (149ms)
+  [PASS] structural           /api/ondc/on_init            on_init: missing transaction_id → 401 (auth gate) or 400
+         401 (81ms)
+  [PASS] structural           /api/ondc/on_init            on_init: missing message_id → 401 (auth gate) or 400
+         401 (83ms)
+  [PASS] structural           /api/ondc/on_init            on_init: missing bpp_id → 401 (auth gate) or 400
+         401 (82ms)
+  [PASS] structural           /api/ondc/on_init            on_init: missing bpp_uri → 401 (auth gate) or 400
+         401 (113ms)
+  [PASS] structural           /api/ondc/on_init            on_init: missing message → 401 (auth gate) or 400
+         401 (525ms)
+  [PASS] ack-shape            /api/ondc/on_init            on_init: error responses carry a NACK ack envelope (or 503 unconfigured)
+         401 (8ms)
+  [PASS] method               /api/ondc/on_confirm         on_confirm: GET is rejected
+         405 (8ms)
+  [PASS] auth                 /api/ondc/on_confirm         on_confirm: missing Authorization → 401 NACK or 503
+         401 (5ms)
+  [PASS] auth                 /api/ondc/on_confirm         on_confirm: malformed Authorization "totally not a header" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_confirm         on_confirm: malformed Authorization "Bearer abc" → 401 NACK or 503
+         401 (3ms)
+  [PASS] auth                 /api/ondc/on_confirm         on_confirm: malformed Authorization "Signature keyId="x"" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_confirm         on_confirm: well-formed header w/ random signature → 401 NACK or 503
+         401 (81ms)
+  [PASS] auth                 /api/ondc/on_confirm         on_confirm: ed25519-signed body, unpublished key → 401 NACK or 503
+         401 (110ms)
+  [PASS] structural           /api/ondc/on_confirm         on_confirm: missing context → 401 (auth gate) or 400
+         401 (104ms)
+  [PASS] structural           /api/ondc/on_confirm         on_confirm: wrong action → 401 (auth gate) or 400
+         401 (81ms)
+  [PASS] structural           /api/ondc/on_confirm         on_confirm: missing transaction_id → 401 (auth gate) or 400
+         401 (78ms)
+  [PASS] structural           /api/ondc/on_confirm         on_confirm: missing message_id → 401 (auth gate) or 400
+         401 (95ms)
+  [PASS] structural           /api/ondc/on_confirm         on_confirm: missing bpp_id → 401 (auth gate) or 400
+         401 (121ms)
+  [PASS] structural           /api/ondc/on_confirm         on_confirm: missing bpp_uri → 401 (auth gate) or 400
+         401 (90ms)
+  [PASS] structural           /api/ondc/on_confirm         on_confirm: missing message → 401 (auth gate) or 400
+         401 (87ms)
+  [PASS] ack-shape            /api/ondc/on_confirm         on_confirm: error responses carry a NACK ack envelope (or 503 unconfigured)
+         401 (4ms)
+  [PASS] method               /api/ondc/on_status          on_status: GET is rejected
+         405 (4ms)
+  [PASS] auth                 /api/ondc/on_status          on_status: missing Authorization → 401 NACK or 503
+         401 (2ms)
+  [PASS] auth                 /api/ondc/on_status          on_status: malformed Authorization "totally not a header" → 401 NACK or 503
+         401 (9ms)
+  [PASS] auth                 /api/ondc/on_status          on_status: malformed Authorization "Bearer abc" → 401 NACK or 503
+         401 (3ms)
+  [PASS] auth                 /api/ondc/on_status          on_status: malformed Authorization "Signature keyId="x"" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_status          on_status: well-formed header w/ random signature → 401 NACK or 503
+         401 (103ms)
+  [PASS] auth                 /api/ondc/on_status          on_status: ed25519-signed body, unpublished key → 401 NACK or 503
+         401 (77ms)
+  [PASS] structural           /api/ondc/on_status          on_status: missing context → 401 (auth gate) or 400
+         401 (110ms)
+  [PASS] structural           /api/ondc/on_status          on_status: wrong action → 401 (auth gate) or 400
+         401 (132ms)
+  [PASS] structural           /api/ondc/on_status          on_status: missing transaction_id → 401 (auth gate) or 400
+         401 (100ms)
+  [PASS] structural           /api/ondc/on_status          on_status: missing message_id → 401 (auth gate) or 400
+         401 (109ms)
+  [PASS] structural           /api/ondc/on_status          on_status: missing bpp_id → 401 (auth gate) or 400
+         401 (113ms)
+  [PASS] structural           /api/ondc/on_status          on_status: missing bpp_uri → 401 (auth gate) or 400
+         401 (94ms)
+  [PASS] structural           /api/ondc/on_status          on_status: missing message → 401 (auth gate) or 400
+         401 (142ms)
+  [PASS] ack-shape            /api/ondc/on_status          on_status: error responses carry a NACK ack envelope (or 503 unconfigured)
+         401 (7ms)
+  [PASS] method               /api/ondc/on_track           on_track: GET is rejected
+         405 (6ms)
+  [PASS] auth                 /api/ondc/on_track           on_track: missing Authorization → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_track           on_track: malformed Authorization "totally not a header" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_track           on_track: malformed Authorization "Bearer abc" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_track           on_track: malformed Authorization "Signature keyId="x"" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_track           on_track: well-formed header w/ random signature → 401 NACK or 503
+         401 (121ms)
+  [PASS] auth                 /api/ondc/on_track           on_track: ed25519-signed body, unpublished key → 401 NACK or 503
+         401 (120ms)
+  [PASS] structural           /api/ondc/on_track           on_track: missing context → 401 (auth gate) or 400
+         401 (93ms)
+  [PASS] structural           /api/ondc/on_track           on_track: wrong action → 401 (auth gate) or 400
+         401 (111ms)
+  [PASS] structural           /api/ondc/on_track           on_track: missing transaction_id → 401 (auth gate) or 400
+         401 (120ms)
+  [PASS] structural           /api/ondc/on_track           on_track: missing message_id → 401 (auth gate) or 400
+         401 (103ms)
+  [PASS] structural           /api/ondc/on_track           on_track: missing bpp_id → 401 (auth gate) or 400
+         401 (90ms)
+  [PASS] structural           /api/ondc/on_track           on_track: missing bpp_uri → 401 (auth gate) or 400
+         401 (104ms)
+  [PASS] structural           /api/ondc/on_track           on_track: missing message → 401 (auth gate) or 400
+         401 (98ms)
+  [PASS] ack-shape            /api/ondc/on_track           on_track: error responses carry a NACK ack envelope (or 503 unconfigured)
+         401 (7ms)
+  [PASS] method               /api/ondc/on_cancel          on_cancel: GET is rejected
+         405 (7ms)
+  [PASS] auth                 /api/ondc/on_cancel          on_cancel: missing Authorization → 401 NACK or 503
+         401 (5ms)
+  [PASS] auth                 /api/ondc/on_cancel          on_cancel: malformed Authorization "totally not a header" → 401 NACK or 503
+         401 (5ms)
+  [PASS] auth                 /api/ondc/on_cancel          on_cancel: malformed Authorization "Bearer abc" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_cancel          on_cancel: malformed Authorization "Signature keyId="x"" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_cancel          on_cancel: well-formed header w/ random signature → 401 NACK or 503
+         401 (104ms)
+  [PASS] auth                 /api/ondc/on_cancel          on_cancel: ed25519-signed body, unpublished key → 401 NACK or 503
+         401 (98ms)
+  [PASS] structural           /api/ondc/on_cancel          on_cancel: missing context → 401 (auth gate) or 400
+         401 (91ms)
+  [PASS] structural           /api/ondc/on_cancel          on_cancel: wrong action → 401 (auth gate) or 400
+         401 (109ms)
+  [PASS] structural           /api/ondc/on_cancel          on_cancel: missing transaction_id → 401 (auth gate) or 400
+         401 (87ms)
+  [PASS] structural           /api/ondc/on_cancel          on_cancel: missing message_id → 401 (auth gate) or 400
+         401 (429ms)
+  [PASS] structural           /api/ondc/on_cancel          on_cancel: missing bpp_id → 401 (auth gate) or 400
+         401 (105ms)
+  [PASS] structural           /api/ondc/on_cancel          on_cancel: missing bpp_uri → 401 (auth gate) or 400
+         401 (105ms)
+  [PASS] structural           /api/ondc/on_cancel          on_cancel: missing message → 401 (auth gate) or 400
+         401 (85ms)
+  [PASS] ack-shape            /api/ondc/on_cancel          on_cancel: error responses carry a NACK ack envelope (or 503 unconfigured)
+         401 (7ms)
+  [PASS] method               /api/ondc/on_update          on_update: GET is rejected
+         405 (7ms)
+  [PASS] auth                 /api/ondc/on_update          on_update: missing Authorization → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_update          on_update: malformed Authorization "totally not a header" → 401 NACK or 503
+         401 (5ms)
+  [PASS] auth                 /api/ondc/on_update          on_update: malformed Authorization "Bearer abc" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_update          on_update: malformed Authorization "Signature keyId="x"" → 401 NACK or 503
+         401 (3ms)
+  [PASS] auth                 /api/ondc/on_update          on_update: well-formed header w/ random signature → 401 NACK or 503
+         401 (88ms)
+  [PASS] auth                 /api/ondc/on_update          on_update: ed25519-signed body, unpublished key → 401 NACK or 503
+         401 (79ms)
+  [PASS] structural           /api/ondc/on_update          on_update: missing context → 401 (auth gate) or 400
+         401 (108ms)
+  [PASS] structural           /api/ondc/on_update          on_update: wrong action → 401 (auth gate) or 400
+         401 (114ms)
+  [PASS] structural           /api/ondc/on_update          on_update: missing transaction_id → 401 (auth gate) or 400
+         401 (100ms)
+  [PASS] structural           /api/ondc/on_update          on_update: missing message_id → 401 (auth gate) or 400
+         401 (100ms)
+  [PASS] structural           /api/ondc/on_update          on_update: missing bpp_id → 401 (auth gate) or 400
+         401 (101ms)
+  [PASS] structural           /api/ondc/on_update          on_update: missing bpp_uri → 401 (auth gate) or 400
+         401 (94ms)
+  [PASS] structural           /api/ondc/on_update          on_update: missing message → 401 (auth gate) or 400
+         401 (99ms)
+  [PASS] ack-shape            /api/ondc/on_update          on_update: error responses carry a NACK ack envelope (or 503 unconfigured)
+         401 (4ms)
+  [PASS] method               /api/ondc/on_rating          on_rating: GET is rejected
+         405 (4ms)
+  [PASS] auth                 /api/ondc/on_rating          on_rating: missing Authorization → 401 NACK or 503
+         401 (3ms)
+  [PASS] auth                 /api/ondc/on_rating          on_rating: malformed Authorization "totally not a header" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_rating          on_rating: malformed Authorization "Bearer abc" → 401 NACK or 503
+         401 (7ms)
+  [PASS] auth                 /api/ondc/on_rating          on_rating: malformed Authorization "Signature keyId="x"" → 401 NACK or 503
+         401 (2ms)
+  [PASS] auth                 /api/ondc/on_rating          on_rating: well-formed header w/ random signature → 401 NACK or 503
+         401 (88ms)
+  [PASS] auth                 /api/ondc/on_rating          on_rating: ed25519-signed body, unpublished key → 401 NACK or 503
+         401 (75ms)
+  [PASS] structural           /api/ondc/on_rating          on_rating: missing context → 401 (auth gate) or 400
+         401 (79ms)
+  [PASS] structural           /api/ondc/on_rating          on_rating: wrong action → 401 (auth gate) or 400
+         401 (87ms)
+  [PASS] structural           /api/ondc/on_rating          on_rating: missing transaction_id → 401 (auth gate) or 400
+         401 (92ms)
+  [PASS] structural           /api/ondc/on_rating          on_rating: missing message_id → 401 (auth gate) or 400
+         401 (90ms)
+  [PASS] structural           /api/ondc/on_rating          on_rating: missing bpp_id → 401 (auth gate) or 400
+         401 (92ms)
+  [PASS] structural           /api/ondc/on_rating          on_rating: missing bpp_uri → 401 (auth gate) or 400
+         401 (89ms)
+  [PASS] structural           /api/ondc/on_rating          on_rating: missing message → 401 (auth gate) or 400
+         401 (98ms)
+  [PASS] ack-shape            /api/ondc/on_rating          on_rating: error responses carry a NACK ack envelope (or 503 unconfigured)
+         401 (7ms)
+  [PASS] method               /api/ondc/on_support         on_support: GET is rejected
+         405 (8ms)
+  [PASS] auth                 /api/ondc/on_support         on_support: missing Authorization → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_support         on_support: malformed Authorization "totally not a header" → 401 NACK or 503
+         401 (5ms)
+  [PASS] auth                 /api/ondc/on_support         on_support: malformed Authorization "Bearer abc" → 401 NACK or 503
+         401 (4ms)
+  [PASS] auth                 /api/ondc/on_support         on_support: malformed Authorization "Signature keyId="x"" → 401 NACK or 503
+         401 (3ms)
+  [PASS] auth                 /api/ondc/on_support         on_support: well-formed header w/ random signature → 401 NACK or 503
+         401 (83ms)
+  [PASS] auth                 /api/ondc/on_support         on_support: ed25519-signed body, unpublished key → 401 NACK or 503
+         401 (98ms)
+  [PASS] structural           /api/ondc/on_support         on_support: missing context → 401 (auth gate) or 400
+         401 (87ms)
+  [PASS] structural           /api/ondc/on_support         on_support: wrong action → 401 (auth gate) or 400
+         401 (96ms)
+  [PASS] structural           /api/ondc/on_support         on_support: missing transaction_id → 401 (auth gate) or 400
+         401 (101ms)
+  [PASS] structural           /api/ondc/on_support         on_support: missing message_id → 401 (auth gate) or 400
+         401 (90ms)
+  [PASS] structural           /api/ondc/on_support         on_support: missing bpp_id → 401 (auth gate) or 400
+         401 (89ms)
+  [PASS] structural           /api/ondc/on_support         on_support: missing bpp_uri → 401 (auth gate) or 400
+         401 (72ms)
+  [PASS] structural           /api/ondc/on_support         on_support: missing message → 401 (auth gate) or 400
+         401 (88ms)
+  [PASS] ack-shape            /api/ondc/on_support         on_support: error responses carry a NACK ack envelope (or 503 unconfigured)
+         401 (6ms)
+
+Summary: 259 passed, 0 failed, 259 total (11476ms)
+  registry               3 pass / 0 fail
+  method                 20 pass / 0 fail
+  parsing                10 pass / 0 fail
+  config-or-validation   10 pass / 0 fail
+  format                 25 pass / 0 fail
+  happy-path-probe       10 pass / 0 fail
+  required-field         41 pass / 0 fail
+  auth                   60 pass / 0 fail
+  structural             70 pass / 0 fail
+  ack-shape              10 pass / 0 fail
