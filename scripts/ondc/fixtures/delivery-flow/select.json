@@ -1,0 +1,44 @@
+{
+  "context": {
+    "domain": "ONDC:RET10",
+    "action": "select",
+    "core_version": "1.2.5",
+    "bap_id": "bnp.com",
+    "bap_uri": "https://bnp.com/ondc",
+    "bpp_id": "snp.com",
+    "bpp_uri": "https://snp.com/ondc",
+    "transaction_id": "T2",
+    "message_id": "M2",
+    "city": "std:080",
+    "country": "IND",
+    "timestamp": "2025-01-08T08:30:00.000Z",
+    "ttl": "PT30S"
+  },
+  "message": {
+    "order": {
+      "provider": {
+        "id": "P1",
+        "locations": [
+          { "id": "L1" }
+        ]
+      },
+      "items": [
+        {
+          "id": "I1",
+          "location_id": "L1",
+          "quantity": { "count": 2 }
+        }
+      ],
+      "fulfillments": [
+        {
+          "end": {
+            "location": {
+              "gps": "12.4535,77.9283",
+              "address": { "area_code": "560037" }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

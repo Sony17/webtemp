@@ -35,6 +35,7 @@ const ACTIONS = [
   "on_rating",
   "on_support",
   "on_subscribe",
+  "on_issue",
 ] as const;
 type Action = (typeof ACTIONS)[number];
 
@@ -56,6 +57,7 @@ const LOADERS: Record<Action, () => Promise<{ POST: (req: Request) => Promise<Re
   on_rating: () => import("@/app/api/ondc/on_rating/route"),
   on_support: () => import("@/app/api/ondc/on_support/route"),
   on_subscribe: () => import("@/app/api/ondc/on_subscribe/route"),
+  on_issue: () => import("@/app/api/ondc/on_issue/route"),
 };
 
 export async function POST(

@@ -125,6 +125,51 @@ export type RatingRecord = {
   receivedAt: number;
 };
 
+// IGM v2.0.0. One IssueRecord per issue.id, keyed first by (transactionId,
+// issueId). The action history (complainant + respondent) is append-only so
+// the full lifecycle — OPEN → PROCESSING → NEED_MORE_INFO → INFO_PROVIDED →
+// RESOLUTION → RESOLUTION_ACCEPT → RESOLVED → CLOSE — is observable end-to-end.
+export type IssueActionEntry = {
+  // Whose side took the action.
+  actor: "complainant" | "respondent";
+  // The wire action code, kept as a free string because IGM keeps adding codes:
+  // OPEN, INFO_PROVIDED, ESCALATE, RESOLUTION_ACCEPT, RESOLUTION_REJECT, CLOSE,
+  // REOPEN (complainant) — PROCESSING, NEED_MORE_INFO, RESOLUTION_PROPOSED,
+  // RESOLVED, CASCADED (respondent).
+  action: string;
+  shortDesc?: string;
+  updatedAt: string;
+  // Whole action object retained so any extra fields (updated_by, images,
+  // additional_desc) are not lost.
+  raw: unknown;
+};
+
+export type IssueRecord = {
+  transactionId: string;
+  bppId: string;
+  bppUri: string;
+  // Last messageId that touched this issue — outbound (issue) or inbound
+  // (on_issue). Always the freshest one seen.
+  messageId: string;
+  issueId: string;
+  category?: string;
+  subCategory?: string;
+  // Order snapshot at the time of OPEN (carried forward across updates).
+  orderId?: string;
+  // Last seen status as the BPP reported it (or "OPEN" before any reply).
+  status: string;
+  // Whether this BAP or the BPP last touched the issue.
+  lastTouchedBy?: "complainant" | "respondent";
+  // Full action history (chronological).
+  actions: IssueActionEntry[];
+  // Resolution proposed by the BPP (if any).
+  resolution?: unknown;
+  // Full last opaque issue object retained for debugging.
+  issue: unknown;
+  createdAt: number;
+  updatedAt: number;
+};
+
 // ---------------------------------------------------------------------------
 // Save inputs — one per callback, matching the route's Extracted* struct.
 // ---------------------------------------------------------------------------
@@ -235,4 +280,23 @@ export type SaveRatingInput = {
   feedbackAck?: boolean;
   ratingAck?: boolean;
   feedback: unknown;
+};
+
+// Upsert/extend an IGM issue. Both outbound (/issue, complainant side) and
+// inbound (/on_issue, respondent side) callsites use this — the actor field
+// disambiguates. New action entries are appended, never replace.
+export type SaveIssueInput = {
+  transactionId: string;
+  messageId: string;
+  bppId: string;
+  bppUri: string;
+  issueId: string;
+  category?: string;
+  subCategory?: string;
+  orderId?: string;
+  status: string;
+  lastTouchedBy: "complainant" | "respondent";
+  newActions: IssueActionEntry[];
+  resolution?: unknown;
+  issue: unknown;
 };

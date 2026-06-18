@@ -41,6 +41,9 @@ import type {
   SaveTrackingInput,
   SaveUpdateOrderInput,
   SupportRecord,
+  IssueRecord,
+  IssueActionEntry,
+  SaveIssueInput,
 } from "@/lib/ondc/store-types";
 import { OndcStoreError } from "@/lib/ondc/store-types";
 import { getPrisma } from "@/lib/db";
@@ -394,6 +397,38 @@ export async function saveRating(input: SaveRatingInput): Promise<void> {
   });
 }
 
+// IGM v2.0.0 issue — also Event-backed, but with a unique access pattern.
+// One Event row per save (so the action history is the chronological set of
+// rows where kind=issue + extra.issueId matches). Reads fold them into one
+// IssueRecord. We piggyback on the existing Event table (no schema change)
+// by serializing issueId into the payload alongside the lifecycle snapshot.
+export async function saveIssue(input: SaveIssueInput): Promise<void> {
+  await ensureSearchRow({ transactionId: input.transactionId });
+  await run("save issue", async () => {
+    const prisma = getPrisma();
+    await prisma.event.create({
+      data: {
+        transactionId: input.transactionId,
+        bppId: input.bppId,
+        bppUri: input.bppUri,
+        messageId: input.messageId,
+        kind: "issue",
+        payload: asJson({
+          issueId: input.issueId,
+          category: input.category,
+          subCategory: input.subCategory,
+          orderId: input.orderId,
+          status: input.status,
+          lastTouchedBy: input.lastTouchedBy,
+          newActions: input.newActions,
+          resolution: input.resolution,
+          issue: input.issue,
+        }),
+      },
+    });
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Reads.
 // ---------------------------------------------------------------------------
@@ -586,5 +621,102 @@ export async function getRating(
       feedback: p.feedback,
       receivedAt: row.receivedAt.getTime(),
     };
+  });
+}
+
+// IGM payload shape we serialize into Event.payload on every saveIssue call.
+type IssueEventPayload = {
+  issueId: string;
+  category?: string;
+  subCategory?: string;
+  orderId?: string;
+  status: string;
+  lastTouchedBy: "complainant" | "respondent";
+  newActions: IssueActionEntry[];
+  resolution?: unknown;
+  issue: unknown;
+};
+
+// Fold every `kind=issue` event with this issueId into one IssueRecord. Because
+// we append a new Event row per save, we accumulate `newActions` chronologically
+// and let later fields overwrite earlier ones (status, resolution, issue).
+function foldIssueEvents(
+  rows: Array<{
+    bppId: string | null;
+    bppUri: string | null;
+    messageId: string;
+    payload: unknown;
+    receivedAt: Date;
+  }>,
+  transactionId: string,
+  issueId: string
+): IssueRecord | null {
+  const matching = rows
+    .map((r) => ({ r, p: r.payload as IssueEventPayload }))
+    .filter(({ p }) => p?.issueId === issueId);
+  if (matching.length === 0) return null;
+  const first = matching[matching.length - 1]; // oldest (rows ordered desc)
+  const last = matching[0]; // newest
+  const actions: IssueActionEntry[] = [];
+  for (let i = matching.length - 1; i >= 0; i--) {
+    const p = matching[i].p;
+    if (Array.isArray(p.newActions)) actions.push(...p.newActions);
+  }
+  const pLast = last.p;
+  return {
+    transactionId,
+    bppId: last.r.bppId ?? "",
+    bppUri: last.r.bppUri ?? "",
+    messageId: last.r.messageId,
+    issueId,
+    category: pLast.category,
+    subCategory: pLast.subCategory,
+    orderId: pLast.orderId,
+    status: pLast.status,
+    lastTouchedBy: pLast.lastTouchedBy,
+    actions,
+    resolution: pLast.resolution,
+    issue: pLast.issue,
+    createdAt: first.r.receivedAt.getTime(),
+    updatedAt: last.r.receivedAt.getTime(),
+  };
+}
+
+// One IGM issue, full lifecycle history folded from all `kind=issue` events.
+// Returns null when the issueId hasn't been seen yet for this transaction.
+export async function getIssue(
+  transactionId: string,
+  issueId: string
+): Promise<IssueRecord | null> {
+  return run("read issue", async () => {
+    const prisma = getPrisma();
+    const rows = await prisma.event.findMany({
+      where: { transactionId, kind: "issue" },
+      orderBy: { receivedAt: "desc" },
+    });
+    return foldIssueEvents(rows, transactionId, issueId);
+  });
+}
+
+// All IGM issues opened against this transaction, newest update first.
+export async function getIssuesByTransaction(
+  transactionId: string
+): Promise<IssueRecord[]> {
+  return run("read issues by txn", async () => {
+    const prisma = getPrisma();
+    const rows = await prisma.event.findMany({
+      where: { transactionId, kind: "issue" },
+      orderBy: { receivedAt: "desc" },
+    });
+    const seen = new Set<string>();
+    const out: IssueRecord[] = [];
+    for (const r of rows) {
+      const p = r.payload as IssueEventPayload;
+      if (!p?.issueId || seen.has(p.issueId)) continue;
+      seen.add(p.issueId);
+      const rec = foldIssueEvents(rows, transactionId, p.issueId);
+      if (rec) out.push(rec);
+    }
+    return out;
   });
 }

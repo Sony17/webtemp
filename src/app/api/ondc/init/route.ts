@@ -91,8 +91,14 @@ type InitRequestBody = {
     country?: string;
     areaCode?: string;
   };
-  fulfillment?: { gps?: string; areaCode?: string };
+  fulfillment?: { type?: string; gps?: string; areaCode?: string };
 };
+
+// ONDC RET10 fulfillment types we support driving from the BAP. "Delivery" is
+// the default; "Self-Pickup" lets the buyer collect the items from the seller's
+// store (same GPS as the provider's location, no last-mile delivery charges).
+const SUPPORTED_FULFILLMENT_TYPES = ["Delivery", "Self-Pickup"] as const;
+type FulfillmentType = (typeof SUPPORTED_FULFILLMENT_TYPES)[number];
 
 // One ordered line item, after validation.
 type InitItem = {
@@ -322,9 +328,8 @@ function buildInitMessage(input: {
     },
   };
 
-  // Attach a delivery fulfillment only when we have a destination — same pattern
-  // as select: the BPP uses it to firm up serviceability and delivery charges in
-  // the returned order.
+  // Attach a fulfillment when we have a destination (gps or area code) so the
+  // BPP can firm up delivery against it. Delivery is the only supported type.
   if (input.deliveryGps || input.deliveryAreaCode) {
     order.fulfillments = [
       {
@@ -384,6 +389,7 @@ export async function POST(req: Request) {
   const providerId = str(body.providerId);
   const deliveryGps = str(body.fulfillment?.gps);
   const deliveryAreaCode = str(body.fulfillment?.areaCode);
+  const fulfillmentTypeRaw = str(body.fulfillment?.type);
 
   // transaction_id is the spine of the lifecycle: init MUST continue the same
   // order session, so it is required here exactly as in select. An init with no
@@ -436,6 +442,18 @@ export async function POST(req: Request) {
   if (deliveryGps && !GPS_RE.test(deliveryGps)) {
     return NextResponse.json(
       { error: "'fulfillment.gps' must be 'lat,long' (decimal degrees)." },
+      { status: 400 }
+    );
+  }
+
+  if (
+    fulfillmentTypeRaw &&
+    !SUPPORTED_FULFILLMENT_TYPES.includes(fulfillmentTypeRaw as FulfillmentType)
+  ) {
+    return NextResponse.json(
+      {
+        error: `'fulfillment.type' must be one of ${SUPPORTED_FULFILLMENT_TYPES.join(", ")}.`,
+      },
       { status: 400 }
     );
   }

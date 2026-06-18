@@ -24,11 +24,14 @@
 // `runtime = "nodejs"`, a 400 guard on the required input.
 import { NextResponse } from "next/server";
 import { readAuditEvents } from "@/lib/ondc/audit";
-// Read straight from the JSON backend rather than the @/lib/ondc/store
-// dispatcher — same rationale as ../reconcile/route.ts: the dispatcher eagerly
-// imports the Postgres backend (store-db.ts → @/lib/db → @prisma/adapter-pg),
-// which isn't installed locally and isn't needed for a read-only projection.
-import * as store from "@/lib/ondc/store-json";
+// Read through the @/lib/ondc/store DISPATCHER — the SAME backend the write
+// path uses (on_select → saveQuote → store.ts → dbBackend when
+// isDatabaseConfigured(), else jsonBackend). Reading store-json directly here
+// silently diverged from writes in DB mode: persisted quotes/orders landed in
+// Postgres while this projection read the empty JSON snapshot, reporting
+// totalEvents:0. store.ts is already statically imported by every write route,
+// so this adds no new dependency.
+import * as store from "@/lib/ondc/store";
 
 // The audit log and the ondc/* store stack are both `import "server-only"` and
 // touch node:fs / @vercel/blob, so this handler must run on the Node runtime,
