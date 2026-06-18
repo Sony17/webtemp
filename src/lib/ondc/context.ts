@@ -24,7 +24,13 @@ export type OndcAction =
   | "cancel"
   | "update"
   | "rating"
-  | "support";
+  | "support"
+  | "issue"
+  // RET 1.2.5 Catalog Validation & Rejection Flow: a BAP-initiated callback
+  // posted to ${bpp_uri}/catalog_rejection that mirrors a NACK envelope with
+  // per-item / per-store rejection reasons. Not a sync response — it's a
+  // separate outbound POST after on_search.
+  | "catalog_rejection";
 
 // The context envelope, in the exact snake_case shape ONDC expects on the wire.
 // bpp_id/bpp_uri are optional: absent for `search` (gateway broadcast), present

@@ -36,6 +36,9 @@ export type {
   SaveTrackingInput,
   SaveUpdateOrderInput,
   SupportRecord,
+  IssueRecord,
+  IssueActionEntry,
+  SaveIssueInput,
 } from "@/lib/ondc/store-types";
 export { OndcStoreError } from "@/lib/ondc/store-types";
 
@@ -60,6 +63,7 @@ export const saveCancelUpdate = backend.saveCancelUpdate;
 export const saveUpdateOrder = backend.saveUpdateOrder;
 export const saveSupport = backend.saveSupport;
 export const saveRating = backend.saveRating;
+export const saveIssue = backend.saveIssue;
 
 // Reads ----------------------------------------------------------------------
 export const getCatalogs = backend.getCatalogs;
@@ -68,3 +72,5 @@ export const getOrder = backend.getOrder;
 export const getOrderById = backend.getOrderById;
 export const getSupport = backend.getSupport;
 export const getRating = backend.getRating;
+export const getIssue = backend.getIssue;
+export const getIssuesByTransaction = backend.getIssuesByTransaction;

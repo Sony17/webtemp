@@ -38,6 +38,9 @@ import type {
   SaveTrackingInput,
   SaveUpdateOrderInput,
   SupportRecord,
+  IssueRecord,
+  IssueActionEntry,
+  SaveIssueInput,
 } from "@/lib/ondc/store-types";
 import { OndcStoreError } from "@/lib/ondc/store-types";
 
@@ -51,10 +54,11 @@ import { OndcStoreError } from "@/lib/ondc/store-types";
 // ---------------------------------------------------------------------------
 
 // Bumped 1 → 2 when the standalone `supports` collection was added, 2 → 3 when
-// the standalone `ratings` collection was added. Old (v1/v2) snapshots remain
-// readable: the defensive reader defaults any missing collection to empty, so an
-// older file simply loads with no supports/ratings (backward compatible).
-const SNAPSHOT_VERSION = 3 as const;
+// the standalone `ratings` collection was added, 3 → 4 when the standalone
+// `issues` (IGM v2.0.0) collection was added. Old snapshots remain readable:
+// the defensive reader defaults any missing collection to empty, so an older
+// file simply loads with no supports/ratings/issues (backward compatible).
+const SNAPSHOT_VERSION = 4 as const;
 
 // On Vercel (and most serverless platforms) the function bundle directory is
 // READ-ONLY; only `/tmp` is writable per invocation. Without this branch a
@@ -77,6 +81,7 @@ type StoreSnapshot = {
   orders: OrderRecord[];
   supports: SupportRecord[];
   ratings: RatingRecord[];
+  issues: IssueRecord[];
 };
 
 // In-memory state. Held on a globalThis singleton so Next dev's HMR (which re-
@@ -88,6 +93,7 @@ type StoreState = {
   orderIndex: Map<string, string>; // orderId -> txn|bpp
   supports: Map<string, SupportRecord>; // key: txn|bpp
   ratings: Map<string, RatingRecord>; // key: txn|bpp
+  issues: Map<string, IssueRecord>; // key: txn|issueId
   hydration: Promise<void> | null; // memoized one-time load from disk/blob
   writeQueue: Promise<void>; // serializes read-modify-write persists
 };
@@ -106,6 +112,7 @@ function getState(): StoreState {
       orderIndex: new Map(),
       supports: new Map(),
       ratings: new Map(),
+      issues: new Map(),
       hydration: null,
       writeQueue: Promise.resolve(),
     };
@@ -138,7 +145,15 @@ function emptySnapshot(): StoreSnapshot {
     orders: [],
     supports: [],
     ratings: [],
+    issues: [],
   };
+}
+
+// IGM issues are keyed by (transactionId, issueId) — a single transaction may
+// open multiple grievances (rare, but the spec allows it), and an issueId is
+// unique within a transaction.
+function issueKey(transactionId: string, issueId: string): string {
+  return `${transactionId}|${issueId}`;
 }
 
 async function readSnapshot(): Promise<StoreSnapshot> {
@@ -176,6 +191,8 @@ async function readSnapshot(): Promise<StoreSnapshot> {
     supports: Array.isArray(snap?.supports) ? snap!.supports : [],
     // Absent in v1/v2 snapshots → defaults to empty (backward compatible).
     ratings: Array.isArray(snap?.ratings) ? snap!.ratings : [],
+    // Absent in v1/v2/v3 snapshots → defaults to empty (backward compatible).
+    issues: Array.isArray(snap?.issues) ? snap!.issues : [],
   };
 }
 
@@ -221,6 +238,9 @@ async function loadSnapshot(s: StoreState): Promise<void> {
   for (const r of snap.ratings) {
     s.ratings.set(compositeKey(r.transactionId, r.bppId), r);
   }
+  for (const i of snap.issues) {
+    s.issues.set(issueKey(i.transactionId, i.issueId), i);
+  }
 }
 
 // Serialize a synchronous mutation of the Maps followed by a full-snapshot
@@ -246,6 +266,7 @@ async function persist(s: StoreState): Promise<void> {
     orders: [...s.orders.values()],
     supports: [...s.supports.values()],
     ratings: [...s.ratings.values()],
+    issues: [...s.issues.values()],
   };
   try {
     await writeSnapshot(snapshot);
@@ -575,6 +596,43 @@ export async function saveRating(input: SaveRatingInput): Promise<void> {
   });
 }
 
+// IGM v2.0.0 issue: upsert keyed by (txn, issueId). Used by BOTH sides — the
+// outbound /issue route (actor=complainant) and the inbound /on_issue callback
+// (actor=respondent). New action entries are APPENDED to the existing
+// history rather than replacing; status / resolution / messageId always reflect
+// the latest write. Same (txn, issueId) → continues the lifecycle; different
+// issueId on the same txn → starts a new grievance side-by-side.
+export async function saveIssue(input: SaveIssueInput): Promise<void> {
+  await ensureHydrated();
+  await enqueuePersist(() => {
+    const s = getState();
+    const key = issueKey(input.transactionId, input.issueId);
+    const existing = s.issues.get(key);
+    const ts = now();
+    const mergedActions: IssueActionEntry[] = [
+      ...(existing?.actions ?? []),
+      ...input.newActions,
+    ];
+    s.issues.set(key, {
+      transactionId: input.transactionId,
+      bppId: input.bppId,
+      bppUri: input.bppUri,
+      messageId: input.messageId,
+      issueId: input.issueId,
+      category: input.category ?? existing?.category,
+      subCategory: input.subCategory ?? existing?.subCategory,
+      orderId: input.orderId ?? existing?.orderId,
+      status: input.status,
+      lastTouchedBy: input.lastTouchedBy,
+      actions: mergedActions,
+      resolution: input.resolution ?? existing?.resolution,
+      issue: input.issue,
+      createdAt: existing?.createdAt ?? ts,
+      updatedAt: ts,
+    });
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Reads — for the request-side routes (select/init/confirm/status) and any UI.
 // A miss returns null/[] (data simply hasn't arrived), never throws.
@@ -642,4 +700,29 @@ export async function getRating(
 ): Promise<RatingRecord | null> {
   await ensureHydrated();
   return getState().ratings.get(compositeKey(transactionId, bppId)) ?? null;
+}
+
+// An IGM issue with full action history, or null. Used by the outbound /issue
+// route to find an existing issue when the client passes its issueId (for
+// INFO_PROVIDED / RESOLUTION_ACCEPT / CLOSE), and by the GET-issue inspection
+// endpoint to surface the lifecycle to humans.
+export async function getIssue(
+  transactionId: string,
+  issueId: string
+): Promise<IssueRecord | null> {
+  await ensureHydrated();
+  return getState().issues.get(issueKey(transactionId, issueId)) ?? null;
+}
+
+// All issues for a transaction. A buyer UI lists these to show every grievance
+// opened against one order (typically zero or one, but the spec allows more).
+export async function getIssuesByTransaction(
+  transactionId: string
+): Promise<IssueRecord[]> {
+  await ensureHydrated();
+  const out: IssueRecord[] = [];
+  for (const rec of getState().issues.values()) {
+    if (rec.transactionId === transactionId) out.push(rec);
+  }
+  return out.sort((a, b) => b.updatedAt - a.updatedAt);
 }
