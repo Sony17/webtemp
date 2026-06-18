@@ -59,6 +59,8 @@ import {
   recordRejection,
 } from "@/lib/ondc/idempotency";
 import { saveCatalog } from "@/lib/ondc/store";
+import { validateCatalog } from "@/lib/ondc/catalog-validate";
+import { postCatalogRejection } from "@/lib/ondc/catalog-rejection-outbound";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -87,6 +89,11 @@ type OnSearchContext = {
 type OnSearchCallback = {
   context?: OnSearchContext;
   message?: { catalog?: unknown };
+  // Per RET 1.2.5 contract ("Catalog Validation & Rejection"): the SNP MAY
+  // send a top-level `error` block on /on_search to signal a catalog the BNP
+  // should reject (the Workbench rejection-test scenario fires this). When
+  // present we echo it back as a NACK envelope without persisting anything.
+  error?: unknown;
 };
 
 // The validated essentials we lift out of a good callback.
@@ -189,6 +196,33 @@ function normalizeOndcUri(value: string): string {
 const STAGING_AUTOMATION_BAP_ID = "staging-automation.ondc.org";
 function isWorkbenchBapMismatchAllowed(): boolean {
   return process.env.ONDC_ALLOW_WORKBENCH_BAP_MISMATCH === "1";
+}
+
+// CATALOG REJECTION SIGNAL — when the SNP includes a top-level `error` on its
+// /on_search payload, the contract treats that callback as a rejection notice
+// (the Workbench Catalog Validation & Rejection flow drives this when the
+// search intent contains a sentinel query/category). The BNP MUST echo the
+// error block back as a NACK envelope rather than persisting the catalog.
+//
+// We accept whatever subset of {type, code, message, path} the SNP populated —
+// ONDC networks are inconsistent. A bare error block with no `code` is treated
+// as no rejection (we ACK normally), because without a code we have no
+// rejection reason to mirror back.
+function extractInboundError(payload: OnSearchCallback): OndcError | null {
+  const raw = payload.error;
+  if (!raw || typeof raw !== "object") return null;
+  const obj = raw as Record<string, unknown>;
+  const code = typeof obj.code === "string" ? obj.code.trim() : "";
+  if (!code) return null;
+  const type = typeof obj.type === "string" ? obj.type : undefined;
+  const message = typeof obj.message === "string" ? obj.message : undefined;
+  const path = typeof obj.path === "string" ? obj.path : undefined;
+  return {
+    type: type ?? "DOMAIN-ERROR",
+    code,
+    ...(message ? { message } : {}),
+    ...(path ? { path } : {}),
+  };
 }
 
 // Pull out the required fields, or return an error string naming the first
@@ -454,6 +488,27 @@ export async function POST(req: Request) {
     );
   }
 
+  // CATALOG-REJECTION pass-through. If the verified payload carries a
+  // top-level error block with a code, the SNP is reporting that this catalog
+  // slice should be rejected (Workbench Catalog Validation & Rejection flow).
+  // Echo it back as a NACK envelope, HTTP 200 (it's a business NACK, not a
+  // transport failure), and skip persistence + idempotency commit — there is
+  // nothing to ingest. We do this BEFORE extractAndValidate, because a
+  // rejection callback may omit `message.catalog` and would otherwise be
+  // NACK'd with our generic "missing message.catalog" error instead of the
+  // SNP's actual rejection reason.
+  const inboundError = extractInboundError(tentativePayload);
+  if (inboundError) {
+    console.log("ondc.on_search catalog rejection passthrough", {
+      transactionId: tentativePayload.context?.transaction_id ?? null,
+      messageId: tentativePayload.context?.message_id ?? null,
+      bppId: tentativePayload.context?.bpp_id ?? null,
+      errorCode: inboundError.code,
+      errorType: inboundError.type,
+    });
+    return nack(200, inboundError, trace, authHeader);
+  }
+
   // (c/d) Full structural + identity validation. bap_id/bap_uri/domain must
   // echo OUR identity (defense in depth on top of the signature check).
   const result = extractAndValidate(tentativePayload, {
@@ -580,6 +635,34 @@ export async function POST(req: Request) {
     result.data.transactionId,
     result.data.messageId
   );
+
+  // RET 1.2.5 Catalog Validation & Rejection Flow — workbench tooltip:
+  // "Buyer rejects catalog partially/fully with item/store-level rejection
+  // details & reason codes." After ACKing the catalog, the BAP MUST walk
+  // it and, when it finds items/stores it refuses to ingest, POST a
+  // follow-up `catalog_rejection` callback to the SNP listing them with the
+  // contract reason codes (20003/20004/20005, comma-joined when combined).
+  //
+  // Fire-and-forget: we do NOT await this. The workbench's ACK clock on
+  // /on_search is short, and a slow catalog_rejection POST must not delay
+  // our sync reply. Failures inside postCatalogRejection are logged, never
+  // thrown — see the function for the contract.
+  const validation = validateCatalog(result.data.catalog);
+  if (!validation.ok && validation.error) {
+    console.log("ondc.on_search catalog rejected (firing callback)", {
+      transactionId: result.data.transactionId,
+      bppId: result.data.bppId,
+      errorCode: validation.error.code,
+      rejectionCount: validation.rejections.length,
+    });
+    void postCatalogRejection({
+      bppId: result.data.bppId,
+      bppUri: result.data.bppUri,
+      transactionId: result.data.transactionId,
+      city: result.data.city,
+      error: validation.error,
+    });
+  }
 
   // (f) Accept. The aggregated catalogs are now (will be) available for the
   // future Select API to read by transaction_id.
