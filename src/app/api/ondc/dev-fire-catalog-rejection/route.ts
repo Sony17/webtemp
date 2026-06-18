@@ -7,6 +7,10 @@
 // envelope. This seed route exists so we can drive that step manually with
 // the real transactionId/bppId/bppUri from the workbench log.
 //
+// Lives at /api/ondc/dev-fire-catalog-rejection (NOT under _debug/, because
+// Next.js excludes underscore-prefixed folders from routing as a "private
+// folder" convention — see https://nextjs.org/docs/app/building-your-application/routing/colocation#private-folders).
+//
 // Refuses to run unless explicitly enabled via ONDC_ENABLE_DEBUG_ROUTES=true.
 // Never enable that flag in any non-dev environment.
 import { NextResponse } from "next/server";
