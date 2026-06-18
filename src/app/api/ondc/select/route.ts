@@ -75,13 +75,13 @@ type SelectRequestBody = {
   bppUri?: string;
   providerId?: string;
   items?: unknown;
-  fulfillment?: { type?: string; gps?: string; areaCode?: string };
+  fulfillment?: { id?: string; type?: string; gps?: string; areaCode?: string };
 };
 
 // ONDC RET10 fulfillment types we support driving from the BAP. "Delivery" is
 // the default; "Self-Pickup" lets the buyer collect the items from the seller's
 // store (same GPS as the provider's location, no last-mile delivery charges).
-const SUPPORTED_FULFILLMENT_TYPES = ["Delivery", "Self-Pickup"] as const;
+const SUPPORTED_FULFILLMENT_TYPES = ["Delivery", "Self-Pickup", "Buyer-Delivery"] as const;
 type FulfillmentType = (typeof SUPPORTED_FULFILLMENT_TYPES)[number];
 
 // One chosen line item, after validation.
@@ -167,6 +167,7 @@ function buildSelectMessage(input: {
   providerId: string;
   items: SelectItem[];
   fulfillmentType: FulfillmentType;
+  fulfillmentId?: string;
   deliveryGps?: string;
   deliveryAreaCode?: string;
 }): OndcSelectMessage {
@@ -177,7 +178,10 @@ function buildSelectMessage(input: {
     ...new Set(input.items.map((it) => it.locationId).filter((id): id is string => Boolean(id))),
   ];
 
-  const FULFILLMENT_ID = "F1";
+  // Default to "F1", but allow the caller to pin a specific fulfillment id — some
+  // seller flows (e.g. Buyer-Delivery) expect a fixed fulfillment id and reject
+  // a mismatched one (NACK 20006).
+  const FULFILLMENT_ID = input.fulfillmentId ?? "F1";
 
   const order: OndcSelectOrder = {
     provider: {
@@ -248,6 +252,7 @@ export async function POST(req: Request) {
   const deliveryGps = str(body.fulfillment?.gps);
   const deliveryAreaCode = str(body.fulfillment?.areaCode);
   const fulfillmentTypeRaw = str(body.fulfillment?.type);
+  const fulfillmentId = str(body.fulfillment?.id);
   const fulfillmentType: FulfillmentType =
     (fulfillmentTypeRaw as FulfillmentType | undefined) ?? "Delivery";
 
@@ -328,6 +333,7 @@ export async function POST(req: Request) {
     providerId,
     items: itemsResult.items,
     fulfillmentType,
+    fulfillmentId,
     deliveryGps,
     deliveryAreaCode,
   });

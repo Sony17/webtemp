@@ -1,0 +1,51 @@
+{
+  "context": {
+    "domain": "ONDC:RET10",
+    "country": "IND",
+    "city": "std:080",
+    "action": "select",
+    "core_version": "1.2.5",
+    "bap_id": "openidea.co.in",
+    "bap_uri": "https://openidea.co.in/ondc",
+    "bpp_id": "staging-automation.ondc.org",
+    "bpp_uri": "https://workbench.ondc.tech/api-service/ONDC:RET10/1.2.5/seller",
+    "transaction_id": "T-SELECT-DELIVERY-0001",
+    "message_id": "M-SELECT-DELIVERY-0001",
+    "timestamp": "2026-06-17T08:30:00.000Z",
+    "ttl": "PT30S"
+  },
+  "message": {
+    "order": {
+      "provider": {
+        "id": "P1",
+        "locations": [
+          { "id": "L1" }
+        ]
+      },
+      "items": [
+        {
+          "id": "I1",
+          "location_id": "L1",
+          "fulfillment_id": "F1",
+          "quantity": {
+            "count": 2
+          }
+        }
+      ],
+      "fulfillments": [
+        {
+          "id": "F1",
+          "type": "Delivery",
+          "end": {
+            "location": {
+              "gps": "12.9716,77.5946",
+              "address": {
+                "area_code": "560001"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
