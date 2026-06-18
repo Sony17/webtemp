@@ -16,7 +16,8 @@
 // thrown, so a flaky callback channel doesn't poison legitimate catalog
 // ingestion.
 import { buildContext } from "@/lib/ondc/context";
-import { sendOndcRequest, type OndcError } from "@/lib/ondc/client";
+import { type OndcError } from "@/lib/ondc/client";
+import { signRequest } from "@/lib/ondc/auth";
 
 export type PostCatalogRejectionParams = {
   // Identifies the SNP we're calling back. Echoed into context.bpp_id /
@@ -63,30 +64,27 @@ export async function postCatalogRejection(
       ...(city ? { city } : {}),
     });
 
-    // The "message" body for a NACK envelope is just the ack envelope; the
-    // error block lives at the top level of the body alongside { context,
-    // message }. sendOndcRequest signs over the full body it builds, so we
-    // pass the ack envelope as `message` and rely on the contract's
-    // top-level error being inside the JSON the client serializes.
-    //
-    // sendOndcRequest hardcodes `JSON.stringify({ context, message })`, which
-    // means a top-level `error` sibling won't be included. We work around
-    // that by stuffing the error INSIDE the message envelope — every ONDC
-    // verifier we've tested accepts message.error as a synonym for top-level
-    // error on async callbacks. If a stricter verifier needs the top-level
-    // location, we can switch to a custom POST here; keeping it within the
-    // shared signer for now avoids a parallel signing path.
-    const message = {
-      ack: { status: "NACK" as const },
-      error,
-    };
+    // Per the RET 1.2.5 catalog_rejection schema the body is just
+    //   { context, error }
+    // with NO `message` sibling. Workbench's schema validator NACKs any body
+    // that includes a `message` property ("must NOT have additional properties:
+    // 'message'"), so we sign the exact { context, error } bytes here instead
+    // of going through sendOndcRequest (which hardcodes a { context, message }
+    // wrapper). Same ed25519 signer, same Authorization/Digest headers — only
+    // the body shape differs.
+    const rawBody = JSON.stringify({ context, error });
+    const signed = signRequest(rawBody);
 
-    const response = await sendOndcRequest({
-      url,
-      action: "catalog_rejection",
-      context,
-      message,
+    const remote = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: signed.authorization,
+        Digest: signed.digest,
+      },
+      body: rawBody,
     });
+    const remoteText = await remote.text();
 
     console.log("ondc.catalog_rejection posted", {
       url,
@@ -97,7 +95,8 @@ export async function postCatalogRejection(
       // The SNP usually ACKs the rejection callback. NACK is fine too — it
       // just means the SNP refused to record our rejection, not that we
       // failed to send it.
-      remoteStatus: response.status,
+      remoteHttpStatus: remote.status,
+      remoteBody: remoteText.slice(0, 500),
     });
   } catch (err) {
     const e = err instanceof Error ? err : null;
