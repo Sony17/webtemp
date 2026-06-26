@@ -38,7 +38,7 @@ import {
   normalizeEd25519PublicKey,
   verifyOndcSignature,
 } from "@/lib/ondc/auth";
-import type { OndcAckResponse, OndcError } from "@/lib/ondc/client";
+import type { OndcError } from "@/lib/ondc/client";
 import { validateContextFreshness } from "@/lib/ondc/context";
 import {
   ONDC_ERROR,
@@ -46,10 +46,10 @@ import {
   coreError,
   freshnessError,
 } from "@/lib/ondc/errors";
+import { buildAck, buildNack } from "@/lib/ondc/responses";
 import {
   annotateTrace,
   beginAuditTrace,
-  finalizeAuditTrace,
   type AuditTrace,
 } from "@/lib/ondc/audit";
 import {
@@ -118,10 +118,10 @@ type ExtractedOnSearch = {
 // Remove (this const + the two `...body, debug_build` spreads below) after debugging.
 const DEBUG_BUILD = "local-20260616";
 
-function ack(trace?: AuditTrace): NextResponse {
-  const body: OndcAckResponse = { message: { ack: { status: "ACK" } } };
-  if (trace) finalizeAuditTrace(trace, { status: 200, body });
-  return NextResponse.json({ ...body, debug_build: DEBUG_BUILD }, { status: 200 });
+function ack(trace?: AuditTrace, context?: unknown): NextResponse {
+  // Echoes the inbound `context` (when known) per ONDC's response contract; the
+  // debug_build stamp is diagnostic only (see DEBUG_BUILD note above).
+  return buildAck({ context, trace, extra: { debug_build: DEBUG_BUILD } });
 }
 
 // A NACK carries an error block and a non-2xx status so the sender can tell it
@@ -137,16 +137,12 @@ function nack(
   httpStatus: number,
   error: OndcError,
   trace?: AuditTrace,
-  cacheKey?: string
+  cacheKey?: string,
+  context?: unknown
 ): NextResponse {
-  const body: OndcAckResponse = {
-    message: { ack: { status: "NACK" } },
-    error,
-  };
   if (cacheKey) recordRejection(cacheKey, { httpStatus, error });
-  if (trace) finalizeAuditTrace(trace, { status: httpStatus, body });
-  // DEBUG (temporary): see DEBUG_BUILD note above. Remove the spread after debugging.
-  return NextResponse.json({ ...body, debug_build: DEBUG_BUILD }, { status: httpStatus });
+  // DEBUG (temporary): debug_build stamp — see DEBUG_BUILD note above.
+  return buildNack({ httpStatus, error, context, trace, extra: { debug_build: DEBUG_BUILD } });
 }
 
 // ---------------------------------------------------------------------------
@@ -488,6 +484,11 @@ export async function POST(req: Request) {
     );
   }
 
+  // The inbound (now signature-verified, parseable) context, echoed back in our
+  // sync ACK/NACK per ONDC's response contract (Workbench grades a context-less
+  // response as "context missing").
+  const ctx = tentativePayload.context;
+
   // CATALOG-REJECTION pass-through. If the verified payload carries a
   // top-level error block with a code, the SNP is reporting that this catalog
   // slice should be rejected (Workbench Catalog Validation & Rejection flow).
@@ -506,7 +507,7 @@ export async function POST(req: Request) {
       errorCode: inboundError.code,
       errorType: inboundError.type,
     });
-    return nack(200, inboundError, trace, authHeader);
+    return nack(200, inboundError, trace, authHeader, ctx);
   }
 
   // (c/d) Full structural + identity validation. bap_id/bap_uri/domain must
@@ -546,7 +547,8 @@ export async function POST(req: Request) {
       400,
       contextError(ONDC_ERROR.CONTEXT_GENERIC, result.reason),
       trace,
-      authHeader
+      authHeader,
+      ctx
     );
   }
   annotateTrace(trace, {
@@ -566,7 +568,7 @@ export async function POST(req: Request) {
       transactionId: result.data.transactionId,
       bppId: result.data.bppId,
     });
-    return nack(400, freshnessError(fresh.failure), trace, authHeader);
+    return nack(400, freshnessError(fresh.failure), trace, authHeader, ctx);
   }
 
   // Idempotency CHECK (read-only): a same (action, txn, msg) re-send is
@@ -586,7 +588,7 @@ export async function POST(req: Request) {
       messageId: result.data.messageId,
       firstSeenAt: new Date(seen.firstSeenAt).toISOString(),
     });
-    return ack(trace);
+    return ack(trace, ctx);
   }
 
   // Defense in depth: the signer (keyId.subscriber_id) should be the BPP that
@@ -602,7 +604,8 @@ export async function POST(req: Request) {
       401,
       contextError(ONDC_ERROR.IDENTITY_MISMATCH, "unauthorized"),
       trace,
-      authHeader
+      authHeader,
+      ctx
     );
   }
 
@@ -623,7 +626,7 @@ export async function POST(req: Request) {
       transactionId: result.data.transactionId,
       bppId: result.data.bppId,
     });
-    return nack(500, coreError("could not store catalog"), trace);
+    return nack(500, coreError("could not store catalog"), trace, undefined, ctx);
   }
 
   // Commit idempotency ONLY now that persistence has succeeded. Committing
@@ -666,5 +669,5 @@ export async function POST(req: Request) {
 
   // (f) Accept. The aggregated catalogs are now (will be) available for the
   // future Select API to read by transaction_id.
-  return ack(trace);
+  return ack(trace, ctx);
 }

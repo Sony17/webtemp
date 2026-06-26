@@ -41,7 +41,7 @@ import {
   normalizeEd25519PublicKey,
   verifyOndcSignature,
 } from "@/lib/ondc/auth";
-import type { OndcAckResponse, OndcError } from "@/lib/ondc/client";
+import type { OndcError } from "@/lib/ondc/client";
 import { validateContextFreshness } from "@/lib/ondc/context";
 import {
   ONDC_ERROR,
@@ -49,10 +49,10 @@ import {
   coreError,
   freshnessError,
 } from "@/lib/ondc/errors";
+import { buildAck, buildNack } from "@/lib/ondc/responses";
 import {
   annotateTrace,
   beginAuditTrace,
-  finalizeAuditTrace,
   type AuditTrace,
 } from "@/lib/ondc/audit";
 import { peekMessageId, commitMessageId } from "@/lib/ondc/idempotency";
@@ -115,10 +115,10 @@ type ExtractedOnCancel = {
 // ACK / NACK responses (BAP → caller, the sync reply ONDC expects)
 // ---------------------------------------------------------------------------
 
-function ack(trace?: AuditTrace): NextResponse {
-  const body: OndcAckResponse = { message: { ack: { status: "ACK" } } };
-  if (trace) finalizeAuditTrace(trace, { status: 200, body });
-  return NextResponse.json(body, { status: 200 });
+// Echoes the inbound `context` (when known) per ONDC's response contract — see
+// responses.ts.
+function ack(trace?: AuditTrace, context?: unknown): NextResponse {
+  return buildAck({ context, trace });
 }
 
 // A NACK carries an error block and a non-2xx status so the sender can tell it
@@ -127,14 +127,10 @@ function ack(trace?: AuditTrace): NextResponse {
 function nack(
   httpStatus: number,
   error: OndcError,
-  trace?: AuditTrace
+  trace?: AuditTrace,
+  context?: unknown
 ): NextResponse {
-  const body: OndcAckResponse = {
-    message: { ack: { status: "NACK" } },
-    error,
-  };
-  if (trace) finalizeAuditTrace(trace, { status: httpStatus, body });
-  return NextResponse.json(body, { status: httpStatus });
+  return buildNack({ httpStatus, error, context, trace });
 }
 
 // ---------------------------------------------------------------------------
@@ -311,10 +307,14 @@ export async function POST(req: Request) {
     return nack(400, contextError(ONDC_ERROR.CONTEXT_GENERIC, "invalid JSON"), trace);
   }
 
+  // The inbound context, echoed back in our sync ACK/NACK per ONDC's response
+  // contract (Workbench grades a context-less response as "context missing").
+  const ctx = payload.context;
+
   // (c/d) Structural validation + field extraction.
   const result = extractAndValidate(payload);
   if (!result.ok) {
-    return nack(400, contextError(ONDC_ERROR.CONTEXT_GENERIC, result.reason), trace);
+    return nack(400, contextError(ONDC_ERROR.CONTEXT_GENERIC, result.reason), trace, ctx);
   }
   annotateTrace(trace, {
     transactionId: result.data.transactionId,
@@ -333,7 +333,7 @@ export async function POST(req: Request) {
       transactionId: result.data.transactionId,
       bppId: result.data.bppId,
     });
-    return nack(400, freshnessError(fresh.failure), trace);
+    return nack(400, freshnessError(fresh.failure), trace, ctx);
   }
 
   // Idempotency CHECK (read-only): a same (action, txn, msg) re-send is
@@ -353,7 +353,7 @@ export async function POST(req: Request) {
       messageId: result.data.messageId,
       firstSeenAt: new Date(seen.firstSeenAt).toISOString(),
     });
-    return ack(trace);
+    return ack(trace, ctx);
   }
 
 
@@ -376,7 +376,7 @@ export async function POST(req: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : "persistence error";
     console.error("ondc.on_cancel persist failed", { msg });
-    return nack(500, coreError("could not store order"), trace);
+    return nack(500, coreError("could not store order"), trace, ctx);
   }
 
   // Commit idempotency ONLY now that persistence has succeeded. Committing
@@ -391,5 +391,5 @@ export async function POST(req: Request) {
 
   // (f) Accept. The cancelled order is now available for the Status/Track APIs to
   // read by transaction_id / order_id.
-  return ack(trace);
+  return ack(trace, ctx);
 }

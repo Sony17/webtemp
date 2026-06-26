@@ -47,3 +47,6 @@ next-env.d.ts
 # ondc local runtime artifacts
 /data/ondc/
 /ondc-local-smoke.log
+
+# separate buyer-app (not part of this project's git history)
+/buyer-app/

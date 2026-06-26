@@ -19,7 +19,7 @@
 // like on_support does; intentionally skipped to avoid mismatch with the
 // staging mock.
 import { NextResponse } from "next/server";
-import type { OndcAckResponse } from "@/lib/ondc/client";
+import { buildAck } from "@/lib/ondc/responses";
 import { saveIssue, getIssue, type IssueActionEntry } from "@/lib/ondc/store";
 
 export const runtime = "nodejs";
@@ -138,7 +138,7 @@ export async function POST(req: Request) {
       bppId,
       issueId,
     });
-    return ack();
+    return ack(ctx);
   }
 
   // Pull whatever the BPP is reporting now.
@@ -193,10 +193,12 @@ export async function POST(req: Request) {
     hasResolution: resolution != null,
   });
 
-  return ack();
+  return ack(ctx);
 }
 
-function ack(): NextResponse {
-  const body: OndcAckResponse = { message: { ack: { status: "ACK" } } };
-  return NextResponse.json(body, { status: 200 });
+// Echoes the inbound `context` (when known) per ONDC's response contract — see
+// responses.ts. Completes the context-echo started in Commit 1 for the issue
+// callback. `context` is omitted on the pre-parse (invalid-JSON) ACK.
+function ack(context?: unknown): NextResponse {
+  return buildAck({ context });
 }

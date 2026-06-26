@@ -89,6 +89,9 @@ type SelectItem = {
   id: string;
   quantity: number;
   locationId?: string;
+  // Optional item-level tags (commercial model / attributes) forwarded opaquely
+  // when the caller threads them from the on_search catalog.
+  tags?: unknown[];
 };
 
 // The ONDC `select` message payload: a Beckn `order`. Only the sub-objects we
@@ -100,7 +103,12 @@ type OndcSelectOrder = {
     id: string;
     quantity: { count: number };
     location_id?: string;
-    fulfillment_id?: string;
+    // ONDC RET 1.2.5: items do NOT carry fulfillment_id at the `select` stage —
+    // the fulfillment is declared once under order.fulfillments[].id, and the BPP
+    // binds items to it. (QA flagged item-level fulfillment_id as "not required".)
+    // `tags` are passed through opaquely when the caller supplies them (commercial
+    // model / item attributes the SNP needs to quote correctly).
+    tags?: unknown[];
   }>;
   fulfillments?: Array<{
     id: string;
@@ -140,7 +148,12 @@ function validateItems(
 
   const items: SelectItem[] = [];
   for (let i = 0; i < raw.length; i++) {
-    const entry = raw[i] as { id?: unknown; quantity?: unknown; locationId?: unknown };
+    const entry = raw[i] as {
+      id?: unknown;
+      quantity?: unknown;
+      locationId?: unknown;
+      tags?: unknown;
+    };
     const id = str(entry?.id);
     if (!id) {
       return { ok: false, reason: `items[${i}].id is required.` };
@@ -153,7 +166,15 @@ function validateItems(
       };
     }
     const locationId = str(entry?.locationId);
-    items.push({ id, quantity, ...(locationId ? { locationId } : {}) });
+    // Pass item tags through opaquely when present (commercial model / BNP-SNP
+    // attributes). We never synthesise them — only forward what the caller sends.
+    const tags = Array.isArray(entry?.tags) ? entry.tags : undefined;
+    items.push({
+      id,
+      quantity,
+      ...(locationId ? { locationId } : {}),
+      ...(tags ? { tags } : {}),
+    });
   }
 
   return { ok: true, items };
@@ -194,7 +215,10 @@ function buildSelectMessage(input: {
       id: it.id,
       quantity: { count: it.quantity },
       ...(it.locationId ? { location_id: it.locationId } : {}),
-      fulfillment_id: FULFILLMENT_ID,
+      // No item-level fulfillment_id at select (QA #2): the fulfillment is
+      // declared once under order.fulfillments[] below. Item tags forwarded when
+      // present (commercial model).
+      ...(it.tags ? { tags: it.tags } : {}),
     })),
   };
 

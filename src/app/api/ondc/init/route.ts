@@ -32,6 +32,7 @@ import { NextResponse } from "next/server";
 import { isOndcConfigured } from "@/lib/ondc/config";
 import { buildContext } from "@/lib/ondc/context";
 import { sendOndcRequest, OndcClientError } from "@/lib/ondc/client";
+import { getQuote } from "@/lib/ondc/store";
 
 // ONDC signing uses node:crypto (via auth.ts), and the whole ondc/* stack is
 // `import "server-only"` — so this handler must run on the Node runtime, not
@@ -91,13 +92,18 @@ type InitRequestBody = {
     country?: string;
     areaCode?: string;
   };
-  fulfillment?: { type?: string; gps?: string; areaCode?: string };
+  // `id` is the fulfillment chosen from the on_select quote — reused here so the
+  // BPP binds the order to the option the buyer actually picked (Self-Pickup /
+  // Buyer-Delivery / Delivery). Optional: when omitted we resolve it from the
+  // persisted on_select quote (see resolveFulfillmentId).
+  fulfillment?: { id?: string; type?: string; gps?: string; areaCode?: string };
 };
 
 // ONDC RET10 fulfillment types we support driving from the BAP. "Delivery" is
-// the default; "Self-Pickup" lets the buyer collect the items from the seller's
-// store (same GPS as the provider's location, no last-mile delivery charges).
-const SUPPORTED_FULFILLMENT_TYPES = ["Delivery", "Self-Pickup"] as const;
+// the default (Slotted Delivery is a Delivery with a time-slot tag);
+// "Self-Pickup" lets the buyer collect from the seller's store; "Buyer-Delivery"
+// lets the buyer arrange their own logistics. Must mirror select/route.ts.
+const SUPPORTED_FULFILLMENT_TYPES = ["Delivery", "Self-Pickup", "Buyer-Delivery"] as const;
 type FulfillmentType = (typeof SUPPORTED_FULFILLMENT_TYPES)[number];
 
 // One ordered line item, after validation.
@@ -151,9 +157,11 @@ type OndcInitOrder = {
   };
   fulfillments?: Array<{
     id: string;
-    type: "Delivery";
+    type: FulfillmentType;
     end?: {
-      location: {
+      // Optional: Self-Pickup references the seller's store (the BPP knows it
+      // from the selected fulfillment id), so no buyer destination is sent.
+      location?: {
         gps?: string;
         address?: {
           name?: string;
@@ -165,7 +173,7 @@ type OndcInitOrder = {
           area_code?: string;
         };
       };
-      contact?: { phone: string };
+      contact?: { phone: string; email?: string };
     };
   }>;
 };
@@ -263,6 +271,57 @@ function validateBilling(
   };
 }
 
+// ONDC L1 address contract: the address `name`, `building` and `locality` must
+// be coherent — `name` distinct from `locality`, and `name + building + locality`
+// under 190 chars. We use the recipient name (billing.name) as the address
+// `name` (see buildInitMessage), so validate that trio here and fail fast with a
+// clear 400 instead of eating a downstream network NACK. Only the inequality is
+// gated on `locality` being present; the length check is always safe.
+function validateAddressConstraints(
+  billing: InitBilling
+): { ok: true } | { ok: false; reason: string } {
+  const name = billing.name;
+  const building = billing.building ?? "";
+  const locality = billing.locality ?? "";
+  if (locality && name === locality) {
+    return {
+      ok: false,
+      reason:
+        "'billing.name' (used as the delivery address name) must differ from 'billing.locality'.",
+    };
+  }
+  if ((name + building + locality).length >= 190) {
+    return {
+      ok: false,
+      reason:
+        "'billing.name' + 'billing.building' + 'billing.locality' must be under 190 characters.",
+    };
+  }
+  return { ok: true };
+}
+
+// Pick the fulfillment id to reference in init from the PERSISTED on_select quote
+// (saved by on_select/route.ts). We prefer the option whose type matches the
+// buyer's chosen fulfillment type, else the first option. This is what lets
+// Self-Pickup / Buyer-Delivery bind to the exact option the buyer selected
+// (QA #9/#21) instead of a hard-coded "F1". Returns undefined when the quote
+// carries no usable fulfillment id.
+function pickFulfillmentIdFromQuote(
+  fulfillments: unknown,
+  preferredType: FulfillmentType
+): string | undefined {
+  if (!Array.isArray(fulfillments)) return undefined;
+  const opts = fulfillments.filter(
+    (f): f is { id?: unknown; type?: unknown } =>
+      Boolean(f) && typeof f === "object"
+  );
+  const byType = opts.find(
+    (f) => typeof f.type === "string" && f.type === preferredType
+  );
+  const chosen = byType ?? opts[0];
+  return chosen && typeof chosen.id === "string" ? chosen.id : undefined;
+}
+
 // Assemble the ONDC init `order` from validated inputs. Kept separate from the
 // handler so the wire-shape construction is unit-testable and the request flow
 // reads top-to-bottom. Assumes inputs are already validated. Mirrors select's
@@ -272,6 +331,8 @@ function buildInitMessage(input: {
   items: InitItem[];
   billing: InitBilling;
   timestamp: string;
+  fulfillmentId: string;
+  fulfillmentType: FulfillmentType;
   deliveryGps?: string;
   deliveryAreaCode?: string;
 }): OndcInitMessage {
@@ -293,7 +354,10 @@ function buildInitMessage(input: {
     input.billing.country ||
     input.billing.areaCode
       ? {
-          ...(input.billing.address ? { name: input.billing.address } : {}),
+          // ONDC address requires a `name` line. Prefer the free-form address
+          // line the buyer typed; fall back to the recipient name so billing
+          // never ships an address without a name (ONDC L1 flags that).
+          name: input.billing.address ?? input.billing.name,
           ...(input.billing.building ? { building: input.billing.building } : {}),
           ...(input.billing.locality ? { locality: input.billing.locality } : {}),
           ...(input.billing.city ? { city: input.billing.city } : {}),
@@ -303,7 +367,11 @@ function buildInitMessage(input: {
         }
       : undefined;
 
-  const FULFILLMENT_ID = "F1";
+  // The fulfillment id chosen from the on_select quote (no longer hard-coded —
+  // QA #9/#21). Items bind to it via item.fulfillment_id (expected at init,
+  // unlike select).
+  const fulfillmentId = input.fulfillmentId;
+  const isSelfPickup = input.fulfillmentType === "Self-Pickup";
 
   const order: OndcInitOrder = {
     provider: {
@@ -316,7 +384,7 @@ function buildInitMessage(input: {
       id: it.id,
       quantity: { count: it.quantity },
       ...(it.locationId ? { location_id: it.locationId } : {}),
-      fulfillment_id: FULFILLMENT_ID,
+      fulfillment_id: fulfillmentId,
     })),
     billing: {
       name: input.billing.name,
@@ -328,33 +396,56 @@ function buildInitMessage(input: {
     },
   };
 
-  // Attach a fulfillment when we have a destination (gps or area code) so the
-  // BPP can firm up delivery against it. Delivery is the only supported type.
-  if (input.deliveryGps || input.deliveryAreaCode) {
-    order.fulfillments = [
-      {
-        id: FULFILLMENT_ID,
-        type: "Delivery",
-        end: {
-          location: {
-            ...(input.deliveryGps ? { gps: input.deliveryGps } : {}),
-            address: {
-              ...(input.billing.address ? { name: input.billing.address } : {}),
-              ...(input.billing.building ? { building: input.billing.building } : {}),
-              ...(input.billing.locality ? { locality: input.billing.locality } : {}),
-              ...(input.billing.city ? { city: input.billing.city } : {}),
-              ...(input.billing.state ? { state: input.billing.state } : {}),
-              ...(input.billing.country ? { country: input.billing.country } : {}),
-              ...(input.deliveryAreaCode ?? input.billing.areaCode
-                ? { area_code: input.deliveryAreaCode ?? input.billing.areaCode }
-                : {}),
+  // Always emit ONE fulfillment that references the SELECTED id + type from
+  // on_select (QA #9/#21 — previously a fulfillment was only built when a
+  // delivery target was present, so Self-Pickup / Buyer-Delivery selections were
+  // dropped). Buyer contact travels on every type. Self-Pickup references the
+  // seller's store (the BPP resolves it from the selected id), so we send no
+  // buyer destination; delivery-style types carry the buyer's gps + address.
+  const contact = {
+    phone: input.billing.phone,
+    ...(input.billing.email ? { email: input.billing.email } : {}),
+  };
+
+  order.fulfillments = [
+    {
+      id: fulfillmentId,
+      type: input.fulfillmentType,
+      end: isSelfPickup
+        ? {
+            // Self-Pickup still requires end.location.gps
+            // (FULFILLMENTS_END_LOCATION_GPS) — the buyer collects at the pickup
+            // point, so we send the gps (the buyer's selected pickup location)
+            // and the buyer contact, but NOT a buyer delivery address.
+            ...(input.deliveryGps
+              ? { location: { gps: input.deliveryGps } }
+              : {}),
+            contact,
+          }
+        : {
+            location: {
+              ...(input.deliveryGps ? { gps: input.deliveryGps } : {}),
+              address: {
+                // Recipient name — NOT the free-form street string (QA #3).
+                // ONDC's L1 address check wants name + building + locality
+                // present, name distinct from locality; the handler validates
+                // those constraints before we get here.
+                name: input.billing.name,
+                ...(input.billing.building ? { building: input.billing.building } : {}),
+                ...(input.billing.locality ? { locality: input.billing.locality } : {}),
+                ...(input.billing.city ? { city: input.billing.city } : {}),
+                ...(input.billing.state ? { state: input.billing.state } : {}),
+                ...(input.billing.country ? { country: input.billing.country } : {}),
+                ...(input.deliveryAreaCode ?? input.billing.areaCode
+                  ? { area_code: input.deliveryAreaCode ?? input.billing.areaCode }
+                  : {}),
+              },
             },
+            // Fulfillment contact (QA #4): phone required; email when supplied.
+            contact,
           },
-          contact: { phone: input.billing.phone },
-        },
-      },
-    ];
-  }
+    },
+  ];
 
   return { order };
 }
@@ -439,6 +530,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: billingResult.reason }, { status: 400 });
   }
 
+  // Enforce the ONDC L1 address contract (name != locality, combined < 190) up
+  // front so a malformed checkout address is rejected here, not by the BPP.
+  const addressResult = validateAddressConstraints(billingResult.billing);
+  if (!addressResult.ok) {
+    return NextResponse.json({ error: addressResult.reason }, { status: 400 });
+  }
+
   if (deliveryGps && !GPS_RE.test(deliveryGps)) {
     return NextResponse.json(
       { error: "'fulfillment.gps' must be 'lat,long' (decimal degrees)." },
@@ -457,6 +555,20 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
+  const fulfillmentType: FulfillmentType =
+    (fulfillmentTypeRaw as FulfillmentType | undefined) ?? "Delivery";
+
+  // Resolve which fulfillment id to reference (QA #9/#21). Prefer the id the
+  // caller threaded from on_select; otherwise read it from the persisted
+  // on_select quote so Self-Pickup / Buyer-Delivery bind to the option the buyer
+  // actually chose. Falls back to "F1" only when no quote is available (e.g. a
+  // dev flow that skipped on_select).
+  let fulfillmentId = str(body.fulfillment?.id);
+  if (!fulfillmentId) {
+    const quote = await getQuote(transactionId, bppId);
+    fulfillmentId = pickFulfillmentIdFromQuote(quote?.fulfillments, fulfillmentType);
+  }
+  if (!fulfillmentId) fulfillmentId = "F1";
 
   // Build the `context` envelope. Like select, init is directed: we reuse the
   // caller's transaction_id and thread bppId/bppUri through so buildContext
@@ -474,6 +586,8 @@ export async function POST(req: Request) {
     items: itemsResult.items,
     billing: billingResult.billing,
     timestamp: context.timestamp,
+    fulfillmentId,
+    fulfillmentType,
     deliveryGps,
     deliveryAreaCode,
   });

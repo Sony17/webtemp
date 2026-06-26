@@ -62,18 +62,30 @@ type CancelRequestBody = {
   bppUri?: string;
   orderId?: string;
   cancellationReasonId?: string;
+  // Force-cancellation flag (QA #17). When true, the cancel message carries the
+  // ONDC `force=yes` tag so the BPP cancels without the usual confirmation
+  // handshake. Defaults to a normal (non-force) cancel.
+  force?: boolean;
   // Opaque pass-through: ONDC's descriptor (short_desc / tags / …). We don't
   // shape it here — whatever the client sends is forwarded as-is.
   descriptor?: unknown;
 };
 
+// One ONDC tag group (code + key/value list) — used for the force-cancel tag.
+type OndcTag = {
+  code: string;
+  list: Array<{ code: string; value: string }>;
+};
+
 // The cancel message in ONDC's snake_case wire shape: the order to cancel, the
-// reason code, and an optional descriptor. `descriptor` is omitted from the wire
-// body entirely when the client didn't supply one (rather than sent as null).
+// reason code, an optional descriptor, and — only for a force cancel — the
+// `force` tag. `descriptor`/`tags` are omitted from the wire body entirely when
+// not applicable (rather than sent as null/empty).
 type OndcCancelMessage = {
   order_id: string;
   cancellation_reason_id: string;
   descriptor?: unknown;
+  tags?: OndcTag[];
 };
 
 // ---------------------------------------------------------------------------
@@ -183,11 +195,16 @@ export async function POST(req: Request) {
 
   // The cancel message: the order id, the reason code, and — only when supplied —
   // the descriptor. Omit descriptor entirely when absent rather than sending null.
+  // For a force cancel (QA #17) attach the ONDC `force=yes` tag; a normal cancel
+  // omits the tag entirely.
   const message: OndcCancelMessage = {
     order_id: orderId,
     cancellation_reason_id: cancellationReasonId,
     ...(body.descriptor !== undefined && body.descriptor !== null
       ? { descriptor: body.descriptor }
+      : {}),
+    ...(body.force === true
+      ? { tags: [{ code: "force", list: [{ code: "force", value: "yes" }] }] }
       : {}),
   };
 

@@ -63,6 +63,10 @@ type SearchRequestBody = {
   // Optional `incrementalStart` overrides start_time; default is now-1h.
   incremental?: boolean;
   incrementalStart?: string;
+  // Incremental refresh mode (QA #18): "start" begins a delta window, "stop"
+  // ends it. Emitted as the `mode` entry of the catalog_inc tag group. Defaults
+  // to "start" when an incremental search is requested without an explicit mode.
+  incrementalMode?: "start" | "stop";
 };
 
 // The ONDC `search` message payload: a Beckn `intent`. Only the sub-objects we
@@ -149,6 +153,7 @@ function buildSearchMessage(input: {
   deliveryAreaCode?: string;
   incremental?: boolean;
   incrementalStart?: string;
+  incrementalMode?: "start" | "stop";
 }): OndcSearchMessage {
   const intent: OndcSearchIntent = {
     payment: {
@@ -185,9 +190,13 @@ function buildSearchMessage(input: {
     const start = input.incrementalStart
       ? input.incrementalStart
       : new Date(end.getTime() - 60 * 60 * 1000).toISOString();
+    // `mode` (start/stop) was missing (QA #18) — START opens the delta window,
+    // STOP closes it. Default to "start" for a one-shot incremental pull.
+    const mode = input.incrementalMode ?? "start";
     intent.tags!.push({
       code: "catalog_inc",
       list: [
+        { code: "mode", value: mode },
         { code: "start_time", value: start },
         { code: "end_time", value: end.toISOString() },
       ],
@@ -264,6 +273,8 @@ export async function POST(req: Request) {
   const targetUrl = str(body.targetUrl);
   const incremental = body.incremental === true;
   const incrementalStart = str(body.incrementalStart);
+  const incrementalMode =
+    body.incrementalMode === "stop" ? "stop" : "start";
 
   // Require at least one discovery criterion — a broadcast with an empty intent
   // is a misuse (and would flood the network for nothing).
@@ -305,9 +316,13 @@ export async function POST(req: Request) {
   // Build the `context` envelope. `search` is broadcast, so no bpp_id/bpp_uri.
   // transaction_id is minted fresh unless the caller is continuing a flow; we
   // return it so the caller can correlate the later on_search callback(s).
+  // An INCREMENTAL refresh is network-wide, so context.city must be "*" (QA #18)
+  // — a city-scoped value would limit the delta to one city. Full-catalog search
+  // keeps the configured city (unchanged behaviour).
   const context = buildContext({
     action: "search",
     ...(transactionId ? { transactionId } : {}),
+    ...(incremental ? { city: "*" } : {}),
   });
 
   const message = buildSearchMessage({
@@ -317,6 +332,7 @@ export async function POST(req: Request) {
     deliveryAreaCode,
     incremental,
     incrementalStart,
+    incrementalMode,
   });
 
   // Search is the one action directed at the gateway's /search, not a BPP —

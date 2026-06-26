@@ -41,6 +41,13 @@ import { NextResponse } from "next/server";
 import { isOndcConfigured } from "@/lib/ondc/config";
 import { buildContext } from "@/lib/ondc/context";
 import { sendOndcRequest, OndcClientError } from "@/lib/ondc/client";
+import { getOrder } from "@/lib/ondc/store";
+import {
+  buildRefundUpdate,
+  buildReturnUpdate,
+  buildReplacementUpdate,
+  type ReplacementState,
+} from "@/lib/ondc/update-builders";
 
 // ONDC signing uses node:crypto (via auth.ts), and the whole ondc/* stack is
 // `import "server-only"` — so this handler must run on the Node runtime, not
@@ -74,8 +81,37 @@ type UpdateRequestBody = {
   transactionId?: string;
   bppId?: string;
   bppUri?: string;
+  // Generic passthrough mode (Phase A, unchanged): caller supplies the raw
+  // update_target + order and we forward them opaquely.
   updateTarget?: string;
   order?: unknown;
+  // Phase B ergonomic modes (mutually exclusive with the generic pair above).
+  // When one is present the matching builder constructs the wire message so the
+  // refund amount is derived from quote_trail and the payloads follow v1.2.5.
+  refund?: {
+    orderId?: string;
+    // on_cancel fulfillments (quote_trail source). Optional — falls back to the
+    // persisted on_cancel order when omitted.
+    fulfillments?: unknown;
+    settlement?: { type?: string; reference?: string; upiAddress?: string };
+  };
+  return?: {
+    orderId?: string;
+    fulfillmentId?: string;
+    itemId?: string;
+    quantity?: number;
+    reasonId?: string;
+    state?: string;
+    images?: string[];
+  };
+  replacement?: {
+    orderId?: string;
+    fulfillmentId?: string;
+    itemId?: string;
+    quantity?: number;
+    reasonId?: string;
+    state?: string;
+  };
 };
 
 // The update message in ONDC's snake_case wire shape: `update_target` (the facet
@@ -87,7 +123,9 @@ type OndcUpdateOrder = {
 
 type OndcUpdateMessage = {
   update_target: string;
-  order: OndcUpdateOrder;
+  // Loose record: the generic path forwards the caller's order; the Phase B
+  // builders populate different facets (payments / fulfillments).
+  order: Record<string, unknown>;
 };
 
 // ---------------------------------------------------------------------------
@@ -120,6 +158,119 @@ function validateOrder(
     };
   }
   return { ok: true, order };
+}
+
+// ---------------------------------------------------------------------------
+// Phase B dispatch — RTO/part-cancel refund, return, replacement
+// ---------------------------------------------------------------------------
+//
+// Orchestration only: validates the ergonomic input, resolves the quote_trail
+// source (caller-supplied or the persisted on_cancel order), and delegates wire
+// construction to the pure builders in update-builders.ts. Returns null when no
+// Phase B field is present, so the handler falls through to the generic path.
+async function resolvePhaseBUpdate(
+  body: UpdateRequestBody,
+  transactionId: string,
+  bppId: string,
+  nowTs: string
+): Promise<
+  | { ok: true; message: OndcUpdateMessage; meta: Record<string, unknown> }
+  | { ok: false; status: number; reason: string }
+  | null
+> {
+  // RTO / part-cancel / return-settlement refund (amount from quote_trail).
+  if (body.refund) {
+    const orderId = str(body.refund.orderId);
+    if (!orderId) {
+      return { ok: false, status: 400, reason: "'refund.orderId' is required." };
+    }
+    // quote_trail source: caller-supplied fulfillments, else the persisted
+    // on_cancel order's fulfillments (saved by on_cancel/route.ts). We never
+    // touch on_cancel — we only READ what it already stored.
+    let fulfillments: unknown = Array.isArray(body.refund.fulfillments)
+      ? body.refund.fulfillments
+      : undefined;
+    if (!fulfillments) {
+      const stored = await getOrder(transactionId, bppId);
+      fulfillments = stored?.fulfillments;
+    }
+    if (!Array.isArray(fulfillments) || fulfillments.length === 0) {
+      return {
+        ok: false,
+        status: 409,
+        reason:
+          "refund requires the on_cancel fulfillments (pass refund.fulfillments, or ensure the on_cancel callback was persisted for this order).",
+      };
+    }
+    const { message, refund } = buildRefundUpdate({
+      orderId,
+      fulfillments,
+      settlement: body.refund.settlement,
+      timestamp: nowTs,
+    });
+    return {
+      ok: true,
+      message,
+      meta: { refundAmount: refund.value, refundCurrency: refund.currency },
+    };
+  }
+
+  // Return request (no order.items per contract).
+  if (body.return) {
+    const orderId = str(body.return.orderId);
+    const fulfillmentId = str(body.return.fulfillmentId);
+    if (!orderId) {
+      return { ok: false, status: 400, reason: "'return.orderId' is required." };
+    }
+    if (!fulfillmentId) {
+      return {
+        ok: false,
+        status: 400,
+        reason: "'return.fulfillmentId' is required.",
+      };
+    }
+    const message = buildReturnUpdate({
+      orderId,
+      fulfillmentId,
+      itemId: str(body.return.itemId),
+      quantity: body.return.quantity,
+      reasonId: str(body.return.reasonId),
+      state: str(body.return.state),
+      images: body.return.images,
+    });
+    return { ok: true, message, meta: { mode: "return" } };
+  }
+
+  // Replacement request (no immediate refund).
+  if (body.replacement) {
+    const orderId = str(body.replacement.orderId);
+    const fulfillmentId = str(body.replacement.fulfillmentId);
+    if (!orderId) {
+      return {
+        ok: false,
+        status: 400,
+        reason: "'replacement.orderId' is required.",
+      };
+    }
+    if (!fulfillmentId) {
+      return {
+        ok: false,
+        status: 400,
+        reason: "'replacement.fulfillmentId' is required.",
+      };
+    }
+    const message = buildReplacementUpdate({
+      orderId,
+      fulfillmentId,
+      itemId: str(body.replacement.itemId),
+      quantity: body.replacement.quantity,
+      reasonId: str(body.replacement.reasonId),
+      state: str(body.replacement.state) as ReplacementState | undefined,
+    });
+    return { ok: true, message, meta: { mode: "replacement" } };
+  }
+
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -182,23 +333,50 @@ export async function POST(req: Request) {
     );
   }
 
-  // update_target names WHICH facet is changing — ONDC requires it on an update.
-  // It is a comma-separated list of targets (e.g. "payment", "fulfillment",
-  // "item", "billing"). We require it to be present and non-empty and let the BPP
-  // be the authority on which targets/values it accepts (generic pass-through).
-  if (!updateTarget) {
-    return NextResponse.json(
-      {
-        error:
-          "'updateTarget' is required (the ONDC update_target, e.g. 'payment').",
-      },
-      { status: 400 }
-    );
-  }
+  // Choose the update message: a Phase B post-order mode (refund / return /
+  // replacement) builds it via a dedicated builder; otherwise fall through to
+  // the Phase A generic passthrough (preserved verbatim below).
+  let message: OndcUpdateMessage;
+  let responseExtra: Record<string, unknown> = {};
 
-  const orderResult = validateOrder(body.order);
-  if (!orderResult.ok) {
-    return NextResponse.json({ error: orderResult.reason }, { status: 400 });
+  const phaseB = await resolvePhaseBUpdate(
+    body,
+    transactionId,
+    bppId,
+    new Date().toISOString()
+  );
+  if (phaseB) {
+    if (!phaseB.ok) {
+      return NextResponse.json(
+        { error: phaseB.reason },
+        { status: phaseB.status }
+      );
+    }
+    message = phaseB.message;
+    responseExtra = phaseB.meta;
+  } else {
+    // ---- Generic passthrough (Phase A — unchanged) ----
+    // update_target names WHICH facet is changing — ONDC requires it on an
+    // update. It is a comma-separated list of targets (e.g. "payment",
+    // "fulfillment", "item", "billing"). We require it to be present and
+    // non-empty and let the BPP be the authority on which targets it accepts.
+    if (!updateTarget) {
+      return NextResponse.json(
+        {
+          error:
+            "'updateTarget' is required (the ONDC update_target, e.g. 'payment').",
+        },
+        { status: 400 }
+      );
+    }
+    const orderResult = validateOrder(body.order);
+    if (!orderResult.ok) {
+      return NextResponse.json({ error: orderResult.reason }, { status: 400 });
+    }
+    message = {
+      update_target: updateTarget,
+      order: orderResult.order as Record<string, unknown>,
+    };
   }
 
   // Build the `context` envelope. Like cancel, update is directed: we reuse the
@@ -211,12 +389,6 @@ export async function POST(req: Request) {
     bppId,
     bppUri,
   });
-
-  // The update message: the target selector and the changed order (opaque).
-  const message: OndcUpdateMessage = {
-    update_target: updateTarget,
-    order: orderResult.order,
-  };
 
   // Directed at the chosen BPP's /update — NOT the gateway. The transport stays
   // dumb about routing; we own the URL here (context.ts encodes the broadcast-vs-
@@ -242,8 +414,9 @@ export async function POST(req: Request) {
       transactionId: context.transaction_id,
       messageId: context.message_id,
       bppId,
-      orderId: orderResult.order.id,
-      updateTarget,
+      orderId: (message.order as { id?: unknown }).id,
+      updateTarget: message.update_target,
+      ...responseExtra,
       ...(result.status === "NACK" ? { error: result.error } : {}),
     };
 
