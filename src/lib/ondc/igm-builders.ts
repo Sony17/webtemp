@@ -99,6 +99,9 @@ export type IssueActionRow = {
   // RESOLUTION_PROPOSED) and INFO_PROVIDED must carry supporting images.
   ref_id?: string;
   images?: IssueImage[];
+  // Rejection flow: a RESOLUTION_REJECTED action carries the reason code (and
+  // any other structured detail) in tags.
+  tags?: IssueTag[];
 };
 
 export type IssueV2Message = {
@@ -300,7 +303,17 @@ export function buildActionRow(params: {
   actorName: string;
   refId?: string;
   images?: IssueImage[];
+  // Rejection: when present, attaches a REASON tag carrying the reason code.
+  reasonCode?: string;
+  tags?: IssueTag[];
 }): IssueActionRow {
+  const tags: IssueTag[] = params.tags ? [...params.tags] : [];
+  if (params.reasonCode) {
+    tags.push({
+      descriptor: { code: "REASON" },
+      list: [{ descriptor: { code: "reason_id" }, value: params.reasonCode }],
+    });
+  }
   return {
     id: params.id,
     descriptor: { code: params.code, short_desc: params.shortDesc },
@@ -311,6 +324,7 @@ export function buildActionRow(params: {
     ...(params.images && params.images.length > 0
       ? { images: params.images }
       : {}),
+    ...(tags.length > 0 ? { tags } : {}),
   };
 }
 

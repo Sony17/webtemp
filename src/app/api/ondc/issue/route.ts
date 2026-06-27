@@ -118,6 +118,9 @@ type IssueRequestBody = {
   // a follow-up we derive ref_id from the last relevant respondent action.
   refId?: string;
   images?: Array<{ url: string; size_type?: string }>;
+  // Rejection flow: ONDC reason code required when rejecting a proposed
+  // resolution (complainantAction = "RESOLUTION_REJECT").
+  reasonCode?: string;
 };
 
 // IGM v2.0.0 wire types and the state machine (statusForAction/actionCodeFor)
@@ -459,6 +462,18 @@ export async function POST(req: Request) {
         )
       : undefined;
 
+  // Rejection flow: a resolution rejection must carry an ONDC reason code.
+  const reasonCode = str(body.reasonCode);
+  if (action === "RESOLUTION_REJECT" && !reasonCode) {
+    return NextResponse.json(
+      {
+        error:
+          "'reasonCode' is required when complainantAction is RESOLUTION_REJECT.",
+      },
+      { status: 400 }
+    );
+  }
+
   const newActionId = randomUUID();
   const newAction: IssueActionRow = buildActionRow({
     id: newActionId,
@@ -469,6 +484,7 @@ export async function POST(req: Request) {
     actorName: personName,
     refId: actionRefId,
     images: actionImages,
+    reasonCode: action === "RESOLUTION_REJECT" ? reasonCode : undefined,
   });
 
   // wrapper input `issueType` maps to schema's `level` (ISSUE/GRIEVANCE/DISPUTE).
