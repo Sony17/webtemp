@@ -45,7 +45,7 @@ export type RefType =
   | "FULFILLMENT"
   | "ITEM"
   | "AGENT"
-  | "TRANSACTION"
+  | "TRANSACTION_ID"
   | "MESSAGE_ID"
   | "COMPLAINT"
   | "CUSTOMER"
@@ -270,7 +270,7 @@ export function buildRefs(params: {
   return [
     { ref_id: params.orderId, ref_type: "ORDER" },
     { ref_id: params.providerId, ref_type: "PROVIDER" },
-    { ref_id: params.transactionId, ref_type: "TRANSACTION" },
+    { ref_id: params.transactionId, ref_type: "TRANSACTION_ID" },
     ...params.items.map(
       (it): IssueRef => ({
         ref_id: it.id,
