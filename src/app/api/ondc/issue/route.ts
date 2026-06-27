@@ -44,6 +44,7 @@ import {
   buildIssueV2,
   statusForAction,
   actionCodeFor,
+  escalateLevel,
 } from "@/lib/ondc/igm-builders";
 
 export const runtime = "nodejs";
@@ -484,15 +485,24 @@ export async function POST(req: Request) {
     actorName: personName,
     refId: actionRefId,
     images: actionImages,
-    reasonCode: action === "RESOLUTION_REJECT" ? reasonCode : undefined,
+    // Reason code on rejection (required) and on escalation/no-action (optional,
+    // e.g. "no_response" / "timeout").
+    reasonCode:
+      action === "RESOLUTION_REJECT" || action === "ESCALATE"
+        ? reasonCode
+        : undefined,
   });
 
   // wrapper input `issueType` maps to schema's `level` (ISSUE/GRIEVANCE/DISPUTE).
-  const level: IssueLevel =
+  const baseLevel: IssueLevel =
     issueType?.toUpperCase() === "GRIEVANCE" ||
     issueType?.toUpperCase() === "DISPUTE"
       ? (issueType.toUpperCase() as IssueLevel)
       : "ISSUE";
+  // No-action / timeout: ESCALATE bumps the grievance tier (ISSUE -> GRIEVANCE
+  // -> DISPUTE). Other actions keep the resolved level.
+  const level: IssueLevel =
+    action === "ESCALATE" ? escalateLevel(baseLevel) : baseLevel;
 
   // descriptor.code carries the buyer's grievance taxonomy (e.g. ITM02).
   const issueDescriptor: OndcIssueMessage["issue"]["descriptor"] = {

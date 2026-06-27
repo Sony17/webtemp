@@ -161,6 +161,17 @@ export function statusForAction(action: ComplainantAction): IssueStatus {
   }
 }
 
+// No-action / timeout handling: when the seller does not respond (no on_issue)
+// or takes no action, the buyer ESCALATEs, which bumps the grievance tier. An
+// un-actioned issue otherwise stays OPEN (pending) — there is no separate
+// "pending" status in the IGM 2.0 enum; OPEN with no respondent action IS
+// pending. DISPUTE is terminal for escalation.
+export function escalateLevel(level: IssueLevel): IssueLevel {
+  if (level === "ISSUE") return "GRIEVANCE";
+  if (level === "GRIEVANCE") return "DISPUTE";
+  return "DISPUTE";
+}
+
 // The action.descriptor.code IGM 2.0 expects per complainant move.
 export function actionCodeFor(action: ComplainantAction): ActionCode {
   switch (action) {
