@@ -88,20 +88,17 @@ export type IssueRef = {
   tags?: IssueTag[];
 };
 
+// The IGM 2.0 action object is STRICT (additionalProperties:false): only id,
+// descriptor, updated_at, action_by, actor_details are allowed. Supporting
+// images live on the ISSUE descriptor (issue.descriptor.images), the action
+// reference (ref_id) is carried as an ACTION entry in issue.refs[], and a
+// rejection reason is carried as a REASON ref — NOT as extra action properties.
 export type IssueActionRow = {
   id: string;
   descriptor: { code: ActionCode; short_desc: string };
   updated_at: string;
   action_by: string;
   actor_details: { name: string };
-  // QA #4: certain actions must reference the action/resolution they answer
-  // (INFO_PROVIDED -> the INFO_REQUESTED, RESOLUTION_ACCEPTED -> the
-  // RESOLUTION_PROPOSED) and INFO_PROVIDED must carry supporting images.
-  ref_id?: string;
-  images?: IssueImage[];
-  // Rejection flow: a RESOLUTION_REJECTED action carries the reason code (and
-  // any other structured detail) in tags.
-  tags?: IssueTag[];
 };
 
 export type IssueV2Message = {
@@ -312,31 +309,40 @@ export function buildActionRow(params: {
   updatedAt: string;
   actionBy: string;
   actorName: string;
-  refId?: string;
-  images?: IssueImage[];
-  // Rejection: when present, attaches a REASON tag carrying the reason code.
-  reasonCode?: string;
-  tags?: IssueTag[];
 }): IssueActionRow {
-  const tags: IssueTag[] = params.tags ? [...params.tags] : [];
-  if (params.reasonCode) {
-    tags.push({
-      descriptor: { code: "REASON" },
-      list: [{ descriptor: { code: "reason_id" }, value: params.reasonCode }],
-    });
-  }
   return {
     id: params.id,
     descriptor: { code: params.code, short_desc: params.shortDesc },
     updated_at: params.updatedAt,
     action_by: params.actionBy,
     actor_details: { name: params.actorName },
-    ...(params.refId ? { ref_id: params.refId } : {}),
-    ...(params.images && params.images.length > 0
-      ? { images: params.images }
-      : {}),
-    ...(tags.length > 0 ? { tags } : {}),
   };
+}
+
+// QA #4 references and the rejection reason are carried in issue.refs[] (an
+// ACTION ref points at the answered action; a REASON ref carries the reason
+// code) — keeping the strict action object clean. Returns the refs to append.
+export function buildActionRefs(params: {
+  refId?: string;
+  reasonCode?: string;
+}): IssueRef[] {
+  const out: IssueRef[] = [];
+  if (params.refId) out.push({ ref_id: params.refId, ref_type: "ACTION" });
+  if (params.reasonCode) {
+    out.push({
+      ref_id: params.reasonCode,
+      ref_type: "COMPLAINT",
+      tags: [
+        {
+          descriptor: { code: "REASON" },
+          list: [
+            { descriptor: { code: "reason_id" }, value: params.reasonCode },
+          ],
+        },
+      ],
+    });
+  }
+  return out;
 }
 
 // Project a persisted action history entry (from IssueRecord.actions, which is
@@ -373,16 +379,13 @@ export function projectStoredAction(
   }
 
   // Respondent: the seller's on_issue respondent_actions[] row, e.g.
-  // { id?, respondent_action, short_desc, updated_at, ref_id?, images? }.
+  // { id?, respondent_action, short_desc, updated_at }. Projected to the strict
+  // action shape (ref_id/images, if any, are the seller's concern).
   const code = (raw.respondent_action ?? entry.action) as ActionCode;
   const id =
     typeof raw.id === "string" && raw.id.trim()
       ? raw.id
       : `resp-${entry.updatedAt}-${code}`;
-  const refId = typeof raw.ref_id === "string" ? raw.ref_id : undefined;
-  const images = Array.isArray(raw.images)
-    ? (raw.images as IssueImage[])
-    : undefined;
   return buildActionRow({
     id,
     code,
@@ -392,8 +395,6 @@ export function projectStoredAction(
     updatedAt: entry.updatedAt,
     actionBy: ctx.counterpartyNpId,
     actorName: ctx.counterpartyNpId,
-    refId,
-    images,
   });
 }
 

@@ -41,6 +41,7 @@ import {
   buildActors,
   buildRefs,
   buildActionRow,
+  buildActionRefs,
   projectStoredAction,
   buildIssueV2,
   buildIssueV1,
@@ -488,14 +489,17 @@ export async function POST(req: Request) {
     updatedAt: now,
     actionBy: ids.interfacingNpId,
     actorName: personName,
+  });
+
+  // QA #4 / rejection / no-action: the action object is strict, so the action
+  // reference (ref_id) and any reason code are carried as issue.refs entries.
+  const refReasonCode =
+    action === "RESOLUTION_REJECT" || action === "ESCALATE"
+      ? reasonCode
+      : undefined;
+  const actionRefs = buildActionRefs({
     refId: actionRefId,
-    images: actionImages,
-    // Reason code on rejection (required) and on escalation/no-action (optional,
-    // e.g. "no_response" / "timeout").
-    reasonCode:
-      action === "RESOLUTION_REJECT" || action === "ESCALATE"
-        ? reasonCode
-        : undefined,
+    reasonCode: refReasonCode,
   });
 
   // wrapper input `issueType` maps to schema's `level` (ISSUE/GRIEVANCE/DISPUTE).
@@ -520,6 +524,11 @@ export async function POST(req: Request) {
     short_desc: shortDesc,
     long_desc: longDesc,
     additional_desc: { url: additionalDescUrl, content_type: "text/plain" },
+    // QA #4: supporting images for an INFO_PROVIDED step live on the issue
+    // descriptor (the strict action object cannot carry images).
+    ...(actionImages && actionImages.length > 0
+      ? { images: actionImages }
+      : {}),
   };
 
   const createdAt = (isV2Snap && (v2Snap!.created_at as string)) || now;
@@ -565,7 +574,7 @@ export async function POST(req: Request) {
         now,
         actors,
         actorIds: ids,
-        refs,
+        refs: [...refs, ...actionRefs],
         descriptor: issueDescriptor,
         priorActions,
         newAction,
