@@ -502,12 +502,15 @@ export async function POST(req: Request) {
     reasonCode: refReasonCode,
   });
 
-  // wrapper input `issueType` maps to schema's `level` (ISSUE/GRIEVANCE/DISPUTE).
+  // wrapper input `issueType` maps to the schema's `level` enum (ISSUE /
+  // GREVIENCE [sic] / DISPUTE). Accept either spelling of grievance as input.
+  const issueTypeUp = issueType?.toUpperCase();
   const baseLevel: IssueLevel =
-    issueType?.toUpperCase() === "GRIEVANCE" ||
-    issueType?.toUpperCase() === "DISPUTE"
-      ? (issueType.toUpperCase() as IssueLevel)
-      : "ISSUE";
+    issueTypeUp === "DISPUTE"
+      ? "DISPUTE"
+      : issueTypeUp === "GRIEVANCE" || issueTypeUp === "GREVIENCE"
+        ? "GREVIENCE"
+        : "ISSUE";
   // No-action / timeout: ESCALATE bumps the grievance tier (ISSUE -> GRIEVANCE
   // -> DISPUTE). Other actions keep the resolved level.
   const level: IssueLevel =

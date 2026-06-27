@@ -23,7 +23,10 @@
 // ---------------------------------------------------------------------------
 
 export type IssueStatus = "OPEN" | "PROCESSING" | "RESOLVED" | "CLOSED";
-export type IssueLevel = "ISSUE" | "GRIEVANCE" | "DISPUTE";
+// NOTE: the ONDC IGM schema enum is the (misspelled) "GREVIENCE", not
+// "GRIEVANCE" — the wire MUST use the schema's spelling or REQUIRED_MESSAGE_LEVEL
+// NACKs.
+export type IssueLevel = "ISSUE" | "GREVIENCE" | "DISPUTE";
 
 export type ActionCode =
   | "OPEN"
@@ -164,8 +167,8 @@ export function statusForAction(action: ComplainantAction): IssueStatus {
 // "pending" status in the IGM 2.0 enum; OPEN with no respondent action IS
 // pending. DISPUTE is terminal for escalation.
 export function escalateLevel(level: IssueLevel): IssueLevel {
-  if (level === "ISSUE") return "GRIEVANCE";
-  if (level === "GRIEVANCE") return "DISPUTE";
+  if (level === "ISSUE") return "GREVIENCE";
+  if (level === "GREVIENCE") return "DISPUTE";
   return "DISPUTE";
 }
 
