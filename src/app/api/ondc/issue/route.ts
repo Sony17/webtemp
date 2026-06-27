@@ -28,6 +28,23 @@ import { isOndcConfigured, getOndcConfig } from "@/lib/ondc/config";
 import { buildContext } from "@/lib/ondc/context";
 import { sendOndcRequest, OndcClientError } from "@/lib/ondc/client";
 import { saveIssue, getIssue, type IssueActionEntry } from "@/lib/ondc/store";
+import {
+  type ComplainantAction,
+  type IssueLevel,
+  type IssueActionRow,
+  type IssueActor,
+  type IssueImage,
+  type IssueV2Message,
+  type RefType,
+  actorIds as buildActorIds,
+  buildActors,
+  buildRefs,
+  buildActionRow,
+  projectStoredAction,
+  buildIssueV2,
+  statusForAction,
+  actionCodeFor,
+} from "@/lib/ondc/igm-builders";
 
 export const runtime = "nodejs";
 
@@ -65,14 +82,7 @@ export const runtime = "nodejs";
 //   }
 //
 // The route returns ACK + the issueId so the client can thread the next call.
-type ComplainantAction =
-  | "OPEN"
-  | "INFO_PROVIDED"
-  | "ESCALATE"
-  | "RESOLUTION_ACCEPT"
-  | "RESOLUTION_REJECT"
-  | "CLOSE";
-
+// ComplainantAction and the IGM wire types now live in @/lib/ondc/igm-builders.
 const VALID_ACTIONS = new Set<ComplainantAction>([
   "OPEN",
   "INFO_PROVIDED",
@@ -102,107 +112,21 @@ type IssueRequestBody = {
   issueId?: string;
   complainantAction?: string;
   actionDesc?: string;
+  // QA #4: action-level reference + supporting images. ref_id ties an
+  // INFO_PROVIDED to the seller's INFO_REQUESTED, or a RESOLUTION_ACCEPT to the
+  // proposed resolution; images back an INFO_PROVIDED. Optional; when omitted on
+  // a follow-up we derive ref_id from the last relevant respondent action.
+  refId?: string;
+  images?: Array<{ url: string; size_type?: string }>;
 };
 
-// IGM v2.0.0 wire message — schema-matches
-// log-validation-utility/schema/Igm/2.0.0/issue.ts. IGM 2.0 is EMBEDDED in the
-// parent retail domain (ONDC:RET10/RET11/…) — context.domain is the retail
-// domain, context.core_version is the retail 1.2.5, and BPP routes /issue
-// through the same seller endpoint that handles select/init/confirm. The OLD
-// pre-2.0 shape (category, sub_category, complainant_info, order_details,
-// description, issue_actions.complainant_actions[]) is dropped; the workbench
-// silently NACKs anything not matching the schema below, which is why on_issue
-// never fired against the RET10 BPP — see also project memory note 3.
-type IssueStatus = "OPEN" | "PROCESSING" | "RESOLVED" | "CLOSED";
-type IssueLevel = "ISSUE" | "GRIEVANCE" | "DISPUTE";
-type ActionCode =
-  | "OPEN"
-  | "PROCESSING"
-  | "RESOLVED"
-  | "CLOSED"
-  | "INFO_REQUESTED"
-  | "INFO_PROVIDED"
-  | "INFO_NOT_AVAILABLE"
-  | "RESOLUTION_PROPOSED"
-  | "RESOLUTION_ACCEPTED"
-  | "RESOLUTION_REJECTED"
-  | "RESOLUTION_CASCADED"
-  | "ESCALATED";
-type RefType =
-  | "ORDER"
-  | "PROVIDER"
-  | "FULFILLMENT"
-  | "ITEM"
-  | "AGENT"
-  | "TRANSACTION"
-  | "MESSAGE_ID"
-  | "COMPLAINT"
-  | "CUSTOMER"
-  | "PAYMENT"
-  | "ACTION";
-type ActorType =
-  | "CUSTOMER"
-  | "CONSUMER"
-  | "INTERFACING_NP"
-  | "COUNTERPARTY_NP"
-  | "PROVIDER"
-  | "AGENT"
-  | "INTERFACING_NP_GRO"
-  | "COUNTERPARTY_NP_GRO"
-  | "CASCADED_NP_GRO"
-  | "CASCADED_NP"
-  | "SELLER";
-
-type IssueActionRow = {
-  id: string;
-  descriptor: { code: ActionCode; short_desc: string };
-  updated_at: string;
-  action_by: string;
-  actor_details: { name: string };
-};
-
-type IssueActor = {
-  id: string;
-  type: ActorType;
-  info: {
-    org: { name: string };
-    person?: { name: string };
-    contact: { phone: string; email: string };
-  };
-};
-
-type OndcIssueMessage = {
-  // APPENDED hint helps the BPP's resolver know we're extending, not replacing.
-  // Schema marks `update_target` optional — included on every non-OPEN action.
-  update_target?: Array<{ path: string; action: "APPENDED" }>;
-  issue: {
-    id: string;
-    status: IssueStatus;
-    level: IssueLevel;
-    created_at: string;
-    updated_at: string;
-    expected_response_time: { duration: string };
-    expected_resolution_time: { duration: string };
-    refs: Array<{
-      ref_id: string;
-      ref_type: RefType;
-      tags?: Array<unknown>;
-    }>;
-    actors: IssueActor[];
-    source_id: string;
-    complainant_id: string;
-    respondent_ids?: string[];
-    descriptor: {
-      code: string;
-      short_desc: string;
-      long_desc: string;
-      additional_desc?: { url: string; content_type: string };
-      images?: Array<{ url: string; size_type?: string }>;
-    };
-    last_action_id: string;
-    actions: IssueActionRow[];
-  };
-};
+// IGM v2.0.0 wire types and the state machine (statusForAction/actionCodeFor)
+// now live in @/lib/ondc/igm-builders. IGM 2.0 is EMBEDDED in the parent retail
+// domain (ONDC:RET10/…): context.domain is the retail domain, core_version is
+// the retail 1.2.5 line, and /issue routes through the same seller endpoint as
+// select/init/confirm. `OndcIssueMessage` is aliased to the lib's IssueV2Message
+// to keep the wire-call generic below unchanged.
+type OndcIssueMessage = IssueV2Message;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -216,43 +140,6 @@ function str(value: unknown): string | undefined {
 
 function isValidAction(value: string): value is ComplainantAction {
   return VALID_ACTIONS.has(value as ComplainantAction);
-}
-
-// IGM 2.0 schema constrains issue.status to a 4-value enum. Every interim
-// complainant action collapses to PROCESSING (the buyer signals movement; the
-// terminal RESOLVED/CLOSED are owned by the seller's on_issue or our CLOSE).
-function statusForAction(action: ComplainantAction): IssueStatus {
-  switch (action) {
-    case "OPEN":
-      return "OPEN";
-    case "INFO_PROVIDED":
-    case "ESCALATE":
-    case "RESOLUTION_ACCEPT":
-    case "RESOLUTION_REJECT":
-      return "PROCESSING";
-    case "CLOSE":
-      return "CLOSED";
-  }
-}
-
-// The action.descriptor.code IGM 2.0 expects per complainant move. CLOSE/OPEN
-// reuse their names; the rest map to the schema's enum (RESOLUTION_ACCEPTED,
-// not RESOLUTION_ACCEPT, etc.).
-function actionCodeFor(action: ComplainantAction): ActionCode {
-  switch (action) {
-    case "OPEN":
-      return "OPEN";
-    case "INFO_PROVIDED":
-      return "INFO_PROVIDED";
-    case "ESCALATE":
-      return "ESCALATED";
-    case "RESOLUTION_ACCEPT":
-      return "RESOLUTION_ACCEPTED";
-    case "RESOLUTION_REJECT":
-      return "RESOLUTION_REJECTED";
-    case "CLOSE":
-      return "CLOSED";
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -461,10 +348,7 @@ export async function POST(req: Request) {
         return fulfRefs.map((r) => {
           // Pull the state we stuffed into the FULFILLMENT_STATE tag.
           const stateTag = (r.tags ?? []).find(
-            (t): t is { descriptor: { code: string }; list?: Array<{ descriptor: { code: string }; value: string }> } =>
-              typeof t === "object" &&
-              t !== null &&
-              (t as { descriptor?: { code?: unknown } }).descriptor?.code === "FULFILLMENT_STATE"
+            (t) => t.descriptor?.code === "FULFILLMENT_STATE"
           );
           const state =
             stateTag?.list?.find((l) => l.descriptor.code === "state")?.value ??
@@ -511,122 +395,112 @@ export async function POST(req: Request) {
   const config = getOndcConfig();
   const now = new Date().toISOString();
 
-  // Build the issue per IGM 2.0 schema. Everything below maps 1:1 against
-  // log-validation-utility/schema/Igm/2.0.0/issue.ts.
+  // Build the issue via the shared IGM builders (@/lib/ondc/igm-builders).
   //
-  // - actors[]: the parties involved. We always include the consumer (the
-  //   buyer). source_id/complainant_id both reference the consumer for a
-  //   buyer-initiated issue.
-  // - refs[]: pointers from the issue to the underlying order/items/etc. The
-  //   seller's IGM resolver uses these to look up the order on their side —
-  //   the #1 cause of "ACK with no on_issue" is missing or wrong refs.
-  // - actions[]: append-only chronological history. We carry forward what we
-  //   persisted and add the new action; last_action_id points at the newest.
+  // - actors[]: CONSUMER + INTERFACING_NP (BAP) + COUNTERPARTY_NP (BPP), with
+  //   source_id = interfacing NP and complainant_id = consumer (QA #1).
+  // - refs[]: order/provider/transaction + items (with quantity, QA #2) +
+  //   fulfillments (with state).
+  // - actions[]: the COMPLETE history projected from the persisted record —
+  //   complainant AND respondent (QA #3) — plus the new row, which carries
+  //   ref_id/images where the protocol expects them (QA #4).
   //
-  // The wire is regenerated per call (IGM expects a full snapshot every time,
-  // not deltas).
+  // The wire is regenerated per call (IGM expects a full snapshot, not deltas).
+  const ids = buildActorIds(config.bapId, bppId);
 
-  // Stable actor id for the consumer — bap_id keeps cross-call identity simple.
-  const consumerActorId = config.bapId;
+  // Reuse a persisted actor set (so identity stays stable across the lifecycle)
+  // only when it already has the full set; otherwise build the three actors.
+  const actors: IssueActor[] =
+    isV2Snap &&
+    Array.isArray(v2Snap!.actors) &&
+    (v2Snap!.actors as IssueActor[]).length >= 3
+      ? (v2Snap!.actors as IssueActor[])
+      : buildActors({
+          bapId: config.bapId,
+          bppId,
+          consumer: { name: personName, phone, email },
+        });
 
-  // Existing wire issue may be the legacy v1 shape (pre-2.0) if this issue was
-  // OPENed before the patch; in that case we treat it as having no v2 data.
-  const v2Existing = existingIssue as Partial<OndcIssueMessage["issue"]> | undefined;
-  const isV2Existing = Array.isArray(v2Existing?.actions) && Array.isArray(v2Existing?.actors);
+  const refs = buildRefs({
+    orderId,
+    providerId,
+    transactionId,
+    items: itemsResolved,
+    fulfillments: fulfillmentsResolved,
+  });
 
-  const actors: IssueActor[] = isV2Existing
-    ? (v2Existing!.actors as IssueActor[])
-    : [
-        {
-          id: consumerActorId,
-          type: "CONSUMER",
-          info: {
-            org: { name: config.bapId },
-            person: { name: personName },
-            contact: { phone, email: email ?? "" },
-          },
-        },
-      ];
+  // Consume the FULL action history (QA #3): project every persisted action
+  // (complainant AND respondent) into a wire row.
+  const priorActions: IssueActionRow[] = (existing?.actions ?? [])
+    .map((e) => projectStoredAction(e, { counterpartyNpId: ids.counterpartyNpId }))
+    .filter((r): r is IssueActionRow => r !== null);
 
-  // Build refs from the resolved order facets. dedupe ref_ids per ref_type.
-  const refs: OndcIssueMessage["issue"]["refs"] = [
-    { ref_id: orderId, ref_type: "ORDER" },
-    { ref_id: providerId, ref_type: "PROVIDER" },
-    { ref_id: transactionId, ref_type: "TRANSACTION" },
-    ...itemsResolved.map((it) => ({ ref_id: it.id, ref_type: "ITEM" as const })),
-    ...fulfillmentsResolved.map((f) => ({
-      ref_id: f.id,
-      ref_type: "FULFILLMENT" as const,
-      tags: [
-        {
-          descriptor: { code: "FULFILLMENT_STATE" },
-          list: [
-            {
-              descriptor: { code: "state" },
-              value: f.state,
-            },
-          ],
-        },
-      ],
-    })),
-  ];
-
-  // Action history: prior v2 actions (if any) + the new row.
-  const priorActions: IssueActionRow[] = isV2Existing
-    ? (v2Existing!.actions as IssueActionRow[])
-    : [];
-  const newActionId = randomUUID();
-  const newAction: IssueActionRow = {
-    id: newActionId,
-    descriptor: {
-      code: actionCodeFor(action),
-      short_desc: actionDescOverride ?? shortDesc,
-    },
-    updated_at: now,
-    action_by: consumerActorId,
-    actor_details: { name: personName },
+  // QA #4: resolve the action-level ref_id (and images for INFO_PROVIDED).
+  // ref_id ties INFO_PROVIDED -> the seller's INFO_REQUESTED, and a resolution
+  // response -> the proposed resolution. Prefer an explicit body value; else
+  // derive from the last matching respondent action in the history.
+  const lastActionIdWithCode = (want: string): string | undefined => {
+    for (let i = priorActions.length - 1; i >= 0; i--) {
+      if (priorActions[i].descriptor.code === want) return priorActions[i].id;
+    }
+    return undefined;
   };
+  const actionRefId =
+    str(body.refId) ??
+    (action === "INFO_PROVIDED"
+      ? lastActionIdWithCode("INFO_REQUESTED")
+      : action === "RESOLUTION_ACCEPT" || action === "RESOLUTION_REJECT"
+        ? lastActionIdWithCode("RESOLUTION_PROPOSED")
+        : undefined);
+  const actionImages: IssueImage[] | undefined =
+    action === "INFO_PROVIDED" && Array.isArray(body.images)
+      ? body.images.filter(
+          (i): i is IssueImage => typeof i?.url === "string"
+        )
+      : undefined;
 
-  // descriptor.code carries the buyer's grievance taxonomy. We map our wrapper
-  // input `subCategory` (e.g. ITM02) into descriptor.code so the seller's IGM
-  // resolver can route on the same taxonomy it used to use.
+  const newActionId = randomUUID();
+  const newAction: IssueActionRow = buildActionRow({
+    id: newActionId,
+    code: actionCodeFor(action),
+    shortDesc: actionDescOverride ?? shortDesc,
+    updatedAt: now,
+    actionBy: ids.interfacingNpId,
+    actorName: personName,
+    refId: actionRefId,
+    images: actionImages,
+  });
+
+  // wrapper input `issueType` maps to schema's `level` (ISSUE/GRIEVANCE/DISPUTE).
+  const level: IssueLevel =
+    issueType?.toUpperCase() === "GRIEVANCE" ||
+    issueType?.toUpperCase() === "DISPUTE"
+      ? (issueType.toUpperCase() as IssueLevel)
+      : "ISSUE";
+
+  // descriptor.code carries the buyer's grievance taxonomy (e.g. ITM02).
   const issueDescriptor: OndcIssueMessage["issue"]["descriptor"] = {
     code: subCategory || category || "ITEM",
     short_desc: shortDesc,
     long_desc: longDesc,
   };
 
-  const message: OndcIssueMessage = {
-    ...(action !== "OPEN"
-      ? {
-          update_target: [
-            { path: "message.issue.actions", action: "APPENDED" as const },
-          ],
-        }
-      : {}),
-    issue: {
-      id: issueId,
-      status: statusForAction(action),
-      // wrapper input `issueType` maps to schema's `level`. ISSUE/GRIEVANCE/
-      // DISPUTE are the three escalation tiers IGM 2.0 tracks.
-      level:
-        (issueType?.toUpperCase() as IssueLevel) === "GRIEVANCE" ||
-        (issueType?.toUpperCase() as IssueLevel) === "DISPUTE"
-          ? (issueType.toUpperCase() as IssueLevel)
-          : "ISSUE",
-      created_at: (isV2Existing && (v2Existing!.created_at as string)) || now,
-      updated_at: now,
-      expected_response_time: { duration: "PT1H" },
-      expected_resolution_time: { duration: "P1D" },
-      refs,
-      actors,
-      source_id: consumerActorId,
-      complainant_id: consumerActorId,
-      descriptor: issueDescriptor,
-      last_action_id: newActionId,
-      actions: [...priorActions, newAction],
-    },
-  };
+  const createdAt = (isV2Snap && (v2Snap!.created_at as string)) || now;
+
+  const message: OndcIssueMessage = buildIssueV2({
+    issueId,
+    action,
+    status: statusForAction(action),
+    level,
+    createdAt,
+    now,
+    actors,
+    actorIds: ids,
+    refs,
+    descriptor: issueDescriptor,
+    priorActions,
+    newAction,
+  });
 
   // Persist FIRST. A transport failure shouldn't leave us forgetful — we need
   // the action in the history so a retry can resend the same snapshot.
