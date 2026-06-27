@@ -124,6 +124,9 @@ type IssueRequestBody = {
   // Rejection flow: ONDC reason code required when rejecting a proposed
   // resolution (complainantAction = "RESOLUTION_REJECT").
   reasonCode?: string;
+  // IGM 2.0 descriptor.additional_desc — the schema requires a url. Optional
+  // override; defaults to a BAP issue-reference URL.
+  additionalDescUrl?: string;
 };
 
 // IGM v2.0.0 wire types and the state machine (statusForAction/actionCodeFor)
@@ -507,10 +510,16 @@ export async function POST(req: Request) {
     action === "ESCALATE" ? escalateLevel(baseLevel) : baseLevel;
 
   // descriptor.code carries the buyer's grievance taxonomy (e.g. ITM02).
+  // additional_desc.url is REQUIRED by the IGM 2.0 schema (REQUIRED_MESSAGE_URL);
+  // default to a BAP issue-reference URL when the caller doesn't supply one.
+  const additionalDescUrl =
+    str(body.additionalDescUrl) ??
+    `https://${config.bapId}/ondc/issue/${issueId}`;
   const issueDescriptor: OndcIssueMessage["issue"]["descriptor"] = {
     code: subCategory || category || "ITEM",
     short_desc: shortDesc,
     long_desc: longDesc,
+    additional_desc: { url: additionalDescUrl, content_type: "text/plain" },
   };
 
   const createdAt = (isV2Snap && (v2Snap!.created_at as string)) || now;
