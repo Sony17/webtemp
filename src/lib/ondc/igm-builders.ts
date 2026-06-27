@@ -364,8 +364,9 @@ export function projectStoredAction(
   const raw = (entry.raw ?? {}) as Record<string, unknown>;
 
   if (entry.actor === "complainant") {
-    // Stored as a full IssueActionRow when we sent it; trust it, but guard the
-    // essentials so a legacy/partial record still yields a valid row.
+    // Rebuild a CLEAN strict row from the stored fields. Never return the stored
+    // object verbatim — a legacy/pre-fix record may carry now-disallowed props
+    // (images/ref_id/tags) that would re-pollute the strict action object.
     if (
       raw &&
       typeof raw === "object" &&
@@ -373,7 +374,18 @@ export function projectStoredAction(
       raw.descriptor &&
       typeof raw.descriptor === "object"
     ) {
-      return raw as unknown as IssueActionRow;
+      const d = raw.descriptor as { code?: ActionCode; short_desc?: string };
+      const actorName =
+        (raw.actor_details as { name?: string } | undefined)?.name ?? "";
+      return buildActionRow({
+        id: raw.id,
+        code: (d.code ?? (entry.action as ActionCode)) as ActionCode,
+        shortDesc: d.short_desc ?? entry.shortDesc ?? "",
+        updatedAt:
+          typeof raw.updated_at === "string" ? raw.updated_at : entry.updatedAt,
+        actionBy: typeof raw.action_by === "string" ? raw.action_by : "",
+        actorName,
+      });
     }
     return null;
   }
