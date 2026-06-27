@@ -401,6 +401,238 @@ export function projectStoredAction(
 // Full v2 issue message
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// IGM v1.0.0 compatibility
+// ---------------------------------------------------------------------------
+//
+// The legacy (pre-2.0) IGM shape: a flat issue with category/sub_category,
+// complainant_info, order_details, description, and issue_actions split into
+// complainant_actions[] / respondent_actions[]. Used when a BPP only speaks IGM
+// 1.0.0 (domain ONDC:IGM, core_version 1.0.0). Business inputs (items,
+// fulfillments, consumer, descriptor, action history) are SHARED with v2 — only
+// the wire projection differs.
+
+export type IssueV1ActionRow = {
+  complainant_action?: string;
+  respondent_action?: string;
+  short_desc: string;
+  updated_at: string;
+  updated_by: {
+    org: { name: string };
+    contact: { phone: string; email: string };
+    person?: { name: string };
+  };
+};
+
+export type IssueV1Message = {
+  issue: {
+    id: string;
+    category: string;
+    sub_category: string;
+    complainant_info: {
+      person: { name: string };
+      contact: { phone: string; email: string };
+    };
+    order_details: {
+      id: string;
+      state: string;
+      items: Array<{ id: string; quantity: number }>;
+      fulfillments: Array<{ id: string; state: string }>;
+      provider_id: string;
+    };
+    description: {
+      short_desc: string;
+      long_desc: string;
+      additional_desc?: { url: string; content_type: string };
+      images?: string[];
+    };
+    source: {
+      network_participant_id: string;
+      type: "CONSUMER" | "INTERFACING_NP";
+    };
+    expected_response_time: { duration: string };
+    expected_resolution_time: { duration: string };
+    status: "OPEN" | "CLOSED";
+    issue_type: IssueLevel;
+    issue_actions: {
+      complainant_actions: IssueV1ActionRow[];
+      respondent_actions: IssueV1ActionRow[];
+    };
+    created_at: string;
+    updated_at: string;
+  };
+};
+
+// v1 complainant_action codes differ slightly from v2's action descriptor codes
+// (CLOSE not CLOSED, ESCALATE not ESCALATED).
+export function v1ActionCode(action: ComplainantAction): string {
+  switch (action) {
+    case "OPEN":
+      return "OPEN";
+    case "INFO_PROVIDED":
+      return "INFO_PROVIDED";
+    case "ESCALATE":
+      return "ESCALATE";
+    case "RESOLUTION_ACCEPT":
+      return "RESOLUTION_ACCEPTED";
+    case "RESOLUTION_REJECT":
+      return "RESOLUTION_REJECTED";
+    case "CLOSE":
+      return "CLOSE";
+  }
+}
+
+// v1 status is a 2-value enum: an issue is OPEN until it is CLOSEd.
+export function v1Status(action: ComplainantAction): "OPEN" | "CLOSED" {
+  return action === "CLOSE" ? "CLOSED" : "OPEN";
+}
+
+// Project a persisted history entry into a v1 action row (complainant_actions or
+// respondent_actions). Shares IssueRecord.actions with the v2 path.
+export function projectStoredActionV1(
+  entry: {
+    actor: "complainant" | "respondent";
+    action: string;
+    shortDesc?: string;
+    updatedAt: string;
+    raw: unknown;
+  },
+  ctx: { bapId: string; bppId: string; consumer: ConsumerInfo }
+): IssueV1ActionRow {
+  const raw = (entry.raw ?? {}) as Record<string, unknown>;
+  if (entry.actor === "complainant") {
+    return {
+      complainant_action: v1ActionCode(entry.action as ComplainantAction),
+      short_desc: entry.shortDesc ?? "",
+      updated_at: entry.updatedAt,
+      updated_by: {
+        org: { name: ctx.bapId },
+        contact: {
+          phone: ctx.consumer.phone,
+          email: ctx.consumer.email ?? "",
+        },
+        person: { name: ctx.consumer.name },
+      },
+    };
+  }
+  return {
+    respondent_action:
+      (typeof raw.respondent_action === "string"
+        ? raw.respondent_action
+        : entry.action) || entry.action,
+    short_desc:
+      (typeof raw.short_desc === "string" ? raw.short_desc : entry.shortDesc) ??
+      "",
+    updated_at: entry.updatedAt,
+    updated_by: {
+      org: { name: ctx.bppId },
+      contact: { phone: "", email: "" },
+    },
+  };
+}
+
+export function buildIssueV1(params: {
+  issueId: string;
+  action: ComplainantAction;
+  createdAt: string;
+  now: string;
+  category: string;
+  subCategory: string;
+  bapId: string;
+  bppId: string;
+  consumer: ConsumerInfo;
+  orderId: string;
+  orderState: string;
+  providerId: string;
+  items: IssueItem[];
+  fulfillments: IssueFulfillment[];
+  shortDesc: string;
+  longDesc: string;
+  images?: string[];
+  level: IssueLevel;
+  // The full persisted history (complainant + respondent) and the new row.
+  priorEntries: Array<{
+    actor: "complainant" | "respondent";
+    action: string;
+    shortDesc?: string;
+    updatedAt: string;
+    raw: unknown;
+  }>;
+  newActionShortDesc: string;
+  responseDuration?: string;
+  resolutionDuration?: string;
+}): IssueV1Message {
+  const ctx = {
+    bapId: params.bapId,
+    bppId: params.bppId,
+    consumer: params.consumer,
+  };
+  const priorRows = params.priorEntries.map((e) =>
+    projectStoredActionV1(e, ctx)
+  );
+  const newRow: IssueV1ActionRow = {
+    complainant_action: v1ActionCode(params.action),
+    short_desc: params.newActionShortDesc,
+    updated_at: params.now,
+    updated_by: {
+      org: { name: params.bapId },
+      contact: {
+        phone: params.consumer.phone,
+        email: params.consumer.email ?? "",
+      },
+      person: { name: params.consumer.name },
+    },
+  };
+
+  return {
+    issue: {
+      id: params.issueId,
+      category: params.category,
+      sub_category: params.subCategory,
+      complainant_info: {
+        person: { name: params.consumer.name },
+        contact: {
+          phone: params.consumer.phone,
+          email: params.consumer.email ?? "",
+        },
+      },
+      order_details: {
+        id: params.orderId,
+        state: params.orderState,
+        items: params.items,
+        fulfillments: params.fulfillments,
+        provider_id: params.providerId,
+      },
+      description: {
+        short_desc: params.shortDesc,
+        long_desc: params.longDesc,
+        ...(params.images && params.images.length > 0
+          ? { images: params.images }
+          : {}),
+      },
+      source: {
+        network_participant_id: params.bapId,
+        type: "INTERFACING_NP",
+      },
+      expected_response_time: { duration: params.responseDuration ?? "PT1H" },
+      expected_resolution_time: {
+        duration: params.resolutionDuration ?? "P1D",
+      },
+      status: v1Status(params.action),
+      issue_type: params.level,
+      issue_actions: {
+        complainant_actions: [
+          ...priorRows.filter((r) => r.complainant_action),
+          newRow,
+        ],
+        respondent_actions: priorRows.filter((r) => r.respondent_action),
+      },
+      created_at: params.createdAt,
+      updated_at: params.now,
+    },
+  };
+}
+
 export function buildIssueV2(params: {
   issueId: string;
   action: ComplainantAction;

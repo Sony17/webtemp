@@ -35,6 +35,7 @@ import {
   type IssueActor,
   type IssueImage,
   type IssueV2Message,
+  type IssueV1Message,
   type RefType,
   actorIds as buildActorIds,
   buildActors,
@@ -42,6 +43,7 @@ import {
   buildActionRow,
   projectStoredAction,
   buildIssueV2,
+  buildIssueV1,
   statusForAction,
   actionCodeFor,
   escalateLevel,
@@ -513,20 +515,52 @@ export async function POST(req: Request) {
 
   const createdAt = (isV2Snap && (v2Snap!.created_at as string)) || now;
 
-  const message: OndcIssueMessage = buildIssueV2({
-    issueId,
-    action,
-    status: statusForAction(action),
-    level,
-    createdAt,
-    now,
-    actors,
-    actorIds: ids,
-    refs,
-    descriptor: issueDescriptor,
-    priorActions,
-    newAction,
-  });
+  // Version select: IGM 1.0.0 (legacy, domain ONDC:IGM) uses the flat v1 shape;
+  // everything else builds the v2 snapshot. Both share the resolved business
+  // inputs above — only the wire projection differs.
+  const isV1 = coreVersion === "1.0.0";
+  const orderState = str(body.orderState) ?? "Completed";
+  const message: OndcIssueMessage | IssueV1Message = isV1
+    ? buildIssueV1({
+        issueId,
+        action,
+        createdAt,
+        now,
+        category,
+        subCategory,
+        bapId: config.bapId,
+        bppId,
+        consumer: { name: personName, phone, email },
+        orderId,
+        orderState,
+        providerId,
+        items: itemsResolved,
+        fulfillments: fulfillmentsResolved,
+        shortDesc,
+        longDesc,
+        images: Array.isArray(body.images)
+          ? body.images
+              .map((i) => i?.url)
+              .filter((u): u is string => typeof u === "string")
+          : undefined,
+        level,
+        priorEntries: existing?.actions ?? [],
+        newActionShortDesc: actionDescOverride ?? shortDesc,
+      })
+    : buildIssueV2({
+        issueId,
+        action,
+        status: statusForAction(action),
+        level,
+        createdAt,
+        now,
+        actors,
+        actorIds: ids,
+        refs,
+        descriptor: issueDescriptor,
+        priorActions,
+        newAction,
+      });
 
   // Persist FIRST. A transport failure shouldn't leave us forgetful — we need
   // the action in the history so a retry can resend the same snapshot.
@@ -566,7 +600,7 @@ export async function POST(req: Request) {
     JSON.stringify({ url, context, message }, null, 2)
   );
   try {
-    const result = await sendOndcRequest<OndcIssueMessage>({
+    const result = await sendOndcRequest<OndcIssueMessage | IssueV1Message>({
       url,
       action: "issue",
       context,
