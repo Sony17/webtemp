@@ -9,6 +9,14 @@
       "createdAt": 1781609801960,
       "updatedAt": 1781609843606,
       "bankReference": "BANK123456"
+    },
+    {
+      "transactionId": "demo-txn",
+      "amount": 499,
+      "paymentReference": "PAY-A1FCD24AD9DAD093",
+      "status": "PENDING",
+      "createdAt": 1782721153255,
+      "updatedAt": 1782721153255
     }
   ]
 }
