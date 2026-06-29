@@ -8,6 +8,8 @@ import * as React from "react";
 import Link from "next/link";
 import { Loader2, ImageOff, Star, Plus, Minus } from "lucide-react";
 import { Button, Card } from "@/components/shop/ui";
+import { FavouriteButton } from "@/components/shop/FavouriteButton";
+import { productKey } from "@/lib/shop/hooks/use-favourites";
 import { cn, formatINR } from "@/lib/shop/cn";
 import type { Product } from "@/lib/shop/types";
 
@@ -294,6 +296,11 @@ export function ProductCard({
             {discount}% OFF
           </span>
         ) : null}
+        <FavouriteButton
+          productKey={productKey(product)}
+          size="sm"
+          className="absolute right-2 top-2"
+        />
       </Link>
       <div className="flex flex-1 flex-col p-3">
         <Link href={href} className="line-clamp-2 text-sm font-medium">

@@ -6,7 +6,7 @@
 // The product data comes from the active discovery transaction's catalogs.
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Check, ShoppingCart, Store, Star, PackageSearch } from "lucide-react";
+import { Check, ShoppingCart, Store, Star, PackageSearch, Truck } from "lucide-react";
 import { Button, Card, Separator, Badge } from "@/components/shop/ui";
 import {
   EmptyState,
@@ -14,6 +14,7 @@ import {
   QuantityStepper,
   Spinner,
 } from "@/components/shop/widgets";
+import { Disclosure } from "@/components/shop/Disclosure";
 import { useShop } from "@/lib/shop/store";
 import { useShopState } from "@/lib/shop/useShopState";
 import { recordView } from "@/lib/shop/hooks/use-recently-viewed";
@@ -161,6 +162,14 @@ export default function ProductPage() {
           </p>
         ) : null}
       </div>
+
+      {/* Delivery & returns */}
+      <Disclosure title="Delivery & returns" icon={<Truck className="h-4 w-4 text-primary" />}>
+        Sold and fulfilled by {activeOffer!.providerName} on the ONDC network.
+        Delivery options and final charges are confirmed by the seller at
+        checkout. Returns, replacements and cancellations are handled per the
+        seller&apos;s policy — you can raise them from your order after delivery.
+      </Disclosure>
 
       {/* Seller comparison */}
       {offers.length > 1 ? (

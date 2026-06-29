@@ -10,9 +10,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search as SearchIcon, SearchX, Store } from "lucide-react";
 import { Button } from "@/components/shop/ui";
 import { EmptyState, ProductCard, Spinner } from "@/components/shop/widgets";
+import { FilterSheet } from "@/components/shop/Filters";
 import { useShop } from "@/lib/shop/store";
 import { useShopState } from "@/lib/shop/useShopState";
-import { parseCatalogs, type Product } from "@/lib/shop/types";
+import {
+  parseCatalogs,
+  filterAndSortProducts,
+  priceCeiling,
+  type Product,
+  type ShopFilters,
+} from "@/lib/shop/types";
 import * as api from "@/lib/shop/api";
 
 function SearchScreen() {
@@ -25,6 +32,7 @@ function SearchScreen() {
   const [txn, setTxn] = React.useState<string | null>(null);
   const [searching, setSearching] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [filters, setFilters] = React.useState<ShopFilters>({ sort: "relevance" });
 
   const runSearch = React.useCallback(
     async (query: string) => {
@@ -74,6 +82,11 @@ function SearchScreen() {
     () => (state ? parseCatalogs(state.catalogs) : []),
     [state]
   );
+  const ceiling = React.useMemo(() => priceCeiling(products), [products]);
+  const shown = React.useMemo(
+    () => filterAndSortProducts(products, filters),
+    [products, filters]
+  );
   const sellerCount = state
     ? new Set(state.catalogs.map((c) => c.bppId)).size
     : 0;
@@ -105,20 +118,29 @@ function SearchScreen() {
         </div>
       </form>
 
-      {/* Status line */}
+      {/* Status line + filters */}
       {txn ? (
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <Store className="h-3.5 w-3.5" />
             {sellerCount} seller{sellerCount === 1 ? "" : "s"} ·{" "}
-            {products.length} item{products.length === 1 ? "" : "s"}
+            {shown.length} item{shown.length === 1 ? "" : "s"}
           </span>
-          {polling ? (
-            <span className="inline-flex items-center gap-1">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-              Finding more…
-            </span>
-          ) : null}
+          <div className="flex items-center gap-2">
+            {polling ? (
+              <span className="inline-flex items-center gap-1">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                Finding more…
+              </span>
+            ) : null}
+            {products.length > 0 ? (
+              <FilterSheet
+                filters={filters}
+                onApply={setFilters}
+                maxPriceCeiling={ceiling}
+              />
+            ) : null}
+          </div>
         </div>
       ) : null}
 
@@ -152,9 +174,23 @@ function SearchScreen() {
             description="No sellers returned a catalog for this search. Try a different term or check your delivery location."
           />
         )
+      ) : shown.length === 0 ? (
+        <EmptyState
+          icon={<SearchX className="h-7 w-7" />}
+          title="No items match your filters"
+          description="Try widening the price range or clearing the filters."
+          action={
+            <Button
+              variant="outline"
+              onClick={() => setFilters({ sort: "relevance" })}
+            >
+              Clear filters
+            </Button>
+          }
+        />
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          {products.map((p, i) => (
+          {shown.map((p, i) => (
             <ProductCard
               key={`${p.bppId}:${p.providerId}:${p.itemId}`}
               product={p}

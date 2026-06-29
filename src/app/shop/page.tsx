@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { Search, Sparkles, ShieldCheck, Truck, BadgeIndianRupee } from "lucide-react";
 import { Card } from "@/components/shop/ui";
 import { RecentlyViewed } from "@/components/shop/RecentlyViewed";
+import { Reveal } from "@/components/shop/motion";
 import { CATEGORIES } from "@/lib/shop/categories";
 
 export default function ShopHome() {
@@ -67,7 +68,7 @@ export default function ShopHome() {
       </section>
 
       {/* Categories */}
-      <section>
+      <Reveal as="section">
         <h2 className="mb-3 text-base font-semibold tracking-tight">
           Shop by category
         </h2>
@@ -87,13 +88,13 @@ export default function ShopHome() {
             </Link>
           ))}
         </div>
-      </section>
+      </Reveal>
 
       {/* Recently viewed */}
       <RecentlyViewed />
 
       {/* Trust strip */}
-      <section className="grid grid-cols-3 gap-3">
+      <Reveal as="section" className="grid grid-cols-3 gap-3" delay={0.05}>
         {[
           { icon: BadgeIndianRupee, title: "Best price", sub: "Compare sellers" },
           { icon: Truck, title: "Fast delivery", sub: "Local fulfilment" },
@@ -105,7 +106,7 @@ export default function ShopHome() {
             <p className="text-[11px] text-muted-foreground">{f.sub}</p>
           </Card>
         ))}
-      </section>
+      </Reveal>
     </div>
   );
 }

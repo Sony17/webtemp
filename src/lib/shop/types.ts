@@ -249,6 +249,39 @@ export function trackingUrl(order: OrderRecord | null | undefined): string | und
   return str(t.url) ?? str(obj(t.location).gps);
 }
 
+/* ── Search filters (client-side over the live catalog) ───────────────────── */
+
+export type ShopSort = "relevance" | "price_low" | "price_high";
+export type ShopFilters = { sort?: ShopSort; maxPrice?: number };
+
+// Sensible upper bound for the price slider, derived from the live results.
+export function priceCeiling(products: Product[]): number {
+  const max = products.reduce((m, p) => Math.max(m, p.price), 0);
+  return Math.max(100, Math.ceil(max / 50) * 50);
+}
+
+// Pure client-side filter + sort over the parsed ONDC catalog. No mock logic:
+// it only uses fields ONDC reliably provides (price). "relevance" preserves the
+// order sellers returned.
+export function filterAndSortProducts(
+  products: Product[],
+  f: ShopFilters
+): Product[] {
+  let out = products;
+  if (f.maxPrice != null) out = out.filter((p) => p.price <= f.maxPrice!);
+  if (f.sort === "price_low") out = [...out].sort((a, b) => a.price - b.price);
+  else if (f.sort === "price_high")
+    out = [...out].sort((a, b) => b.price - a.price);
+  return out;
+}
+
+export function activeFilterCount(f: ShopFilters): number {
+  return (
+    (f.maxPrice != null ? 1 : 0) +
+    (f.sort && f.sort !== "relevance" ? 1 : 0)
+  );
+}
+
 /* ── Fulfillment options (from the on_select quote) ───────────────────────── */
 
 export type FulfillmentOption = {

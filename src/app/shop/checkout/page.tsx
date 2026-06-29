@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import { Button, Card, Input, Label, Separator, Textarea } from "@/components/shop/ui";
 import { EmptyState, QuoteSummary } from "@/components/shop/widgets";
+import { Stepper } from "@/components/shop/Stepper";
+
+const CHECKOUT_STEPS = ["Address", "Review", "Payment"];
 import { useShop, type Address } from "@/lib/shop/store";
 import {
   parseQuote,
@@ -281,6 +284,7 @@ export default function CheckoutPage() {
   if (step === "review") {
     return (
       <div className="space-y-4 pb-28">
+        <Stepper steps={CHECKOUT_STEPS} current={1} />
         <Card className="p-4">
           <div className="flex items-start gap-2">
             <MapPin className="mt-0.5 h-4 w-4 text-primary" />
@@ -388,6 +392,7 @@ export default function CheckoutPage() {
   // step === "address"
   return (
     <form onSubmit={getQuote} className="space-y-4 pb-28">
+      <Stepper steps={CHECKOUT_STEPS} current={0} />
       <h1 className="text-lg font-semibold">Delivery details</h1>
       {error ? (
         <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
