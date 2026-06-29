@@ -21,12 +21,21 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Button, Card, Badge, Separator } from "@/components/shop/ui";
-import { EmptyState, QuoteSummary, Spinner } from "@/components/shop/widgets";
+import {
+  EmptyState,
+  QuoteSummary,
+  Spinner,
+  Timeline,
+  RefundSummary,
+} from "@/components/shop/widgets";
 import { useShopState } from "@/lib/shop/useShopState";
 import {
   parseQuote,
   orderState,
   trackingUrl,
+  buildOrderTimeline,
+  parseOrderFulfillments,
+  parseRefund,
   type BppState,
 } from "@/lib/shop/types";
 import * as api from "@/lib/shop/api";
@@ -70,6 +79,9 @@ export default function OrderPage() {
   const quote = parseQuote(order?.quote);
   const status = orderState(order);
   const track = trackingUrl(order);
+  const timeline = buildOrderTimeline(order);
+  const shipments = parseOrderFulfillments(order);
+  const refund = parseRefund(order);
 
   React.useEffect(() => {
     api.paymentInstructions(txn).then(setPay).catch(() => setPay(null));
@@ -175,6 +187,16 @@ export default function OrderPage() {
         </Card>
       ) : null}
 
+      {/* Refund (RTO / cancellation / return settlement from quote_trail) */}
+      {refund ? (
+        <Card className="border-emerald-200 p-4 dark:border-emerald-900/40">
+          <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
+            <RotateCcw className="h-4 w-4 text-emerald-600" /> Refund
+          </h2>
+          <RefundSummary refund={refund} />
+        </Card>
+      ) : null}
+
       {/* Payment instructions (manual settlement) */}
       {pay && !cancelled ? (
         <Card className="p-4">
@@ -245,15 +267,60 @@ export default function OrderPage() {
               Tracking will appear here once the seller ships your order.
             </p>
           )}
-          {order.statusHistory?.length ? (
-            <div className="mt-3 space-y-1.5 border-l-2 border-border pl-3">
-              {order.statusHistory.slice(-5).map((h, i) => (
-                <p key={i} className="text-xs text-muted-foreground">
-                  {typeof h.state === "string" ? h.state : "Update"}
-                </p>
+          {/* Per-shipment fulfillment status (multi-fulfillment aware) */}
+          {shipments.length ? (
+            <div className="mt-3 space-y-2">
+              {shipments.map((f, i) => (
+                <div
+                  key={f.id ?? i}
+                  className="rounded-lg border border-border p-2.5"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">
+                      {shipments.length > 1 ? `Shipment ${i + 1}` : "Shipment"}
+                      {f.type ? (
+                        <span className="ml-1 text-xs font-normal text-muted-foreground">
+                          · {f.type}
+                        </span>
+                      ) : null}
+                    </span>
+                    {f.isRTO ? (
+                      <Badge variant="warning" className="ml-auto">
+                        RTO
+                      </Badge>
+                    ) : f.state ? (
+                      <Badge variant="secondary" className="ml-auto">
+                        {f.state}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  {f.agentName ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Agent: {f.agentName}
+                    </p>
+                  ) : null}
+                  {f.trackingUrl ? (
+                    <a
+                      href={f.trackingUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 block text-xs text-primary hover:underline"
+                    >
+                      Track this shipment
+                    </a>
+                  ) : null}
+                </div>
               ))}
             </div>
           ) : null}
+        </Card>
+      ) : null}
+
+      {/* Order timeline */}
+      {timeline.length ? (
+        <Card className="p-4">
+          <h2 className="mb-3 text-sm font-semibold">Order timeline</h2>
+          <Timeline events={timeline} />
         </Card>
       ) : null}
 
