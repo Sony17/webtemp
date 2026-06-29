@@ -199,6 +199,15 @@ export default function OrderPage() {
               complete payment.
             </p>
           ) : null}
+          <Link
+            href={`/shop/order/${encodeURIComponent(txn)}/${encodeURIComponent(
+              bppId
+            )}/payment`}
+          >
+            <Button variant="outline" className="mt-3 w-full">
+              Manage payment
+            </Button>
+          </Link>
         </Card>
       ) : null}
 

@@ -63,6 +63,11 @@ type ShopContextValue = {
   // Locally-remembered placed orders (newest first)
   orders: OrderRef[];
   addOrder: (ref: OrderRef) => void;
+  updateOrderRef: (
+    transactionId: string,
+    bppId: string,
+    patch: Partial<OrderRef>
+  ) => void;
 };
 
 const ShopContext = React.createContext<ShopContextValue | null>(null);
@@ -182,6 +187,21 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const updateOrderRef = React.useCallback(
+    (transactionId: string, bppId: string, patch: Partial<OrderRef>) => {
+      setOrders((prev) => {
+        const next = prev.map((o) =>
+          o.transactionId === transactionId && o.bppId === bppId
+            ? { ...o, ...patch }
+            : o
+        );
+        save(LS_ORDERS, next);
+        return next;
+      });
+    },
+    []
+  );
+
   const cartCount = lines.reduce((s, l) => s + l.quantity, 0);
   const cartTotal = lines.reduce((s, l) => s + l.product.price * l.quantity, 0);
   const cartBpp =
@@ -208,6 +228,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     setTransactionId,
     orders,
     addOrder,
+    updateOrderRef,
   };
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;
