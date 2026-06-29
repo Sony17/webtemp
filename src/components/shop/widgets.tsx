@@ -6,9 +6,10 @@
 // waiting for data to arrive).
 import * as React from "react";
 import Link from "next/link";
-import { Loader2, ImageOff, Star, Plus, Minus } from "lucide-react";
+import { Loader2, ImageOff, Plus, Minus } from "lucide-react";
 import { Button, Card } from "@/components/shop/ui";
 import { FavouriteButton } from "@/components/shop/FavouriteButton";
+import { Rating } from "@/components/shop/Rating";
 import { productKey } from "@/lib/shop/hooks/use-favourites";
 import { cn, formatINR } from "@/lib/shop/cn";
 import type { Product } from "@/lib/shop/types";
@@ -310,10 +311,7 @@ export function ProductCard({
           {product.unit ?? product.providerName}
         </p>
         {product.rating ? (
-          <span className="mt-1 inline-flex w-fit items-center gap-0.5 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-            <Star className="h-3 w-3 fill-current" />
-            {product.rating.toFixed(1)}
-          </span>
+          <Rating value={product.rating} className="mt-1 w-fit" />
         ) : null}
         <div className="mt-2 flex items-end justify-between gap-2">
           <div>

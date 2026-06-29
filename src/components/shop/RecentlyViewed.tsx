@@ -7,6 +7,7 @@
 import Link from "next/link";
 import { useRecentlyViewed } from "@/lib/shop/hooks/use-recently-viewed";
 import { ProductThumb } from "@/components/shop/widgets";
+import { Carousel } from "@/components/shop/Carousel";
 import { formatINR } from "@/lib/shop/cn";
 
 export function RecentlyViewed() {
@@ -18,12 +19,12 @@ export function RecentlyViewed() {
       <h2 className="mb-3 text-base font-semibold tracking-tight">
         Recently viewed
       </h2>
-      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-none">
+      <Carousel ariaLabel="Recently viewed products" itemClassName="w-28">
         {items.map((p) => (
           <Link
             key={`${p.bppId}:${p.providerId}:${p.itemId}`}
             href={`/shop/search?q=${encodeURIComponent(p.name)}`}
-            className="w-28 shrink-0"
+            className="block"
           >
             <div className="aspect-square w-28 overflow-hidden rounded-xl border border-border bg-card">
               <ProductThumb
@@ -36,7 +37,7 @@ export function RecentlyViewed() {
             <p className="text-xs text-muted-foreground">{formatINR(p.price)}</p>
           </Link>
         ))}
-      </div>
+      </Carousel>
     </section>
   );
 }

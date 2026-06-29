@@ -12,9 +12,9 @@ import {
   EmptyState,
   ProductThumb,
   QuantityStepper,
-  Spinner,
 } from "@/components/shop/widgets";
 import { Disclosure } from "@/components/shop/Disclosure";
+import { DetailSkeleton } from "@/components/shop/Skeletons";
 import { useShop } from "@/lib/shop/store";
 import { useShopState } from "@/lib/shop/useShopState";
 import { recordView } from "@/lib/shop/hooks/use-recently-viewed";
@@ -87,7 +87,7 @@ export default function ProductPage() {
       : null);
 
   if (!product) {
-    if (polling) return <Spinner label="Loading product…" />;
+    if (polling) return <DetailSkeleton />;
     return (
       <EmptyState
         icon={<PackageSearch className="h-7 w-7" />}

@@ -10,6 +10,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search as SearchIcon, SearchX, Store } from "lucide-react";
 import { Button } from "@/components/shop/ui";
 import { EmptyState, ProductCard, Spinner } from "@/components/shop/widgets";
+import { ErrorState } from "@/components/shop/ErrorState";
+import { ProductGridSkeleton } from "@/components/shop/Skeletons";
 import { FilterSheet } from "@/components/shop/Filters";
 import { useShop } from "@/lib/shop/store";
 import { useShopState } from "@/lib/shop/useShopState";
@@ -146,18 +148,13 @@ function SearchScreen() {
 
       {/* States */}
       {error ? (
-        <EmptyState
-          icon={<SearchX className="h-7 w-7" />}
+        <ErrorState
           title="Search couldn't complete"
           description={error}
-          action={
-            <Button onClick={() => runSearch(q)} variant="outline">
-              Try again
-            </Button>
-          }
+          onRetry={() => runSearch(q)}
         />
       ) : searching && !txn ? (
-        <Spinner label="Broadcasting to the network…" />
+        <ProductGridSkeleton />
       ) : !txn ? (
         <EmptyState
           icon={<SearchIcon className="h-7 w-7" />}
@@ -166,7 +163,7 @@ function SearchScreen() {
         />
       ) : products.length === 0 ? (
         polling ? (
-          <Spinner label="Waiting for sellers to respond…" />
+          <ProductGridSkeleton />
         ) : (
           <EmptyState
             icon={<SearchX className="h-7 w-7" />}
