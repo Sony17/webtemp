@@ -16,6 +16,7 @@ import {
 } from "@/components/shop/widgets";
 import { useShop } from "@/lib/shop/store";
 import { useShopState } from "@/lib/shop/useShopState";
+import { recordView } from "@/lib/shop/hooks/use-recently-viewed";
 import {
   offersForProduct,
   parseCatalogs,
@@ -52,6 +53,13 @@ export default function ProductPage() {
     (p) =>
       p.bppId === bppId && p.providerId === providerId && p.itemId === itemId
   );
+
+  // Record this product as recently viewed (snapshot) once it resolves. Keyed on
+  // the stable ids so it fires once per product, not on every poll tick.
+  React.useEffect(() => {
+    if (product) recordView(product);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.bppId, product?.providerId, product?.itemId]);
 
   // Which seller offer is currently selected (defaults to the one in the URL).
   const [selected, setSelected] = React.useState<SellerOffer | null>(null);

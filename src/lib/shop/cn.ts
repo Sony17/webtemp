@@ -17,3 +17,46 @@ export function formatINR(value: number | string | null | undefined): string {
     maximumFractionDigits: 2,
   }).format(n);
 }
+
+// ── Date / misc formatters (migrated from the prototype's lib/format) ───────
+
+/** "12 Jun 2026" */
+export function formatDate(iso: string | number | Date): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(d);
+}
+
+/** "12 Jun, 4:30 PM" */
+export function formatDateTime(iso: string | number | Date): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(d);
+}
+
+/** Render a delivery ETA range in minutes as friendly text. */
+export function formatEta(minMins: number, maxMins?: number): string {
+  if (!maxMins || maxMins === minMins) {
+    if (minMins >= 60) return `${Math.round(minMins / 60)} hr`;
+    return `${minMins} min`;
+  }
+  return `${minMins}–${maxMins} min`;
+}
+
+export function pluralize(
+  count: number,
+  singular: string,
+  plural?: string
+): string {
+  return count === 1 ? singular : (plural ?? `${singular}s`);
+}

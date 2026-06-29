@@ -68,10 +68,16 @@ export function ProductThumb({
   src,
   alt,
   className,
+  priority = false,
 }: {
   src?: string;
   alt: string;
   className?: string;
+  // LCP optimisation (migrated from the prototype's QA fix): above-the-fold
+  // thumbnails load eagerly with high fetch priority; the rest stay lazy. Native
+  // <img> is used deliberately — ONDC catalog images come from arbitrary seller
+  // hosts, which next/image would reject without a wildcard remote allowlist.
+  priority?: boolean;
 }) {
   const [failed, setFailed] = React.useState(false);
   if (!src || failed) {
@@ -92,6 +98,9 @@ export function ProductThumb({
       src={src}
       alt={alt}
       onError={() => setFailed(true)}
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
+      decoding="async"
       className={cn("object-cover", className)}
     />
   );
@@ -253,9 +262,12 @@ export function RefundSummary({
 export function ProductCard({
   product,
   onAdd,
+  priority = false,
 }: {
   product: Product;
   onAdd?: (p: Product) => void;
+  // Pass true for above-the-fold cards (LCP). See ProductThumb.
+  priority?: boolean;
 }) {
   const discount =
     product.maxPrice && product.maxPrice > product.price
@@ -274,6 +286,7 @@ export function ProductCard({
         <ProductThumb
           src={product.image}
           alt={product.name}
+          priority={priority}
           className="h-full w-full"
         />
         {discount > 0 ? (

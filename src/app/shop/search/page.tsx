@@ -154,11 +154,12 @@ function SearchScreen() {
         )
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          {products.map((p) => (
+          {products.map((p, i) => (
             <ProductCard
               key={`${p.bppId}:${p.providerId}:${p.itemId}`}
               product={p}
               onAdd={addToCart}
+              priority={i < 4}
             />
           ))}
         </div>

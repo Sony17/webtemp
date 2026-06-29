@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Sparkles, ShieldCheck, Truck, BadgeIndianRupee } from "lucide-react";
 import { Card } from "@/components/shop/ui";
+import { RecentlyViewed } from "@/components/shop/RecentlyViewed";
 import { CATEGORIES } from "@/lib/shop/categories";
 
 export default function ShopHome() {
@@ -87,6 +88,9 @@ export default function ShopHome() {
           ))}
         </div>
       </section>
+
+      {/* Recently viewed */}
+      <RecentlyViewed />
 
       {/* Trust strip */}
       <section className="grid grid-cols-3 gap-3">
