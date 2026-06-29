@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/shop/cn";
 import { useShop } from "@/lib/shop/store";
+import { useTheme } from "@/lib/shop/theme";
+import { ThemeToggle } from "@/components/shop/ThemeToggle";
 
 const TABS = [
   { href: "/shop", label: "Home", icon: Home, exact: true },
@@ -50,15 +52,18 @@ function Header() {
             OpenIdea
           </span>
         </Link>
-        <div className="ml-auto text-right">
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            Deliver to
-          </p>
-          <p className="max-w-[140px] truncate text-xs font-medium">
-            {address?.areaCode
-              ? `${address.locality ?? address.city ?? ""} ${address.areaCode}`.trim()
-              : "Set location"}
-          </p>
+        <div className="ml-auto flex items-center gap-2">
+          <div className="text-right">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Deliver to
+            </p>
+            <p className="max-w-[140px] truncate text-xs font-medium">
+              {address?.areaCode
+                ? `${address.locality ?? address.city ?? ""} ${address.areaCode}`.trim()
+                : "Set location"}
+            </p>
+          </div>
+          <ThemeToggle />
         </div>
       </div>
     </header>
@@ -104,8 +109,14 @@ function BottomNav() {
 }
 
 export default function Chrome({ children }: { children: React.ReactNode }) {
+  const { theme } = useTheme();
   return (
-    <div className="shop-theme flex min-h-dvh flex-col bg-background text-foreground">
+    <div
+      className={cn(
+        "shop-theme flex min-h-dvh flex-col bg-background text-foreground",
+        theme === "dark" && "dark"
+      )}
+    >
       <Header />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-6 pt-4">
         {children}

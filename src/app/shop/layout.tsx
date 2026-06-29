@@ -5,6 +5,7 @@
 // + globals.css) so the SaaS pages are untouched.
 import type { Metadata } from "next";
 import { ShopProvider } from "@/lib/shop/store";
+import { ThemeProvider } from "@/lib/shop/theme";
 import Chrome from "@/components/shop/Chrome";
 
 export const metadata: Metadata = {
@@ -18,8 +19,10 @@ export default function ShopLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ShopProvider>
-      <Chrome>{children}</Chrome>
-    </ShopProvider>
+    <ThemeProvider>
+      <ShopProvider>
+        <Chrome>{children}</Chrome>
+      </ShopProvider>
+    </ThemeProvider>
   );
 }
