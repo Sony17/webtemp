@@ -8,12 +8,32 @@
 // action then poll /api/shop/state until the matching record lands.
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
-import { Button, Card, Input, Label, Separator } from "@/components/shop/ui";
+import {
+  MapPin,
+  Loader2,
+  CheckCircle2,
+  AlertTriangle,
+  Truck,
+  Store,
+  Bike,
+  Clock,
+} from "lucide-react";
+import { Button, Card, Input, Label, Separator, Textarea } from "@/components/shop/ui";
 import { EmptyState, QuoteSummary } from "@/components/shop/widgets";
 import { useShop, type Address } from "@/lib/shop/store";
-import { parseQuote, type ParsedQuote } from "@/lib/shop/types";
+import {
+  parseQuote,
+  parseFulfillmentOptions,
+  type ParsedQuote,
+  type FulfillmentOption,
+} from "@/lib/shop/types";
 import * as api from "@/lib/shop/api";
+
+const FULFILLMENT_ICON: Record<string, typeof Truck> = {
+  Delivery: Truck,
+  "Self-Pickup": Store,
+  "Buyer-Delivery": Bike,
+};
 
 type Step = "address" | "quoting" | "review" | "placing" | "error";
 
@@ -44,6 +64,9 @@ export default function CheckoutPage() {
     }
   );
   const [quote, setQuote] = React.useState<ParsedQuote | null>(null);
+  const [options, setOptions] = React.useState<FulfillmentOption[]>([]);
+  const [chosenFf, setChosenFf] = React.useState<FulfillmentOption | null>(null);
+  const [instructions, setInstructions] = React.useState(address?.instructions ?? "");
   const [error, setError] = React.useState<string | null>(null);
   const [statusMsg, setStatusMsg] = React.useState("");
 
@@ -83,7 +106,7 @@ export default function CheckoutPage() {
       return;
     }
     setError(null);
-    setAddress(form);
+    setAddress({ ...form, instructions: instructions.trim() || undefined });
     setStep("quoting");
     setStatusMsg("Requesting a quote from the seller…");
     try {
@@ -107,10 +130,15 @@ export default function CheckoutPage() {
         (s) => !!s.bpps.find((b) => b.bppId === cartBpp.bppId)?.quote,
         { intervalMs: 2000, maxMs: 25_000 }
       );
-      const q = parseQuote(
-        state.bpps.find((b) => b.bppId === cartBpp.bppId)?.quote
+      const quoteRecord = state.bpps.find((b) => b.bppId === cartBpp.bppId)?.quote;
+      setQuote(parseQuote(quoteRecord));
+      // Surface the seller's offered fulfillment options (Home delivery /
+      // Self-Pickup / Buyer-Delivery / slotted windows) for the buyer to choose.
+      const ffOptions = parseFulfillmentOptions(quoteRecord);
+      setOptions(ffOptions);
+      setChosenFf(
+        ffOptions.find((o) => o.type === "Delivery") ?? ffOptions[0] ?? null
       );
-      setQuote(q);
       setStep("review");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to get a quote.");
@@ -145,7 +173,13 @@ export default function CheckoutPage() {
           state: form.state,
           areaCode: form.areaCode,
         },
-        fulfillment,
+        // Bind to the buyer's chosen fulfillment option (id + type) from the
+        // on_select quote — covers Self-Pickup / Buyer-Delivery / slotted.
+        fulfillment: {
+          ...fulfillment,
+          ...(chosenFf ? { id: chosenFf.id, type: chosenFf.type as typeof fulfillment.type } : {}),
+        },
+        instructions: instructions.trim() || undefined,
       });
       if (initRes.status === "NACK") {
         throw new Error(initRes.error?.message ?? "Init was rejected.");
@@ -197,6 +231,8 @@ export default function CheckoutPage() {
         title,
         total: quote?.total ?? cartTotal,
         placedAt: Date.now(),
+        fulfillmentLabel: chosenFf?.category ?? chosenFf?.type,
+        instructions: instructions.trim() || undefined,
       });
 
       clearCart();
@@ -264,6 +300,49 @@ export default function CheckoutPage() {
             </button>
           </div>
         </Card>
+
+        {/* Fulfillment options offered by the seller (on_select) */}
+        {options.length > 0 ? (
+          <Card className="p-4">
+            <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
+              <Truck className="h-4 w-4" /> Delivery method
+            </h2>
+            <div className="space-y-2">
+              {options.map((o) => {
+                const Icon = FULFILLMENT_ICON[o.type] ?? Truck;
+                const active = chosenFf?.id === o.id;
+                return (
+                  <button
+                    key={o.id}
+                    onClick={() => setChosenFf(o)}
+                    className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+                      active
+                        ? "border-primary bg-accent/40 ring-1 ring-primary"
+                        : "border-border hover:bg-accent/30"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">{o.category}</p>
+                      <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                        {o.tat ? (
+                          <span className="inline-flex items-center gap-1">
+                            <Clock className="h-3 w-3" /> {o.tat}
+                          </span>
+                        ) : null}
+                        {o.slotLabel ? <span>Slot: {o.slotLabel}</span> : null}
+                        {o.slotted && !o.slotLabel ? <span>Scheduled</span> : null}
+                      </p>
+                    </div>
+                    {active ? (
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+        ) : null}
 
         <Card className="p-4">
           <h2 className="mb-3 text-sm font-semibold">Order summary</h2>
@@ -376,6 +455,13 @@ export default function CheckoutPage() {
             value={form.gps ?? ""}
             onChange={(e) => update("gps", e.target.value)}
             placeholder="12.9716,77.5946"
+          />
+        </Field>
+        <Field label="Delivery instructions (optional)" className="col-span-2">
+          <Textarea
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            placeholder="e.g. Leave at the door, call on arrival"
           />
         </Field>
       </div>

@@ -86,8 +86,8 @@ export function ProductThumb({
       </div>
     );
   }
-  // eslint-disable-next-line @next/next/no-img-element
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
       alt={alt}
@@ -164,6 +164,87 @@ export function QuoteSummary({
       <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
         <span className="font-semibold">To pay</span>
         <span className="text-lg font-semibold">{formatINR(quote.total)}</span>
+      </div>
+    </div>
+  );
+}
+
+export function Timeline({
+  events,
+}: {
+  events: import("@/lib/shop/types").TimelineEvent[];
+}) {
+  const tone: Record<string, string> = {
+    order: "bg-primary",
+    fulfillment: "bg-emerald-500",
+    cancel: "bg-destructive",
+    refund: "bg-amber-500",
+    return: "bg-amber-500",
+    replacement: "bg-blue-500",
+    rto: "bg-orange-500",
+  };
+  if (!events.length) {
+    return (
+      <p className="text-sm text-muted-foreground">No updates yet.</p>
+    );
+  }
+  return (
+    <div className="space-y-0">
+      {events.map((e, i) => (
+        <div key={i} className="flex gap-3">
+          <div className="flex flex-col items-center">
+            <span
+              className={cn(
+                "mt-1 h-2.5 w-2.5 shrink-0 rounded-full",
+                e.done ? tone[e.kind] ?? "bg-primary" : "bg-muted"
+              )}
+            />
+            {i < events.length - 1 ? (
+              <span className="my-0.5 w-px flex-1 bg-border" />
+            ) : null}
+          </div>
+          <div className="pb-4">
+            <p className="text-sm font-medium leading-tight">{e.label}</p>
+            {e.sublabel ? (
+              <p className="text-xs text-muted-foreground">{e.sublabel}</p>
+            ) : null}
+            {e.at ? (
+              <p className="text-[11px] text-muted-foreground">
+                {new Date(e.at).toLocaleString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function RefundSummary({
+  refund,
+}: {
+  refund: import("@/lib/shop/types").ParsedRefund;
+}) {
+  return (
+    <div>
+      <div className="space-y-1.5">
+        {refund.lines.map((l, i) => (
+          <div key={i} className="flex items-center justify-between text-sm">
+            <span className="capitalize text-muted-foreground">{l.title}</span>
+            <span>{formatINR(l.amount)}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+        <span className="font-semibold">Refund amount</span>
+        <span className="text-lg font-semibold text-emerald-600">
+          {formatINR(refund.total)}
+        </span>
       </div>
     </div>
   );

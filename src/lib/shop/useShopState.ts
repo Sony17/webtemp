@@ -25,15 +25,21 @@ export function useShopState(
   const [error, setError] = React.useState<string | null>(null);
   const [polling, setPolling] = React.useState(false);
 
-  // Keep the latest stopWhen without restarting the effect each render.
+  // Keep the latest stopWhen without restarting the polling effect each render.
+  // Written in an effect (not during render) to satisfy the refs rule.
   const stopRef = React.useRef(stopWhen);
-  stopRef.current = stopWhen;
+  React.useEffect(() => {
+    stopRef.current = stopWhen;
+  });
 
   React.useEffect(() => {
     if (!transactionId || !enabled) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const startedAt = Date.now();
+    // Flag the start of an external polling loop (network → store). This is the
+    // rule's documented "synchronize with an external system" case.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPolling(true);
 
     const tick = async () => {

@@ -73,8 +73,7 @@ export async function waitFor(
 ): Promise<ShopState> {
   const { intervalMs = 2000, maxMs = 30_000 } = opts;
   const start = Date.now();
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
+  for (;;) {
     let s: ShopState;
     try {
       s = await getState(transactionId);
@@ -95,17 +94,22 @@ export type SelectItem = {
   locationId?: string;
 };
 
+export type FulfillmentInput = {
+  // Pin the fulfillment id chosen from the on_select quote (Self-Pickup /
+  // Buyer-Delivery / a specific delivery slot bind to a fixed id).
+  id?: string;
+  type?: "Delivery" | "Self-Pickup" | "Buyer-Delivery";
+  gps?: string;
+  areaCode?: string;
+};
+
 export function select(body: {
   transactionId: string;
   bppId: string;
   bppUri: string;
   providerId: string;
   items: SelectItem[];
-  fulfillment?: {
-    type?: "Delivery" | "Self-Pickup" | "Buyer-Delivery";
-    gps?: string;
-    areaCode?: string;
-  };
+  fulfillment?: FulfillmentInput;
 }): Promise<AckEnvelope> {
   return postJSON<AckEnvelope>("/api/ondc/select", body);
 }
@@ -130,11 +134,11 @@ export function init(body: {
   providerId: string;
   items: SelectItem[];
   billing: Billing;
-  fulfillment?: {
-    type?: "Delivery" | "Self-Pickup" | "Buyer-Delivery";
-    gps?: string;
-    areaCode?: string;
-  };
+  fulfillment?: FulfillmentInput;
+  // Buyer delivery instructions. Threaded through the existing init route in a
+  // forward-compatible way (the route ignores unknown fields today); the buyer
+  // app also persists/displays it locally. No new endpoint is invented.
+  instructions?: string;
 }): Promise<AckEnvelope> {
   return postJSON<AckEnvelope>("/api/ondc/init", body);
 }

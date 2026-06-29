@@ -54,11 +54,14 @@ function SearchScreen() {
     [address, setTransactionId]
   );
 
-  // Fire the initial search from the ?q= seed once.
+  // Fire the initial search from the ?q= seed once. runSearch kicks off a
+  // network request (external system) and updates state from its result.
+  /* eslint-disable react-hooks/set-state-in-effect */
   React.useEffect(() => {
     if (initialQ) runSearch(initialQ);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQ]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Poll for catalogs for ~30s after a search; sellers answer over time.
   const { state, polling } = useShopState(txn, {

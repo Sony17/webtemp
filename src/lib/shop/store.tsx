@@ -21,6 +21,10 @@ export type OrderRef = {
   title: string; // e.g. "Basmati Rice +2 more"
   total: number;
   placedAt: number;
+  // Buyer-side choices captured at checkout (display only).
+  fulfillmentLabel?: string;
+  instructions?: string;
+  paymentMethod?: "PREPAID" | "COD";
 };
 
 export type Address = {
@@ -33,6 +37,8 @@ export type Address = {
   state?: string;
   areaCode?: string;
   gps?: string;
+  // Optional delivery instructions ("leave at door", "call on arrival").
+  instructions?: string;
 };
 
 type ShopContextValue = {
@@ -91,13 +97,19 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [transactionId, setTxnState] = React.useState<string | null>(null);
   const [orders, setOrders] = React.useState<OrderRef[]>([]);
 
-  // Hydrate once on mount (avoids SSR/client mismatch).
+  // Hydrate once on mount from localStorage (an external system) — done in an
+  // effect rather than a useState initializer so the server render stays empty
+  // and there's no hydration mismatch. This is the rule's documented exception
+  // (subscribing/reading from an external system), so the set-state-in-effect
+  // rule is intentionally suppressed for this one-shot hydration.
+  /* eslint-disable react-hooks/set-state-in-effect */
   React.useEffect(() => {
     setLines(load<CartLine[]>(LS_CART, []));
     setAddressState(load<Address | null>(LS_ADDRESS, null));
     setTxnState(load<string | null>(LS_TXN, null));
     setOrders(load<OrderRef[]>(LS_ORDERS, []));
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   React.useEffect(() => save(LS_CART, lines), [lines]);
 

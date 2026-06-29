@@ -24,7 +24,10 @@ export default function AccountPage() {
   );
   const [saved, setSaved] = React.useState(false);
 
+  // Sync the form once the store hydrates the saved address from localStorage
+  // (an external system that resolves after the first client render).
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (address) setForm(address);
   }, [address]);
 
