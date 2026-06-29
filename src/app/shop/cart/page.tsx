@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { Trash2, ShoppingCart, Store } from "lucide-react";
 import { Button, Card, Separator } from "@/components/shop/ui";
 import { EmptyState, ProductThumb, QuantityStepper } from "@/components/shop/widgets";
+import { AnimatedNumber } from "@/components/shop/motion";
 import { useShop } from "@/lib/shop/store";
 import { formatINR } from "@/lib/shop/cn";
 
@@ -112,7 +113,11 @@ export default function CartPage() {
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
           <div>
             <p className="text-xs text-muted-foreground">Total</p>
-            <p className="text-base font-semibold">{formatINR(cartTotal)}</p>
+            <AnimatedNumber
+              value={cartTotal}
+              format={(v) => formatINR(v)}
+              className="text-base font-semibold"
+            />
           </div>
           <Button className="flex-1" onClick={() => router.push("/shop/checkout")}>
             Proceed to checkout

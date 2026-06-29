@@ -13,6 +13,7 @@ import { EmptyState, ProductCard, Spinner } from "@/components/shop/widgets";
 import { ErrorState } from "@/components/shop/ErrorState";
 import { ProductGridSkeleton } from "@/components/shop/Skeletons";
 import { FilterSheet } from "@/components/shop/Filters";
+import { Stagger, StaggerItem } from "@/components/shop/motion";
 import { useShop } from "@/lib/shop/store";
 import { useShopState } from "@/lib/shop/useShopState";
 import {
@@ -186,16 +187,13 @@ function SearchScreen() {
           }
         />
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <Stagger className="grid grid-cols-2 gap-3">
           {shown.map((p, i) => (
-            <ProductCard
-              key={`${p.bppId}:${p.providerId}:${p.itemId}`}
-              product={p}
-              onAdd={addToCart}
-              priority={i < 4}
-            />
+            <StaggerItem key={`${p.bppId}:${p.providerId}:${p.itemId}`}>
+              <ProductCard product={p} onAdd={addToCart} priority={i < 4} />
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
       )}
     </div>
   );
