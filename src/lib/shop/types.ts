@@ -260,6 +260,26 @@ export function priceCeiling(products: Product[]): number {
   return Math.max(100, Math.ceil(max / 50) * 50);
 }
 
+// Case-insensitive relevance match of the live catalog against the user's search
+// query. ONDC sellers answer a `search` intent with their FULL catalog (the
+// network doesn't guarantee item-level matching), so the buyer app narrows the
+// results client-side. A product matches when EVERY query token appears (as a
+// substring) somewhere across its searchable fields, so a multi-word query like
+// "basmati rice" still matches "Rice — Basmati" regardless of word order.
+// Matched on: product name + descriptor (primary), category id + seller/provider
+// name (secondary). An empty query is a no-op (returns the input unchanged).
+export function filterByQuery(products: Product[], query: string): Product[] {
+  const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return products;
+  return products.filter((p) => {
+    const haystack = [p.name, p.description, p.categoryId, p.providerName]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return tokens.every((t) => haystack.includes(t));
+  });
+}
+
 // Pure client-side filter + sort over the parsed ONDC catalog. No mock logic:
 // it only uses fields ONDC reliably provides (price). "relevance" preserves the
 // order sellers returned.

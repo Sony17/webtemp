@@ -18,6 +18,7 @@ import { useShop } from "@/lib/shop/store";
 import { useShopState } from "@/lib/shop/useShopState";
 import {
   parseCatalogs,
+  filterByQuery,
   filterAndSortProducts,
   priceCeiling,
   type Product,
@@ -32,6 +33,10 @@ function SearchScreen() {
   const { address, addToCart, setTransactionId } = useShop();
 
   const [q, setQ] = React.useState(initialQ);
+  // The query that the CURRENT results are filtered against — set when a search
+  // actually fires (not on every keystroke), so editing the box without
+  // submitting doesn't re-filter the visible catalog mid-type.
+  const [activeQuery, setActiveQuery] = React.useState(initialQ.trim());
   const [txn, setTxn] = React.useState<string | null>(null);
   const [searching, setSearching] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -41,6 +46,7 @@ function SearchScreen() {
     async (query: string) => {
       const trimmed = query.trim();
       if (!trimmed) return;
+      setActiveQuery(trimmed);
       setSearching(true);
       setError(null);
       setTxn(null);
@@ -85,10 +91,16 @@ function SearchScreen() {
     () => (state ? parseCatalogs(state.catalogs) : []),
     [state]
   );
-  const ceiling = React.useMemo(() => priceCeiling(products), [products]);
+  // Narrow the seller's full catalog to the user's query FIRST (ONDC returns the
+  // whole catalog), THEN apply the price/sort filters on top of the matches.
+  const matched = React.useMemo(
+    () => filterByQuery(products, activeQuery),
+    [products, activeQuery]
+  );
+  const ceiling = React.useMemo(() => priceCeiling(matched), [matched]);
   const shown = React.useMemo(
-    () => filterAndSortProducts(products, filters),
-    [products, filters]
+    () => filterAndSortProducts(matched, filters),
+    [matched, filters]
   );
   const sellerCount = state
     ? new Set(state.catalogs.map((c) => c.bppId)).size
@@ -170,6 +182,20 @@ function SearchScreen() {
             icon={<SearchX className="h-7 w-7" />}
             title="No results yet"
             description="No sellers returned a catalog for this search. Try a different term or check your delivery location."
+          />
+        )
+      ) : matched.length === 0 ? (
+        // Sellers responded, but nothing in their catalogs matches the query.
+        // Keep showing the skeleton while more sellers may still answer; once
+        // polling stops, show a definitive "No products found" instead of the
+        // unmatched full catalog.
+        polling ? (
+          <ProductGridSkeleton />
+        ) : (
+          <EmptyState
+            icon={<SearchX className="h-7 w-7" />}
+            title="No products found"
+            description={`No products matched "${activeQuery}". Try a different search term.`}
           />
         )
       ) : shown.length === 0 ? (
