@@ -46,7 +46,7 @@ import {
   buildRefundUpdate,
   buildReturnUpdate,
   buildReplacementUpdate,
-  type ReplacementState,
+  buildInstructionsUpdate,
 } from "@/lib/ondc/update-builders";
 
 // ONDC signing uses node:crypto (via auth.ts), and the whole ondc/* stack is
@@ -101,8 +101,10 @@ type UpdateRequestBody = {
     itemId?: string;
     quantity?: number;
     reasonId?: string;
-    state?: string;
+    reasonDesc?: string;
     images?: string[];
+    ttlApproval?: string;
+    ttlReverseqc?: string;
   };
   replacement?: {
     orderId?: string;
@@ -110,7 +112,19 @@ type UpdateRequestBody = {
     itemId?: string;
     quantity?: number;
     reasonId?: string;
-    state?: string;
+    reasonDesc?: string;
+    images?: string[];
+    ttlApproval?: string;
+    ttlReverseqc?: string;
+  };
+  // Buyer instructions / delivery update (contract 011): fulfillment.end.
+  // instructions.{ long_desc, additional_desc:{ content_type, url } }.
+  instructions?: {
+    orderId?: string;
+    fulfillmentId?: string;
+    longDesc?: string;
+    additionalDescUrl?: string;
+    additionalDescContentType?: "text/html" | "text/plain";
   };
 };
 
@@ -235,8 +249,10 @@ async function resolvePhaseBUpdate(
       itemId: str(body.return.itemId),
       quantity: body.return.quantity,
       reasonId: str(body.return.reasonId),
-      state: str(body.return.state),
+      reasonDesc: str(body.return.reasonDesc),
       images: body.return.images,
+      ttlApproval: str(body.return.ttlApproval),
+      ttlReverseqc: str(body.return.ttlReverseqc),
     });
     return { ok: true, message, meta: { mode: "return" } };
   }
@@ -265,9 +281,46 @@ async function resolvePhaseBUpdate(
       itemId: str(body.replacement.itemId),
       quantity: body.replacement.quantity,
       reasonId: str(body.replacement.reasonId),
-      state: str(body.replacement.state) as ReplacementState | undefined,
+      reasonDesc: str(body.replacement.reasonDesc),
+      images: body.replacement.images,
+      ttlApproval: str(body.replacement.ttlApproval),
+      ttlReverseqc: str(body.replacement.ttlReverseqc),
     });
     return { ok: true, message, meta: { mode: "replacement" } };
+  }
+
+  // Buyer instructions / delivery update (fulfillment.end.instructions).
+  if (body.instructions) {
+    const orderId = str(body.instructions.orderId);
+    const fulfillmentId = str(body.instructions.fulfillmentId);
+    if (!orderId) {
+      return {
+        ok: false,
+        status: 400,
+        reason: "'instructions.orderId' is required.",
+      };
+    }
+    if (!fulfillmentId) {
+      return {
+        ok: false,
+        status: 400,
+        reason: "'instructions.fulfillmentId' is required.",
+      };
+    }
+    const contentType =
+      body.instructions.additionalDescContentType === "text/html"
+        ? "text/html"
+        : body.instructions.additionalDescContentType === "text/plain"
+          ? "text/plain"
+          : undefined;
+    const message = buildInstructionsUpdate({
+      orderId,
+      fulfillmentId,
+      longDesc: str(body.instructions.longDesc),
+      additionalDescUrl: str(body.instructions.additionalDescUrl),
+      additionalDescContentType: contentType,
+    });
+    return { ok: true, message, meta: { mode: "instructions" } };
   }
 
   return null;

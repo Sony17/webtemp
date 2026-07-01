@@ -628,7 +628,11 @@ export function buildIssueV1(params: {
       },
       source: {
         network_participant_id: params.bapId,
-        type: "INTERFACING_NP",
+        // IGM v1.0.0: when the buyer raises the complaint, source.type is
+        // "CONSUMER" (spec enum CONSUMER/SELLER/INTERFACING NP; every buyer-raised
+        // example uses CONSUMER). The BAP is the interfacing NP but the SOURCE of
+        // the complaint is the consumer.
+        type: "CONSUMER",
       },
       expected_response_time: { duration: params.responseDuration ?? "PT1H" },
       expected_resolution_time: {

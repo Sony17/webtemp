@@ -155,52 +155,52 @@ function buildSearchMessage(input: {
   incrementalStart?: string;
   incrementalMode?: "start" | "stop";
 }): OndcSearchMessage {
+  // bap_terms is published on EVERY search. bap_features is added ONLY on a
+  // NON-incremental search: the RET10 1.2.5 "Incremental catalog refresh"
+  // examples carry only `catalog_inc` (+ bap_terms) and NO bap_features. Sending
+  // bap_features on an incremental refresh diverges from the contract's own
+  // incremental payloads, so it is omitted there. (Contract §"Incremental
+  // catalog refresh", api-contract examples at pull/push/stop.)
+  const tags: NonNullable<OndcSearchIntent["tags"]> = [
+    {
+      code: "bap_terms",
+      list: [
+        { code: "static_terms", value: "" },
+        { code: "static_terms_new", value: BAP_STATIC_TERMS_NEW },
+        { code: "effective_date", value: BAP_TERMS_EFFECTIVE_DATE },
+      ],
+    },
+  ];
+  if (!input.incremental) {
+    tags.push({ code: "bap_features", list: BAP_FEATURES });
+  }
+
   const intent: OndcSearchIntent = {
     payment: {
       "@ondc/org/buyer_app_finder_fee_type": FINDER_FEE_TYPE,
       "@ondc/org/buyer_app_finder_fee_amount": FINDER_FEE_AMOUNT,
     },
-    // Publish the BAP's transaction-level tags on every search, as required by
-    // RET10 1.2.5. Two groups are emitted (per ONDC guidance 2026-06-16):
-    //   1. bap_terms    — the BAP's static terms (unchanged).
-    //   2. bap_features — the optional protocol features this BAP supports
-    //                     (see BAP_FEATURES above for codes + provenance).
-    // No other tag groups are added.
-    tags: [
-      {
-        code: "bap_terms",
-        list: [
-          { code: "static_terms", value: "" },
-          { code: "static_terms_new", value: BAP_STATIC_TERMS_NEW },
-          { code: "effective_date", value: BAP_TERMS_EFFECTIVE_DATE },
-        ],
-      },
-      {
-        code: "bap_features",
-        list: BAP_FEATURES,
-      },
-    ],
+    tags,
   };
 
-  // Incremental refresh: append the RET10 1.2.5 `catalog_inc` tag group so the
-  // request is treated as a delta refresh instead of a full-catalog pull. The
-  // window is [start_time, now]; start defaults to now - 1h when not supplied.
+  // Incremental refresh: append a MODE-AWARE `catalog_inc` group and RETURN —
+  // a delta refresh carries NO discovery intent (no item / category /
+  // fulfillment) per the contract's incremental examples. Per the RET10 1.2.5
+  // "Incremental catalog refresh" section:
+  //   - mode "start" (push): list = [{mode:"start"}]; start_time is OPTIONAL and
+  //     defaults to Context.timestamp — so it is sent only when explicitly given.
+  //   - mode "stop":         list = [{mode:"stop"}].
+  // start_time/end_time are NOT sent for a mode-based push/stop refresh (they
+  // belong only to the separate 1-time "pull" scenario, which this BAP does not
+  // drive from the Workbench incremental flow).
   if (input.incremental) {
-    const end = new Date();
-    const start = input.incrementalStart
-      ? input.incrementalStart
-      : new Date(end.getTime() - 60 * 60 * 1000).toISOString();
-    // `mode` (start/stop) was missing (QA #18) — START opens the delta window,
-    // STOP closes it. Default to "start" for a one-shot incremental pull.
     const mode = input.incrementalMode ?? "start";
-    intent.tags!.push({
-      code: "catalog_inc",
-      list: [
-        { code: "mode", value: mode },
-        { code: "start_time", value: start },
-        { code: "end_time", value: end.toISOString() },
-      ],
-    });
+    const list: { code: string; value: string }[] = [{ code: "mode", value: mode }];
+    if (mode === "start" && input.incrementalStart) {
+      list.push({ code: "start_time", value: input.incrementalStart });
+    }
+    intent.tags!.push({ code: "catalog_inc", list });
+    return { intent };
   }
 
   // ONDC RET10 1.2.5 rejects an intent that carries BOTH `item` and `category`
@@ -277,8 +277,10 @@ export async function POST(req: Request) {
     body.incrementalMode === "stop" ? "stop" : "start";
 
   // Require at least one discovery criterion — a broadcast with an empty intent
-  // is a misuse (and would flood the network for nothing).
-  if (!query && !category) {
+  // is a misuse (and would flood the network for nothing). An INCREMENTAL (delta)
+  // refresh is mode/time based and carries no discovery criterion, so the
+  // query/category requirement applies only to a normal search.
+  if (!incremental && !query && !category) {
     return NextResponse.json(
       { error: "At least one of 'query' or 'category' is required." },
       { status: 400 }

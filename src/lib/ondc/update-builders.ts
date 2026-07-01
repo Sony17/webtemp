@@ -83,6 +83,40 @@ export function calculateRefundAmount(fulfillments: unknown): RefundAmount {
   return { currency, value: Math.abs(total).toFixed(2), trail };
 }
 
+// Extract the reverse fulfillment(s) being refunded — those carrying the refund
+// `quote_trail` — as BARE { id, type } for the refund /update's
+// order.fulfillments. The contract names only the reverse leg, e.g.
+// [{id:"R1",type:"Return"}] (return-refund) or [{id:"C1",type:"Cancel"}]
+// (cancel-refund), with NO tags echoed. Falls back to every id-bearing
+// fulfillment when none carry a quote_trail, so the required `fulfillments`
+// attribute is still present.
+function extractReverseFulfillments(
+  fulfillments: unknown
+): Array<{ id: string; type?: string }> {
+  if (!Array.isArray(fulfillments)) return [];
+  const withTrail: Array<{ id: string; type?: string }> = [];
+  const all: Array<{ id: string; type?: string }> = [];
+  for (const f of fulfillments) {
+    if (!f || typeof f !== "object") continue;
+    const o = f as { id?: unknown; type?: unknown; tags?: unknown };
+    const id = typeof o.id === "string" ? o.id : undefined;
+    if (!id) continue;
+    const type = typeof o.type === "string" ? o.type : undefined;
+    const bare = type ? { id, type } : { id };
+    all.push(bare);
+    const hasQuoteTrail =
+      Array.isArray(o.tags) &&
+      o.tags.some(
+        (t) =>
+          t &&
+          typeof t === "object" &&
+          (t as { code?: unknown }).code === "quote_trail"
+      );
+    if (hasQuoteTrail) withTrail.push(bare);
+  }
+  return withTrail.length > 0 ? withTrail : all;
+}
+
 // ---------------------------------------------------------------------------
 // Refund update (RTO / part-cancel / return settlement) — QA #10, #11, #13
 // ---------------------------------------------------------------------------
@@ -107,26 +141,29 @@ export function buildRefundUpdate(params: {
   const s = params.settlement ?? {};
 
   const settlementDetail: Record<string, unknown> = {
-    settlement_counterparty: "buyer-app",
+    settlement_counterparty: "buyer",
     settlement_phase: "refund",
     settlement_type: s.type ?? "upi",
     settlement_amount: refund.value,
-    settlement_status: "PAID",
     settlement_timestamp: params.timestamp,
-    ...(s.reference ? { settlement_reference: s.reference } : {}),
     ...(s.upiAddress ? { upi_address: s.upiAddress } : {}),
   };
 
-  // The refund settlement update carries ONLY the payment settlement. The
-  // fulfillments are NOT echoed back: the BPP's /update schema restricts
-  // fulfillments[].tags[].code to a fixed set (return_request, cancel_request,
-  // update_state, update_fulfillment_time, …) that EXCLUDES `quote_trail`, so
-  // echoing the on_cancel/on_update fulfillments is rejected with
-  // FULFILLMENTS_TAGS_VALID_TAGS. We read `quote_trail` only to COMPUTE the
-  // refund amount (above) — the trail itself stays on the BPP's side.
+  // Contract "settlement trail for refund initiation": the refund /update carries
+  // the payment settlement in the SINGULAR `payment` object (not `payments[]`),
+  // and names the reverse fulfillment(s) being refunded in `order.fulfillments`
+  // as BARE { id, type } — no tags. We derive those from the on_cancel/on_update
+  // fulfillments that carry the refund `quote_trail` (the same source the amount
+  // is computed from). The bare shape avoids echoing quote_trail tags (which the
+  // BPP rejects with FULFILLMENTS_TAGS_VALID_TAGS) while still including the
+  // required `fulfillments` attribute (QA: "fulfillment attribute is missing").
+  // `settlement_status` is NOT part of the contract settlement_details object and
+  // is dropped (QA: "Some additional settlement_details are given").
+  const reverse = extractReverseFulfillments(params.fulfillments);
   const order: Record<string, unknown> = {
     id: params.orderId,
-    payments: [{ "@ondc/org/settlement_details": [settlementDetail] }],
+    ...(reverse.length > 0 ? { fulfillments: reverse } : {}),
+    payment: { "@ondc/org/settlement_details": [settlementDetail] },
   };
 
   return { message: { update_target: "payment", order }, refund };
@@ -136,19 +173,29 @@ export function buildRefundUpdate(params: {
 // Return request update — QA #12
 // ---------------------------------------------------------------------------
 
-// Build the return-request `update`. Per the contract a return update carries
-// ONLY the return fulfillment (state + return_request tag) — NOT `order.items`
-// (QA #12). State defaults to "Return_Initiated"; later transitions
-// (Return_Approved / Return_Picked / Liquidated / Return_Delivered) are driven
-// by passing `state`.
+// Build the return-request `update`. Per the RET10 1.2.5 "Return with pickup"
+// contract the message is:
+//   update_target: "item"
+//   order.fulfillments: [ { type:"Return", tags:[{ code:"return_request", list:[
+//     id, item_id, item_quantity, reason_id, reason_desc, images(CSV),
+//     ttl_approval, ttl_reverseqc ] }] } ]
+// The request fulfillment carries NO `id` and NO `state` — the BPP creates the
+// return fulfillment (same id as the return-request id) and owns its state on
+// on_update. `reason_desc`/`ttl_approval`/`ttl_reverseqc` are contract-mandatory;
+// the two TTLs default to the contract example values when not supplied.
 export function buildReturnUpdate(params: {
   orderId: string;
-  fulfillmentId: string;
+  fulfillmentId: string; // = the return-request id (contract "id" = R1)
   itemId?: string;
   quantity?: number;
   reasonId?: string;
-  state?: string;
+  reasonDesc?: string;
   images?: string[];
+  ttlApproval?: string;
+  ttlReverseqc?: string;
+  // Internal: when true, append the replace="yes" entry — a replacement request
+  // is a return_request + replace=yes (see buildReplacementUpdate).
+  replace?: boolean;
 }): UpdateMessage {
   const list: OndcTagEntry[] = [{ code: "id", value: params.fulfillmentId }];
   if (params.itemId) list.push({ code: "item_id", value: params.itemId });
@@ -156,20 +203,29 @@ export function buildReturnUpdate(params: {
     list.push({ code: "item_quantity", value: String(params.quantity) });
   }
   if (params.reasonId) list.push({ code: "reason_id", value: params.reasonId });
+  // Contract-mandatory buyer comment; threaded from the buyer when available.
+  list.push({
+    code: "reason_desc",
+    value: params.reasonDesc ?? "Return requested",
+  });
   if (params.images && params.images.length > 0) {
+    // Contract shows `images` as a comma-separated string ("url1,url2").
     list.push({ code: "images", value: params.images.join(",") });
   }
+  // Protocol TTLs — approve/reject window and reverse-QC window (contract-mandatory).
+  list.push({ code: "ttl_approval", value: params.ttlApproval ?? "PT24H" });
+  list.push({ code: "ttl_reverseqc", value: params.ttlReverseqc ?? "P3D" });
+  if (params.replace) list.push({ code: "replace", value: "yes" });
 
   return {
-    update_target: "fulfillment",
+    update_target: "item",
     order: {
       id: params.orderId,
-      // NO `items` — a return update carries only the return fulfillment.
+      // NO `items`; the request fulfillment carries only `type` + the
+      // return_request tag (no id/state — the BPP owns those on on_update).
       fulfillments: [
         {
-          id: params.fulfillmentId,
           type: "Return",
-          state: { descriptor: { code: params.state ?? "Return_Initiated" } },
           tags: [{ code: "return_request", list }],
         },
       ],
@@ -181,54 +237,62 @@ export function buildReturnUpdate(params: {
 // Replacement request update — QA #14, #15
 // ---------------------------------------------------------------------------
 
-// The replacement lifecycle states, in protocol order. A refund is NOT emitted
-// as part of a replacement — replacement substitutes the item; a refund only
-// follows later IF the replacement is rejected/cancelled (a separate refund
-// update), so this builder never carries settlement details (QA #14).
-//
-// A replacement is INITIATED with a `return_request` tag, not a
-// "replacement_request" tag: the BPP's /update schema restricts
-// fulfillments[].tags[].code to a fixed set (return_request, cancel_request,
-// update_state, …) that has no replacement-specific code, and QA #15 specifies
-// replacement is raised via an "update with return request". The seller then
-// resolves that request as a replacement (the substitute item is delivered),
-// which is why no refund is sent.
-export type ReplacementState =
-  | "Replacement_Requested"
-  | "Replacement_Approved"
-  | "Replacement_Completed"
-  | "Replacement_Rejected";
-
+// A replacement is raised as a RETURN request carrying an extra replace="yes"
+// entry (contract "Replacement flow" 00B — "/update - add 'replace' in
+// return_request"): SAME update_target "item", SAME fulfillment type "Return",
+// SAME return_request tag list as a return, plus { code:"replace", value:"yes" }
+// (contract footnotes 1110/1111). The seller resolves it as a replacement (a new
+// item is delivered after pickup) instead of a refund — so NO settlement/refund
+// is emitted at initiation. There is no "Replacement" fulfillment type and no
+// replacement `state` on the request (the BPP owns fulfillment state on
+// on_update), so this builder is exactly the return builder + replace=yes.
 export function buildReplacementUpdate(params: {
   orderId: string;
   fulfillmentId: string;
   itemId?: string;
   quantity?: number;
   reasonId?: string;
-  state?: ReplacementState;
+  reasonDesc?: string;
+  images?: string[];
+  ttlApproval?: string;
+  ttlReverseqc?: string;
 }): UpdateMessage {
-  const list: OndcTagEntry[] = [{ code: "id", value: params.fulfillmentId }];
-  if (params.itemId) list.push({ code: "item_id", value: params.itemId });
-  if (params.quantity != null) {
-    list.push({ code: "item_quantity", value: String(params.quantity) });
-  }
-  if (params.reasonId) list.push({ code: "reason_id", value: params.reasonId });
+  return buildReturnUpdate({ ...params, replace: true });
+}
 
+// ---------------------------------------------------------------------------
+// Buyer instructions update — contract "Buyer instructions" (011)
+// ---------------------------------------------------------------------------
+
+// Build the buyer-instructions `update`. Per contract the buyer communicates
+// delivery instructions via update_target "fulfillment", at
+// order.fulfillments[].end.instructions.{ long_desc, additional_desc:{
+// content_type, url } }. content_type is an enum ("text/html" | "text/plain");
+// the url should remain accessible to the SNP until the fulfillment state is
+// "Order-delivered" (contract footnotes 1145/1146).
+export function buildInstructionsUpdate(params: {
+  orderId: string;
+  fulfillmentId: string;
+  longDesc?: string;
+  additionalDescUrl?: string;
+  additionalDescContentType?: "text/html" | "text/plain";
+}): UpdateMessage {
+  const instructions: Record<string, unknown> = {};
+  if (params.longDesc) instructions.long_desc = params.longDesc;
+  if (params.additionalDescUrl) {
+    instructions.additional_desc = {
+      content_type: params.additionalDescContentType ?? "text/plain",
+      url: params.additionalDescUrl,
+    };
+  }
   return {
     update_target: "fulfillment",
     order: {
       id: params.orderId,
-      // NO payments/settlement — replacement does not refund immediately.
       fulfillments: [
         {
           id: params.fulfillmentId,
-          type: "Replacement",
-          state: {
-            descriptor: { code: params.state ?? "Replacement_Requested" },
-          },
-          // `return_request` is the allowed reverse-logistics request tag; the
-          // seller resolves it as a replacement (see type note above).
-          tags: [{ code: "return_request", list }],
+          end: { instructions },
         },
       ],
     },

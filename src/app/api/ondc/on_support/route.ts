@@ -391,6 +391,8 @@ export async function POST(req: Request) {
   );
 
   // (f) Accept. The contact channels are now available for a buyer UI to read by
-  // transaction_id / bpp_id.
-  return ack(trace);
+  // transaction_id / bpp_id. Echo the inbound context (like every other callback
+  // and like this route's own replay-ACK at the idempotency branch above) so the
+  // ONDC log validator does not grade the success ACK as "context missing".
+  return ack(trace, ctx);
 }

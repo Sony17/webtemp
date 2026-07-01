@@ -62,12 +62,17 @@ type CancelRequestBody = {
   bppUri?: string;
   orderId?: string;
   cancellationReasonId?: string;
-  // Force-cancellation flag (QA #17). When true, the cancel message carries the
-  // ONDC `force=yes` tag so the BPP cancels without the usual confirmation
-  // handshake. Defaults to a normal (non-force) cancel.
+  // Force-cancellation flag. When true, the cancel message carries the ONDC
+  // `params` tag group (force=yes + ttl_response) INSIDE message.descriptor, per
+  // the RET10 1.2.5 "Force cancellation" contract. Defaults to a normal cancel.
   force?: boolean;
-  // Opaque pass-through: ONDC's descriptor (short_desc / tags / …). We don't
-  // shape it here — whatever the client sends is forwarded as-is.
+  // TAT for a valid cancellation response (ISO8601 Duration) — the
+  // `ttl_response` entry of the force `params` group. Optional; defaults to the
+  // contract's example value "PT1H".
+  ttlResponse?: string;
+  // Opaque pass-through: ONDC's descriptor (name / short_desc / tags / …). We
+  // don't shape it here — whatever the client sends is forwarded as-is (and, for
+  // a force cancel, the `params` tag group is merged into it).
   descriptor?: unknown;
 };
 
@@ -78,14 +83,14 @@ type OndcTag = {
 };
 
 // The cancel message in ONDC's snake_case wire shape: the order to cancel, the
-// reason code, an optional descriptor, and — only for a force cancel — the
-// `force` tag. `descriptor`/`tags` are omitted from the wire body entirely when
-// not applicable (rather than sent as null/empty).
+// reason code, and an optional descriptor. For a force cancel the `params` tag
+// group (force + ttl_response) is carried INSIDE `descriptor.tags` per contract
+// — there is no message-level `tags`. `descriptor` is omitted from the wire body
+// entirely when not applicable (rather than sent as null/empty).
 type OndcCancelMessage = {
   order_id: string;
   cancellation_reason_id: string;
   descriptor?: unknown;
-  tags?: OndcTag[];
 };
 
 // ---------------------------------------------------------------------------
@@ -193,20 +198,48 @@ export async function POST(req: Request) {
     bppUri,
   });
 
-  // The cancel message: the order id, the reason code, and — only when supplied —
-  // the descriptor. Omit descriptor entirely when absent rather than sending null.
-  // For a force cancel (QA #17) attach the ONDC `force=yes` tag; a normal cancel
-  // omits the tag entirely.
+  // The cancel message: the order id, the reason code, and — when applicable —
+  // the descriptor.
   const message: OndcCancelMessage = {
     order_id: orderId,
     cancellation_reason_id: cancellationReasonId,
-    ...(body.descriptor !== undefined && body.descriptor !== null
-      ? { descriptor: body.descriptor }
-      : {}),
-    ...(body.force === true
-      ? { tags: [{ code: "force", list: [{ code: "force", value: "yes" }] }] }
-      : {}),
   };
+
+  // Caller-supplied descriptor (opaque). For a fulfillment-level cancel this
+  // carries { name:"fulfillment", short_desc:<fulfillment id> } (contract
+  // footnotes 692/693); for an order-level cancel it may be absent.
+  const callerDescriptor =
+    body.descriptor !== undefined &&
+    body.descriptor !== null &&
+    typeof body.descriptor === "object" &&
+    !Array.isArray(body.descriptor)
+      ? (body.descriptor as Record<string, unknown>)
+      : undefined;
+
+  if (body.force === true) {
+    // Force cancellation (contract "Force cancellation"): the `params` tag group
+    // — carrying force="yes" and the ttl_response TAT — is attached INSIDE
+    // message.descriptor.tags (NOT at the message level). Merge into any caller
+    // descriptor, preserving its existing name/short_desc/tags.
+    const base = callerDescriptor ? { ...callerDescriptor } : {};
+    const existingTags = Array.isArray((base as { tags?: unknown }).tags)
+      ? ((base as { tags?: unknown }).tags as OndcTag[])
+      : [];
+    const paramsTag: OndcTag = {
+      code: "params",
+      list: [
+        { code: "force", value: "yes" },
+        { code: "ttl_response", value: str(body.ttlResponse) ?? "PT1H" },
+      ],
+    };
+    message.descriptor = { ...base, tags: [...existingTags, paramsTag] };
+  } else if (callerDescriptor !== undefined) {
+    // Non-force cancel: forward the caller's descriptor verbatim when present.
+    message.descriptor = callerDescriptor;
+  } else if (body.descriptor !== undefined && body.descriptor !== null) {
+    // Preserve prior behaviour for a non-object descriptor passthrough.
+    message.descriptor = body.descriptor;
+  }
 
   // Directed at the chosen BPP's /cancel — NOT the gateway. The transport stays
   // dumb about routing; we own the URL here (context.ts encodes the broadcast-vs-

@@ -111,6 +111,11 @@ type InitItem = {
   id: string;
   quantity: number;
   locationId?: string;
+  // Optional item-level tags forwarded opaquely — the Commercial Model (00A)
+  // requires the BNP to send the selected SNP-commercial option in /init as
+  // items[].tags:[{code:"np_fees",list:[{code:"id",value:<optionId>}]}]. Mirrors
+  // select's item tags passthrough.
+  tags?: unknown[];
 };
 
 // Validated billing details (init-specific). name + phone are the minimum a BPP
@@ -138,6 +143,8 @@ type OndcInitOrder = {
     quantity: { count: number };
     location_id?: string;
     fulfillment_id?: string;
+    // Item tags forwarded opaquely (Commercial Model np_fees selection, etc.).
+    tags?: unknown[];
   }>;
   billing: {
     name: string;
@@ -209,7 +216,12 @@ function validateItems(
 
   const items: InitItem[] = [];
   for (let i = 0; i < raw.length; i++) {
-    const entry = raw[i] as { id?: unknown; quantity?: unknown; locationId?: unknown };
+    const entry = raw[i] as {
+      id?: unknown;
+      quantity?: unknown;
+      locationId?: unknown;
+      tags?: unknown;
+    };
     const id = str(entry?.id);
     if (!id) {
       return { ok: false, reason: `items[${i}].id is required.` };
@@ -222,7 +234,15 @@ function validateItems(
       };
     }
     const locationId = str(entry?.locationId);
-    items.push({ id, quantity, ...(locationId ? { locationId } : {}) });
+    // Pass item tags through opaquely when present (Commercial Model np_fees,
+    // etc.). We never synthesise them — only forward what the caller sends.
+    const tags = Array.isArray(entry?.tags) ? entry.tags : undefined;
+    items.push({
+      id,
+      quantity,
+      ...(locationId ? { locationId } : {}),
+      ...(tags ? { tags } : {}),
+    });
   }
 
   return { ok: true, items };
@@ -385,6 +405,9 @@ function buildInitMessage(input: {
       quantity: { count: it.quantity },
       ...(it.locationId ? { location_id: it.locationId } : {}),
       fulfillment_id: fulfillmentId,
+      // Commercial Model (00A): forward the selected np_fees option tag when the
+      // caller threads it from the on_select/on_init quote.
+      ...(it.tags ? { tags: it.tags } : {}),
     })),
     billing: {
       name: input.billing.name,
