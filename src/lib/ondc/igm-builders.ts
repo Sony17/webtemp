@@ -102,6 +102,10 @@ export type IssueActionRow = {
   updated_at: string;
   action_by: string;
   actor_details: { name: string };
+  // QA: an INFO_PROVIDED action references the seller's INFO_REQUESTED via
+  // ref_id and carries the supporting images inline on the action itself.
+  ref_id?: string;
+  images?: IssueImage[];
 };
 
 export type IssueV2Message = {
@@ -270,7 +274,8 @@ export function buildRefs(params: {
   return [
     { ref_id: params.orderId, ref_type: "ORDER" },
     { ref_id: params.providerId, ref_type: "PROVIDER" },
-    { ref_id: params.transactionId, ref_type: "TRANSACTION_ID" },
+    // QA: the TRANSACTION_ID ref is NOT required (it is already carried in
+    // context.transaction_id) — omitted.
     ...params.items.map(
       (it): IssueRef => ({
         ref_id: it.id,
@@ -287,15 +292,12 @@ export function buildRefs(params: {
       })
     ),
     ...params.fulfillments.map(
+      // QA: tags on the FULFILLMENT ref are NOT required — emit the bare ref
+      // (the FULFILLMENT_STATE tag is dropped). `f.state` is retained on the
+      // param for the caller's snapshot hydration but no longer serialized.
       (f): IssueRef => ({
         ref_id: f.id,
         ref_type: "FULFILLMENT",
-        tags: [
-          {
-            descriptor: { code: "FULFILLMENT_STATE" },
-            list: [{ descriptor: { code: "state" }, value: f.state }],
-          },
-        ],
       })
     ),
   ];
@@ -312,6 +314,10 @@ export function buildActionRow(params: {
   updatedAt: string;
   actionBy: string;
   actorName: string;
+  // QA: carried on INFO_PROVIDED (ref_id -> the seller's INFO_REQUESTED, plus
+  // the supporting images). Omitted for actions that don't need them.
+  refId?: string;
+  images?: IssueImage[];
 }): IssueActionRow {
   return {
     id: params.id,
@@ -319,6 +325,10 @@ export function buildActionRow(params: {
     updated_at: params.updatedAt,
     action_by: params.actionBy,
     actor_details: { name: params.actorName },
+    ...(params.refId ? { ref_id: params.refId } : {}),
+    ...(params.images && params.images.length > 0
+      ? { images: params.images }
+      : {}),
   };
 }
 

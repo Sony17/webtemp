@@ -490,16 +490,19 @@ export async function POST(req: Request) {
     updatedAt: now,
     actionBy: ids.interfacingNpId,
     actorName: personName,
+    // QA: ref_id + images ride ON the INFO_PROVIDED action itself.
+    refId: actionRefId,
+    images: actionImages,
   });
 
-  // QA #4 / rejection / no-action: the action object is strict, so the action
-  // reference (ref_id) and any reason code are carried as issue.refs entries.
+  // The action reference (ref_id) now rides on the action row itself (QA), so it
+  // is NOT duplicated into issue.refs. Only the rejection/escalation reason code
+  // is carried as a refs entry.
   const refReasonCode =
     action === "RESOLUTION_REJECT" || action === "ESCALATE"
       ? reasonCode
       : undefined;
   const actionRefs = buildActionRefs({
-    refId: actionRefId,
     reasonCode: refReasonCode,
   });
 
@@ -528,11 +531,6 @@ export async function POST(req: Request) {
     short_desc: shortDesc,
     long_desc: longDesc,
     additional_desc: { url: additionalDescUrl, content_type: "text/plain" },
-    // QA #4: supporting images for an INFO_PROVIDED step live on the issue
-    // descriptor (the strict action object cannot carry images).
-    ...(actionImages && actionImages.length > 0
-      ? { images: actionImages }
-      : {}),
   };
 
   const createdAt = (isV2Snap && (v2Snap!.created_at as string)) || now;
