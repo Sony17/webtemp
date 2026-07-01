@@ -408,7 +408,8 @@ export async function POST(req: Request) {
   // Build the issue via the shared IGM builders (@/lib/ondc/igm-builders).
   //
   // - actors[]: CONSUMER + INTERFACING_NP (BAP) + COUNTERPARTY_NP (BPP), with
-  //   source_id = interfacing NP and complainant_id = consumer (QA #1).
+  //   source_id = consumer and complainant_id = interfacing NP (QA: "source
+  //   type should be CONSUMER").
   // - refs[]: order/provider/transaction + items (with quantity, QA #2) +
   //   fulfillments (with state).
   // - actions[]: the COMPLETE history projected from the persisted record —

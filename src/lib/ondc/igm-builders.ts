@@ -706,10 +706,12 @@ export function buildIssueV2(params: {
       },
       refs: params.refs,
       actors: params.actors,
-      // QA #1: source_id = the interfacing NP (BAP), complainant_id = the
-      // consumer; respondent = the counterparty NP (BPP).
-      source_id: params.actorIds.interfacingNpId,
-      complainant_id: params.actorIds.consumerId,
+      // source_id = the CONSUMER (the source/origin of the complaint),
+      // complainant_id = the INTERFACING NP (the BAP raising it on the
+      // consumer's behalf); respondent = the counterparty NP (BPP). QA flagged
+      // the previous inversion ("source type should be CONSUMER in this case").
+      source_id: params.actorIds.consumerId,
+      complainant_id: params.actorIds.interfacingNpId,
       respondent_ids: [params.actorIds.counterpartyNpId],
       descriptor: params.descriptor,
       last_action_id: params.newAction.id,
