@@ -513,7 +513,7 @@ export function projectStoredActionV1(
     updatedAt: string;
     raw: unknown;
   },
-  ctx: { bapId: string; bppId: string; consumer: ConsumerInfo }
+  ctx: { bapId: string; bppId: string; domain: string; consumer: ConsumerInfo }
 ): IssueV1ActionRow {
   const raw = (entry.raw ?? {}) as Record<string, unknown>;
   if (entry.actor === "complainant") {
@@ -522,7 +522,8 @@ export function projectStoredActionV1(
       short_desc: entry.shortDesc ?? "",
       updated_at: entry.updatedAt,
       updated_by: {
-        org: { name: ctx.bapId },
+        // IGM v1.0.0 footnote 23: org.name = subscriber_id::domain.
+        org: { name: `${ctx.bapId}::${ctx.domain}` },
         contact: {
           phone: ctx.consumer.phone,
           email: ctx.consumer.email ?? "",
@@ -541,7 +542,7 @@ export function projectStoredActionV1(
       "",
     updated_at: entry.updatedAt,
     updated_by: {
-      org: { name: ctx.bppId },
+      org: { name: `${ctx.bppId}::${ctx.domain}` },
       contact: { phone: "", email: "" },
     },
   };
@@ -556,6 +557,7 @@ export function buildIssueV1(params: {
   subCategory: string;
   bapId: string;
   bppId: string;
+  domain: string;
   consumer: ConsumerInfo;
   orderId: string;
   orderState: string;
@@ -564,6 +566,7 @@ export function buildIssueV1(params: {
   fulfillments: IssueFulfillment[];
   shortDesc: string;
   longDesc: string;
+  additionalDescUrl?: string;
   images?: string[];
   level: IssueLevel;
   // The full persisted history (complainant + respondent) and the new row.
@@ -581,6 +584,7 @@ export function buildIssueV1(params: {
   const ctx = {
     bapId: params.bapId,
     bppId: params.bppId,
+    domain: params.domain,
     consumer: params.consumer,
   };
   const priorRows = params.priorEntries.map((e) =>
@@ -591,7 +595,8 @@ export function buildIssueV1(params: {
     short_desc: params.newActionShortDesc,
     updated_at: params.now,
     updated_by: {
-      org: { name: params.bapId },
+      // IGM v1.0.0 footnote 23: org.name = subscriber_id::domain.
+      org: { name: `${params.bapId}::${params.domain}` },
       contact: {
         phone: params.consumer.phone,
         email: params.consumer.email ?? "",
@@ -622,6 +627,16 @@ export function buildIssueV1(params: {
       description: {
         short_desc: params.shortDesc,
         long_desc: params.longDesc,
+        // IGM v1.0.0: additional_desc { url, content_type } is present in every
+        // spec /issue example (footnote 15, optional but shown throughout).
+        ...(params.additionalDescUrl
+          ? {
+              additional_desc: {
+                url: params.additionalDescUrl,
+                content_type: "text/plain",
+              },
+            }
+          : {}),
         ...(params.images && params.images.length > 0
           ? { images: params.images }
           : {}),

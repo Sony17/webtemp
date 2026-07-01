@@ -551,6 +551,7 @@ export async function POST(req: Request) {
         subCategory,
         bapId: config.bapId,
         bppId,
+        domain,
         consumer: { name: personName, phone, email },
         orderId,
         orderState,
@@ -559,6 +560,7 @@ export async function POST(req: Request) {
         fulfillments: fulfillmentsResolved,
         shortDesc,
         longDesc,
+        additionalDescUrl,
         images: Array.isArray(body.images)
           ? body.images
               .map((i) => i?.url)
