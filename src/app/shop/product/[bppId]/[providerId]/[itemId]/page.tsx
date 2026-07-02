@@ -17,7 +17,7 @@ import { Disclosure } from "@/components/shop/Disclosure";
 import { DetailSkeleton } from "@/components/shop/Skeletons";
 import { useShop } from "@/lib/shop/store";
 import { useShopState } from "@/lib/shop/useShopState";
-import { recordView } from "@/lib/shop/hooks/use-recently-viewed";
+import { recordView, useRecentlyViewed } from "@/lib/shop/hooks/use-recently-viewed";
 import {
   offersForProduct,
   parseCatalogs,
@@ -50,10 +50,38 @@ export default function ProductPage() {
     [state]
   );
 
-  const product = products.find(
+  const liveProduct = products.find(
     (p) =>
       p.bppId === bppId && p.providerId === providerId && p.itemId === itemId
   );
+
+  // Fall back to the recently-viewed snapshot when the live discovery catalog
+  // no longer carries this item (search window aged out, or a deep-link/refresh
+  // with no active transaction). The snapshot keeps the purchase-critical
+  // identity (incl. bppUri), so add-to-cart → checkout still works.
+  const recent = useRecentlyViewed();
+  const product: Product | undefined = React.useMemo(() => {
+    if (liveProduct) return liveProduct;
+    const snap = recent.find(
+      (r) => r.bppId === bppId && r.providerId === providerId && r.itemId === itemId
+    );
+    if (!snap?.bppUri) return undefined; // not purchasable without a bppUri
+    return {
+      bppId: snap.bppId,
+      bppUri: snap.bppUri,
+      providerId: snap.providerId,
+      providerName: snap.providerName ?? "Seller",
+      itemId: snap.itemId,
+      locationId: snap.locationId,
+      name: snap.name,
+      description: snap.description,
+      image: snap.image,
+      price: snap.price,
+      maxPrice: snap.maxPrice,
+      currency: snap.currency,
+      unit: snap.unit,
+    };
+  }, [liveProduct, recent, bppId, providerId, itemId]);
 
   // Record this product as recently viewed (snapshot) once it resolves. Keyed on
   // the stable ids so it fires once per product, not on every poll tick.

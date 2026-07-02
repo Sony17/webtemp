@@ -60,6 +60,7 @@ export default function OrderPage() {
     intervalMs: 4000,
     maxMs: 120_000,
     enabled: true,
+    bppId,
     stopWhen: (s) => {
       const st = orderState(s.bpps.find((b) => b.bppId === bppId)?.order);
       return st === "Completed" || st === "Cancelled";
@@ -89,10 +90,23 @@ export default function OrderPage() {
 
   const act = async (key: string, fn: () => Promise<unknown>) => {
     setBusy(key);
+    // Snapshot the order revision before firing, then poll until the seller's
+    // callback (on_status / on_track / on_cancel / on_support) actually lands —
+    // instead of a fixed 1.5s guess that races a slow network.
+    const beforeRev = order?.updatedAt;
+    const hadSupport = !!bpp?.support;
     try {
       await fn();
-      await new Promise((r) => setTimeout(r, 1500));
-      await refetch();
+      const deadline = Date.now() + 16_000;
+      for (;;) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const s = await refetch();
+        const b = s?.bpps.find((x) => x.bppId === bppId);
+        // Order revision advanced, or support contact just arrived.
+        const changed =
+          b?.order?.updatedAt !== beforeRev || (!!b?.support && !hadSupport);
+        if (changed || Date.now() > deadline) break;
+      }
     } catch {
       /* surfaced via state polling */
     } finally {
@@ -387,12 +401,53 @@ export default function OrderPage() {
 
       {/* Support contact result */}
       {bpp?.support ? (
-        <Card className="p-4 text-sm">
-          <p className="font-medium">Seller support</p>
-          <pre className="mt-1 whitespace-pre-wrap break-words text-xs text-muted-foreground">
-            {JSON.stringify(bpp.support, null, 2)}
-          </pre>
-        </Card>
+        (() => {
+          const sup = bpp.support as {
+            phone?: string;
+            email?: string;
+            uri?: string;
+          };
+          const hasAny = sup.phone || sup.email || sup.uri;
+          return (
+            <Card className="p-4 text-sm">
+              <p className="font-medium">Seller support</p>
+              <div className="mt-2 space-y-1 text-muted-foreground">
+                {sup.phone ? (
+                  <p>
+                    Phone:{" "}
+                    <a href={`tel:${sup.phone}`} className="text-primary">
+                      {sup.phone}
+                    </a>
+                  </p>
+                ) : null}
+                {sup.email ? (
+                  <p>
+                    Email:{" "}
+                    <a href={`mailto:${sup.email}`} className="text-primary">
+                      {sup.email}
+                    </a>
+                  </p>
+                ) : null}
+                {sup.uri ? (
+                  <p>
+                    Web:{" "}
+                    <a
+                      href={sup.uri}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="break-all text-primary hover:underline"
+                    >
+                      {sup.uri}
+                    </a>
+                  </p>
+                ) : null}
+                {!hasAny ? (
+                  <p>The seller&apos;s contact details will appear here shortly.</p>
+                ) : null}
+              </div>
+            </Card>
+          );
+        })()
       ) : null}
 
       {/* Inline cancel */}

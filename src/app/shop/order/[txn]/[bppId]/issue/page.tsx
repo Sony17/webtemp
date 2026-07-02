@@ -18,7 +18,7 @@ import { EmptyState, Spinner } from "@/components/shop/widgets";
 import { useShop } from "@/lib/shop/store";
 import { useShopState } from "@/lib/shop/useShopState";
 import * as api from "@/lib/shop/api";
-import type { IssueRecord } from "@/lib/shop/types";
+import type { IssueRecord, ShopState } from "@/lib/shop/types";
 
 const CATEGORIES = [
   { c: "ITEM", s: "ITM01", label: "Item issue" },
@@ -37,9 +37,20 @@ export default function IssuePage() {
   const { state, refetch } = useShopState(transactionId, {
     intervalMs: 4000,
     maxMs: 120_000,
+    bppId: bpp,
     stopWhen: (s) =>
       s.issues.some((i) => ["RESOLVED", "CLOSED"].includes(i.status)),
   });
+
+  // Poll refetch until `pred` holds (the on_issue callback landed) or ~16s.
+  const pollUntil = async (pred: (s: ShopState) => boolean) => {
+    const deadline = Date.now() + 16_000;
+    for (;;) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const s = await refetch();
+      if (!s || pred(s) || Date.now() > deadline) break;
+    }
+  };
   const bppState = state?.bpps.find((b) => b.bppId === bpp);
   const orderId = bppState?.order?.orderId;
   const bppUri = bppState?.bppUri;
@@ -66,6 +77,10 @@ export default function IssuePage() {
       setError("A short description and contact phone are required.");
       return;
     }
+    if (!/^\d{10}$/.test(phone.trim())) {
+      setError("Contact phone must be a 10-digit number.");
+      return;
+    }
     setBusy("open");
     setError(null);
     try {
@@ -82,8 +97,9 @@ export default function IssuePage() {
       });
       if (res.status === "NACK")
         throw new Error(res.error?.message ?? "Issue rejected.");
-      await new Promise((r) => setTimeout(r, 1500));
-      await refetch();
+      // Wait for the grievance to actually appear (on_issue) before dropping
+      // the busy state, so the timeline renders instead of a blank form.
+      await pollUntil((s) => s.issues.some((i) => i.bppId === bpp));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to raise issue.");
     } finally {
@@ -96,6 +112,8 @@ export default function IssuePage() {
   ) => {
     if (!issue || !bppUri) return;
     setBusy(action);
+    const beforeCount = issue.actions.length;
+    const beforeRev = issue.updatedAt;
     try {
       await api.issueAction({
         transactionId,
@@ -104,8 +122,12 @@ export default function IssuePage() {
         issueId: issue.issueId,
         complainantAction: action,
       });
-      await new Promise((r) => setTimeout(r, 1500));
-      await refetch();
+      // Poll until the respondent's on_issue reflects our action (new entry or
+      // a status/resolution change) rather than a fixed 1.5s guess.
+      await pollUntil((s) => {
+        const i = s.issues.find((x) => x.bppId === bpp);
+        return !!i && (i.actions.length !== beforeCount || i.updatedAt !== beforeRev);
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Action failed.");
     } finally {

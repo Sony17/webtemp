@@ -15,6 +15,15 @@ export type RecentProduct = {
   image?: string;
   price: number;
   currency: string;
+  // Purchase-critical identity, so the product page can reconstruct a usable
+  // Product (and drive select/init) from the snapshot when the live discovery
+  // catalog has aged out. Optional for backward-compat with older snapshots.
+  bppUri?: string;
+  providerName?: string;
+  locationId?: string;
+  maxPrice?: number;
+  unit?: string;
+  description?: string;
 };
 
 const KEY = "openidea.recentlyViewed.v1";
@@ -55,6 +64,12 @@ export function recordView(p: Product) {
     image: p.image,
     price: p.price,
     currency: p.currency,
+    bppUri: p.bppUri,
+    providerName: p.providerName,
+    locationId: p.locationId,
+    maxPrice: p.maxPrice,
+    unit: p.unit,
+    description: p.description,
   };
   const k = `${snap.bppId}:${snap.providerId}:${snap.itemId}`;
   items = [

@@ -43,7 +43,7 @@ export default function PaymentPage() {
   );
 
   // Order state → seller payment terms (COD availability).
-  const { state } = useShopState(transactionId, { maxMs: 8000 });
+  const { state } = useShopState(transactionId, { maxMs: 8000, bppId: bpp });
   const order = state?.bpps.find((b) => b.bppId === bpp)?.order ?? null;
   const terms = parsePaymentTerms(order);
   const codOffered = terms.some((t) => t.isCOD);

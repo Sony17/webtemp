@@ -72,6 +72,8 @@ export default function CheckoutPage() {
   const [instructions, setInstructions] = React.useState(address?.instructions ?? "");
   const [error, setError] = React.useState<string | null>(null);
   const [statusMsg, setStatusMsg] = React.useState("");
+  // Reentrancy guard for placeOrder (survives re-renders; not display state).
+  const placingRef = React.useRef(false);
 
   if (lines.length === 0 && step === "address") {
     return (
@@ -108,6 +110,25 @@ export default function CheckoutPage() {
       setError("Name, phone and pincode are required.");
       return;
     }
+    if (!/^\d{10}$/.test(form.phone.trim())) {
+      setError("Phone must be a 10-digit number.");
+      return;
+    }
+    if (!/^\d{6}$/.test(form.areaCode.trim())) {
+      setError("Pincode must be a 6-digit number.");
+      return;
+    }
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      setError("Enter a valid email address or leave it blank.");
+      return;
+    }
+    if (
+      form.gps &&
+      !/^-?\d{1,3}(\.\d+)?\s*,\s*-?\d{1,3}(\.\d+)?$/.test(form.gps.trim())
+    ) {
+      setError("GPS must be 'lat,long', e.g. 12.9716,77.5946.");
+      return;
+    }
     setError(null);
     setAddress({ ...form, instructions: instructions.trim() || undefined });
     setStep("quoting");
@@ -131,9 +152,18 @@ export default function CheckoutPage() {
       const state = await api.waitFor(
         transactionId,
         (s) => !!s.bpps.find((b) => b.bppId === cartBpp.bppId)?.quote,
-        { intervalMs: 2000, maxMs: 25_000 }
+        { intervalMs: 2000, maxMs: 25_000, bppId: cartBpp.bppId, bppUri: cartBpp.bppUri }
       );
       const quoteRecord = state.bpps.find((b) => b.bppId === cartBpp.bppId)?.quote;
+      // No quote came back within the window — almost always a stale discovery
+      // session (the search that minted this transaction has aged out of the
+      // seller/network). Fail clearly and send the buyer back to search rather
+      // than proceeding to "review" with a misleading local estimate.
+      if (!quoteRecord) {
+        throw new Error(
+          "The seller didn't return a price — your search may have expired. Please search again to get live prices."
+        );
+      }
       setQuote(parseQuote(quoteRecord));
       // Surface the seller's offered fulfillment options (Home delivery /
       // Self-Pickup / Buyer-Delivery / slotted windows) for the buyer to choose.
@@ -152,6 +182,10 @@ export default function CheckoutPage() {
   // Step 3+4: init (final quote) then confirm (place order).
   const placeOrder = async () => {
     if (!cartBpp || !transactionId) return;
+    // Guard against a double-tap firing two init/confirm chains before the
+    // "placing" re-render swaps the button out.
+    if (placingRef.current) return;
+    placingRef.current = true;
     setStep("placing");
     setError(null);
     try {
@@ -187,17 +221,32 @@ export default function CheckoutPage() {
       if (initRes.status === "NACK") {
         throw new Error(initRes.error?.message ?? "Init was rejected.");
       }
-      await api.waitFor(
+      // Wait for the on_init order (its inner ONDC order object) to surface.
+      const initedState = await api.waitFor(
         transactionId,
-        (s) => !!s.bpps.find((b) => b.bppId === cartBpp.bppId)?.order,
-        { intervalMs: 2000, maxMs: 25_000 }
+        (s) => !!s.bpps.find((b) => b.bppId === cartBpp.bppId)?.order?.order,
+        { intervalMs: 2000, maxMs: 25_000, bppId: cartBpp.bppId, bppUri: cartBpp.bppUri }
       );
+      const initedOrder = initedState.bpps.find(
+        (b) => b.bppId === cartBpp.bppId
+      )?.order?.order;
+      if (!initedOrder) {
+        throw new Error(
+          "The seller hasn't finalised your order yet. Please try again in a moment."
+        );
+      }
 
       setStatusMsg("Placing your order…");
+      // Thread the finalized on_init order straight into confirm. The confirm
+      // route accepts it in the body, so placement no longer depends on the
+      // server re-reading a persisted order (which the JSON `/tmp` store may
+      // hold on a different serverless instance → the "no on_init order
+      // persisted" 409). We already have it here from the poll above.
       const confirmRes = await api.confirm({
         transactionId,
         bppId: cartBpp.bppId,
         bppUri: cartBpp.bppUri,
+        order: initedOrder,
       });
       if (confirmRes.status === "NACK") {
         throw new Error(confirmRes.error?.message ?? "Confirm was rejected.");
@@ -205,7 +254,7 @@ export default function CheckoutPage() {
       const finalState = await api.waitFor(
         transactionId,
         (s) => !!s.bpps.find((b) => b.bppId === cartBpp.bppId)?.order?.orderId,
-        { intervalMs: 2000, maxMs: 30_000 }
+        { intervalMs: 2000, maxMs: 30_000, bppId: cartBpp.bppId, bppUri: cartBpp.bppUri }
       );
 
       // Open an out-of-band payment record (manual settlement model).
@@ -247,6 +296,8 @@ export default function CheckoutPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to place order.");
       setStep("error");
+    } finally {
+      placingRef.current = false;
     }
   };
 
@@ -257,9 +308,12 @@ export default function CheckoutPage() {
         title="Checkout couldn't complete"
         description={error ?? "Something went wrong with the seller."}
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-center gap-2">
             <Button variant="outline" onClick={() => setStep("address")}>
               Edit details
+            </Button>
+            <Button variant="outline" onClick={() => router.push("/shop/search")}>
+              Search again
             </Button>
             <Button onClick={() => router.push("/shop/cart")}>Back to cart</Button>
           </div>
@@ -373,9 +427,11 @@ export default function CheckoutPage() {
               </span>
             </div>
           )}
-          <p className="mt-2 inline-flex items-center gap-1 text-xs text-emerald-600">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Price confirmed by seller
-          </p>
+          {quote ? (
+            <p className="mt-2 inline-flex items-center gap-1 text-xs text-emerald-600">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Price confirmed by seller
+            </p>
+          ) : null}
         </Card>
 
         <div className="fixed inset-x-0 bottom-[3.25rem] z-20 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-md">

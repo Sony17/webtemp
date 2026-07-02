@@ -24,7 +24,7 @@ export default function ReturnPage() {
   const bpp = decodeURIComponent(bppId);
   const router = useRouter();
 
-  const { state } = useShopState(transactionId, { maxMs: 6000 });
+  const { state } = useShopState(transactionId, { maxMs: 6000, bppId: bpp });
   const order = state?.bpps.find((b) => b.bppId === bpp)?.order;
   const bppUri = state?.bpps.find((b) => b.bppId === bpp)?.bppUri;
   const orderId = order?.orderId;
@@ -65,6 +65,13 @@ export default function ReturnPage() {
   }
 
   const submit = async () => {
+    const imageList = images.trim()
+      ? images.split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+    if (imageList.some((u) => !/^https?:\/\/.+/i.test(u))) {
+      setError("Photo URLs must start with http:// or https://");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -82,9 +89,7 @@ export default function ReturnPage() {
               bppUri,
               return: {
                 ...payload,
-                images: images.trim()
-                  ? images.split(",").map((s) => s.trim())
-                  : undefined,
+                images: imageList.length ? imageList : undefined,
               },
             })
           : await api.update({

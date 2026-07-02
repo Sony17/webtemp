@@ -14,13 +14,17 @@ type Options = {
   enabled?: boolean;
   // Return true to stop polling (data we were waiting for has arrived).
   stopWhen?: (state: ShopState) => boolean;
+  // Hint the bpp this screen cares about so its quote/order/support is surfaced
+  // even without a visible catalog slice (see api.getState / state route).
+  bppId?: string;
+  bppUri?: string;
 };
 
 export function useShopState(
   transactionId: string | null | undefined,
   opts: Options = {}
 ) {
-  const { intervalMs = 2500, maxMs = 60_000, enabled = true, stopWhen } = opts;
+  const { intervalMs = 2500, maxMs = 60_000, enabled = true, stopWhen, bppId, bppUri } = opts;
   const [state, setState] = React.useState<ShopState | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [polling, setPolling] = React.useState(false);
@@ -44,7 +48,7 @@ export function useShopState(
 
     const tick = async () => {
       try {
-        const s = await getState(transactionId);
+        const s = await getState(transactionId, { bppId, bppUri });
         if (cancelled) return;
         setState(s);
         setError(null);
@@ -68,19 +72,19 @@ export function useShopState(
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [transactionId, enabled, intervalMs, maxMs]);
+  }, [transactionId, enabled, intervalMs, maxMs, bppId, bppUri]);
 
   const refetch = React.useCallback(async () => {
     if (!transactionId) return;
     try {
-      const s = await getState(transactionId);
+      const s = await getState(transactionId, { bppId, bppUri });
       setState(s);
       setError(null);
       return s;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load state");
     }
-  }, [transactionId]);
+  }, [transactionId, bppId, bppUri]);
 
   return { state, error, polling, refetch };
 }

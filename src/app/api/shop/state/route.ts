@@ -45,6 +45,17 @@ export async function GET(req: Request) {
     if (!bppIds.has(c.bppId)) bppIds.set(c.bppId, c.bppUri);
   }
 
+  // A quote/order/support can exist for a bpp we never saw a catalog slice for
+  // — e.g. a checkout resumed after the discovery catalogs aged out, or the
+  // JSON `/tmp` store fragmented and this instance holds the order but not the
+  // catalog. The caller (which always knows its bpp post-select) can hint it so
+  // that bpp's downstream records are still surfaced.
+  const bppIdHint = url.searchParams.get("bppId")?.trim();
+  const bppUriHint = url.searchParams.get("bppUri")?.trim();
+  if (bppIdHint && !bppIds.has(bppIdHint)) {
+    bppIds.set(bppIdHint, bppUriHint ?? "");
+  }
+
   const bpps = await Promise.all(
     [...bppIds.entries()].map(async ([bppId, bppUri]) => {
       const [quote, order, support, rating] = await Promise.all([
@@ -53,7 +64,11 @@ export async function GET(req: Request) {
         store.getSupport(transactionId, bppId),
         store.getRating(transactionId, bppId),
       ]);
-      return { bppId, bppUri, quote, order, support, rating };
+      // Prefer the catalog/hint bppUri, but fall back to whatever a stored
+      // record carries so a hinted-only bpp still routes for later actions.
+      const resolvedBppUri =
+        bppUri || order?.bppUri || quote?.bppUri || support?.bppUri || "";
+      return { bppId, bppUri: resolvedBppUri, quote, order, support, rating };
     })
   );
 

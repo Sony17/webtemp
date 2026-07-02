@@ -56,10 +56,20 @@ export function search(body: {
   return postJSON<AckEnvelope>("/api/ondc/search", body);
 }
 
-export function getState(transactionId: string): Promise<ShopState> {
-  return getJSON<ShopState>(
-    `/api/shop/state?transactionId=${encodeURIComponent(transactionId)}`
-  );
+// Optional hint so the read model surfaces THIS bpp's quote/order/support even
+// when no on_search catalog slice for it is visible on the serving instance
+// (the JSON `/tmp` store fragments across serverless instances). Every post-
+// select screen already knows the bpp it cares about, so it passes it here.
+export type StateHint = { bppId?: string; bppUri?: string };
+
+export function getState(
+  transactionId: string,
+  hint: StateHint = {}
+): Promise<ShopState> {
+  const q = new URLSearchParams({ transactionId });
+  if (hint.bppId) q.set("bppId", hint.bppId);
+  if (hint.bppUri) q.set("bppUri", hint.bppUri);
+  return getJSON<ShopState>(`/api/shop/state?${q.toString()}`);
 }
 
 // Imperatively poll getState until `predicate` is satisfied (the awaited ONDC
@@ -69,14 +79,14 @@ export function getState(transactionId: string): Promise<ShopState> {
 export async function waitFor(
   transactionId: string,
   predicate: (s: ShopState) => boolean,
-  opts: { intervalMs?: number; maxMs?: number } = {}
+  opts: { intervalMs?: number; maxMs?: number } & StateHint = {}
 ): Promise<ShopState> {
-  const { intervalMs = 2000, maxMs = 30_000 } = opts;
+  const { intervalMs = 2000, maxMs = 30_000, bppId, bppUri } = opts;
   const start = Date.now();
   for (;;) {
     let s: ShopState;
     try {
-      s = await getState(transactionId);
+      s = await getState(transactionId, { bppId, bppUri });
     } catch {
       s = { transactionId, catalogs: [], bpps: [], issues: [] };
     }

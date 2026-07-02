@@ -46,7 +46,7 @@ export default function RatePage() {
   const bpp = decodeURIComponent(bppId);
   const router = useRouter();
 
-  const { state } = useShopState(transactionId, { maxMs: 6000 });
+  const { state } = useShopState(transactionId, { maxMs: 6000, bppId: bpp });
   const bppState = state?.bpps.find((b) => b.bppId === bpp);
   const bppUri = bppState?.bppUri;
   const orderId = bppState?.order?.orderId;
