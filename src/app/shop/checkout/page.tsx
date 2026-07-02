@@ -72,8 +72,48 @@ export default function CheckoutPage() {
   const [instructions, setInstructions] = React.useState(address?.instructions ?? "");
   const [error, setError] = React.useState<string | null>(null);
   const [statusMsg, setStatusMsg] = React.useState("");
+  const [locating, setLocating] = React.useState(false);
   // Reentrancy guard for placeOrder (survives re-renders; not display state).
   const placingRef = React.useRef(false);
+
+  // Capture the buyer's GPS. Most RET10 sellers define serviceability
+  // hyperlocally (radius/polygon), so they can only price + return on_select
+  // when the select carries the delivery GPS — a bare pincode isn't enough.
+  // We read it from the browser (an external system) and write "lat,long".
+  const detectLocation = React.useCallback((silent = false) => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      if (!silent)
+        setError("Location isn't available in this browser — enter GPS manually.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const gps = `${pos.coords.latitude.toFixed(6)},${pos.coords.longitude.toFixed(6)}`;
+        setForm((f) => ({ ...f, gps }));
+        setLocating(false);
+        if (!silent) setError(null);
+      },
+      () => {
+        setLocating(false);
+        if (!silent)
+          setError(
+            "Couldn't get your location. Allow location access, or type GPS as lat,long."
+          );
+      },
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 300_000 }
+    );
+  }, []);
+
+  // Best-effort auto-detect once on mount when we don't already have a GPS, so
+  // the delivery target is serviceability-ready without the buyer thinking about
+  // it. Silent: a denied permission just leaves the field for manual entry.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  React.useEffect(() => {
+    if (!form.gps) detectLocation(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (lines.length === 0 && step === "address") {
     return (
@@ -122,10 +162,17 @@ export default function CheckoutPage() {
       setError("Enter a valid email address or leave it blank.");
       return;
     }
-    if (
-      form.gps &&
-      !/^-?\d{1,3}(\.\d+)?\s*,\s*-?\d{1,3}(\.\d+)?$/.test(form.gps.trim())
-    ) {
+    // GPS is effectively required: RET10 serviceability is usually hyperlocal
+    // (radius/polygon), so without the delivery GPS the seller can't determine
+    // serviceability and never returns on_select (the "no price" dead end). Ask
+    // for it here rather than sending a select the seller can only drop.
+    if (!form.gps?.trim()) {
+      setError(
+        "We need your delivery location to get a price. Tap “Use my location”, or type GPS as lat,long."
+      );
+      return;
+    }
+    if (!/^-?\d{1,3}(\.\d+)?\s*,\s*-?\d{1,3}(\.\d+)?$/.test(form.gps.trim())) {
       setError("GPS must be 'lat,long', e.g. 12.9716,77.5946.");
       return;
     }
@@ -152,7 +199,9 @@ export default function CheckoutPage() {
       const state = await api.waitFor(
         transactionId,
         (s) => !!s.bpps.find((b) => b.bppId === cartBpp.bppId)?.quote,
-        { intervalMs: 2000, maxMs: 25_000, bppId: cartBpp.bppId, bppUri: cartBpp.bppUri }
+        // Poll a touch past the select `ttl` (PT30S) so a slow-but-valid
+        // on_select isn't cut off early.
+        { intervalMs: 2000, maxMs: 32_000, bppId: cartBpp.bppId, bppUri: cartBpp.bppUri }
       );
       const quoteRecord = state.bpps.find((b) => b.bppId === cartBpp.bppId)?.quote;
       // No quote came back within the window — almost always a stale discovery
@@ -225,7 +274,8 @@ export default function CheckoutPage() {
       const initedState = await api.waitFor(
         transactionId,
         (s) => !!s.bpps.find((b) => b.bppId === cartBpp.bppId)?.order?.order,
-        { intervalMs: 2000, maxMs: 25_000, bppId: cartBpp.bppId, bppUri: cartBpp.bppUri }
+        // Same reasoning as select: init `ttl` is PT30S, so wait a bit past it.
+        { intervalMs: 2000, maxMs: 32_000, bppId: cartBpp.bppId, bppUri: cartBpp.bppUri }
       );
       const initedOrder = initedState.bpps.find(
         (b) => b.bppId === cartBpp.bppId
@@ -511,12 +561,34 @@ export default function CheckoutPage() {
             inputMode="numeric"
           />
         </Field>
-        <Field label="GPS (lat,long)">
-          <Input
-            value={form.gps ?? ""}
-            onChange={(e) => update("gps", e.target.value)}
-            placeholder="12.9716,77.5946"
-          />
+        <Field label="Delivery location (GPS)" required className="col-span-2">
+          <div className="flex gap-2">
+            <Input
+              value={form.gps ?? ""}
+              onChange={(e) => update("gps", e.target.value)}
+              placeholder="12.9716,77.5946"
+              inputMode="text"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => detectLocation(false)}
+              disabled={locating}
+              className="shrink-0"
+            >
+              {locating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <MapPin className="h-4 w-4" />
+              )}
+              {locating ? "Locating…" : "Use my location"}
+            </Button>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Sellers use your exact location to check delivery — required to get a
+            price.
+          </p>
         </Field>
         <Field label="Delivery instructions (optional)" className="col-span-2">
           <Textarea
