@@ -16,7 +16,14 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
-const url = process.env.DIRECT_URL?.trim() || process.env.DATABASE_URL?.trim();
+// Prefer an explicit DIRECT_URL, then the unpooled URL that Vercel's Neon /
+// Postgres integration auto-injects (so connecting a database in the Storage
+// tab is enough — no manual DIRECT_URL needed), then fall back to DATABASE_URL.
+const url =
+  process.env.DIRECT_URL?.trim() ||
+  process.env.DATABASE_URL_UNPOOLED?.trim() || // Neon (Vercel) auto-injected direct URL
+  process.env.POSTGRES_URL_NON_POOLING?.trim() || // Vercel Postgres auto-injected direct URL
+  process.env.DATABASE_URL?.trim();
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
