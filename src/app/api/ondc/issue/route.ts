@@ -39,6 +39,7 @@ import {
   type RefType,
   actorIds as buildActorIds,
   buildActors,
+  buildInterfacingNpGro,
   buildRefs,
   buildActionRow,
   buildActionRefs,
@@ -128,6 +129,11 @@ type IssueRequestBody = {
   // IGM 2.0 descriptor.additional_desc — the schema requires a url. Optional
   // override; defaults to a BAP issue-reference URL.
   additionalDescUrl?: string;
+  // Grievance escalation: the complainant NP's GRO details, surfaced as an
+  // INTERFACING_NP_GRO actor once the level becomes GREVIENCE/DISPUTE (QA #5).
+  groName?: string;
+  groPhone?: string;
+  groEmail?: string;
 };
 
 // IGM v2.0.0 wire types and the state machine (statusForAction/actionCodeFor)
@@ -381,6 +387,26 @@ export async function POST(req: Request) {
   const longDesc = str(body.longDesc) ?? v2Snap?.descriptor?.long_desc ?? "";
   const issueType = str(body.issueType) ?? v2Snap?.level ?? "ISSUE";
 
+  // wrapper input `issueType` maps to the schema's `level` enum (ISSUE /
+  // GREVIENCE [sic] / DISPUTE). Accept either spelling of grievance as input.
+  // Resolved BEFORE actors/actions so the GRO can be added and the escalation
+  // action attributed to it once the tier reaches grievance.
+  const issueTypeUp = issueType?.toUpperCase();
+  const baseLevel: IssueLevel =
+    issueTypeUp === "DISPUTE"
+      ? "DISPUTE"
+      : issueTypeUp === "GRIEVANCE" || issueTypeUp === "GREVIENCE"
+        ? "GREVIENCE"
+        : "ISSUE";
+  // No-action / timeout: ESCALATE bumps the grievance tier (ISSUE -> GRIEVANCE
+  // -> DISPUTE). Other actions keep the resolved level (which persists via the
+  // stored snapshot once escalated, so post-escalation actions stay grievance).
+  const level: IssueLevel =
+    action === "ESCALATE" ? escalateLevel(baseLevel) : baseLevel;
+  // QA #5: once the issue is a grievance (or dispute), the complainant NP's GRO
+  // must appear in actors[] and own the action.
+  const isGrievance = level === "GREVIENCE" || level === "DISPUTE";
+
   if (!orderId) {
     return NextResponse.json(
       { error: "Could not resolve orderId; pass it explicitly or seed from OPEN." },
@@ -425,12 +451,30 @@ export async function POST(req: Request) {
     isV2Snap &&
     Array.isArray(v2Snap!.actors) &&
     (v2Snap!.actors as IssueActor[]).length >= 3
-      ? (v2Snap!.actors as IssueActor[])
+      ? [...(v2Snap!.actors as IssueActor[])]
       : buildActors({
           bapId: config.bapId,
           bppId,
           consumer: { name: personName, phone, email },
         });
+
+  // QA #5: once escalated to grievance/dispute, surface the complainant NP's GRO
+  // as an INTERFACING_NP_GRO actor. Append it only when it isn't already present
+  // (the persisted snapshot already carries it on post-escalation actions).
+  const groName = str(body.groName) ?? "Grievance Officer";
+  const groPhone = str(body.groPhone) ?? phone;
+  const groEmail = str(body.groEmail) ?? email;
+  if (isGrievance && !actors.some((a) => a.type === "INTERFACING_NP_GRO")) {
+    actors.push(
+      buildInterfacingNpGro({
+        bapId: config.bapId,
+        domain,
+        name: groName,
+        phone: groPhone,
+        email: groEmail,
+      })
+    );
+  }
 
   const refs = buildRefs({
     orderId,
@@ -488,8 +532,10 @@ export async function POST(req: Request) {
     code: actionCodeFor(action),
     shortDesc: actionDescOverride ?? shortDesc,
     updatedAt: now,
-    actionBy: ids.interfacingNpId,
-    actorName: personName,
+    // QA #5: at grievance/dispute the GRO owns the action; otherwise the
+    // interfacing NP does.
+    actionBy: isGrievance ? ids.interfacingNpGroId : ids.interfacingNpId,
+    actorName: isGrievance ? groName : personName,
     // QA: ref_id + images ride ON the INFO_PROVIDED action itself.
     refId: actionRefId,
     images: actionImages,
@@ -505,20 +551,6 @@ export async function POST(req: Request) {
   const actionRefs = buildActionRefs({
     reasonCode: refReasonCode,
   });
-
-  // wrapper input `issueType` maps to the schema's `level` enum (ISSUE /
-  // GREVIENCE [sic] / DISPUTE). Accept either spelling of grievance as input.
-  const issueTypeUp = issueType?.toUpperCase();
-  const baseLevel: IssueLevel =
-    issueTypeUp === "DISPUTE"
-      ? "DISPUTE"
-      : issueTypeUp === "GRIEVANCE" || issueTypeUp === "GREVIENCE"
-        ? "GREVIENCE"
-        : "ISSUE";
-  // No-action / timeout: ESCALATE bumps the grievance tier (ISSUE -> GRIEVANCE
-  // -> DISPUTE). Other actions keep the resolved level.
-  const level: IssueLevel =
-    action === "ESCALATE" ? escalateLevel(baseLevel) : baseLevel;
 
   // descriptor.code carries the buyer's grievance taxonomy (e.g. ITM02).
   // additional_desc.url is REQUIRED by the IGM 2.0 schema (REQUIRED_MESSAGE_URL);

@@ -91,11 +91,11 @@ export type IssueRef = {
   tags?: IssueTag[];
 };
 
-// The IGM 2.0 action object is STRICT (additionalProperties:false): only id,
-// descriptor, updated_at, action_by, actor_details are allowed. Supporting
-// images live on the ISSUE descriptor (issue.descriptor.images), the action
-// reference (ref_id) is carried as an ACTION entry in issue.refs[], and a
-// rejection reason is carried as a REASON ref — NOT as extra action properties.
+// The IGM 2.0 action object carries id, descriptor, updated_at, action_by,
+// actor_details, and (per QA "info provided action> ref_id missing, images
+// missing") an optional ref_id (e.g. INFO_PROVIDED -> the seller's
+// INFO_REQUESTED) and supporting images inline on the action. A rejection reason
+// is still carried as a REASON ref in issue.refs[], not on the action.
 export type IssueActionRow = {
   id: string;
   descriptor: { code: ActionCode; short_desc: string };
@@ -211,6 +211,9 @@ export type ActorIds = {
   consumerId: string;
   interfacingNpId: string;
   counterpartyNpId: string;
+  // The complainant NP's Grievance Redressal Officer — only added to the wire
+  // once the issue is escalated to GREVIENCE/DISPUTE (see buildInterfacingNpGro).
+  interfacingNpGroId: string;
 };
 
 export function actorIds(bapId: string, bppId: string): ActorIds {
@@ -218,6 +221,30 @@ export function actorIds(bapId: string, bppId: string): ActorIds {
     consumerId: `${bapId}_consumer`,
     interfacingNpId: bapId,
     counterpartyNpId: bppId,
+    interfacingNpGroId: `${bapId}_gro`,
+  };
+}
+
+// Build the complainant NP's Grievance Redressal Officer actor. Per the IGM 2.0
+// grievance model, when an issue is escalated to GREVIENCE (or DISPUTE) the
+// complainant NP MUST surface its GRO as an INTERFACING_NP_GRO actor (mirroring
+// the respondent's COUNTERPARTY_NP_GRO), and the escalation action is attributed
+// to that GRO. org.name follows the `subscriber_id::domain` convention.
+export function buildInterfacingNpGro(params: {
+  bapId: string;
+  domain: string;
+  name: string;
+  phone?: string;
+  email?: string;
+}): IssueActor {
+  return {
+    id: `${params.bapId}_gro`,
+    type: "INTERFACING_NP_GRO",
+    info: {
+      org: { name: `${params.bapId}::${params.domain}` },
+      person: { name: params.name },
+      contact: { phone: params.phone ?? "", email: params.email ?? "" },
+    },
   };
 }
 
