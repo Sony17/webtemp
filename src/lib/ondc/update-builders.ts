@@ -9,8 +9,11 @@
 //
 // Each builder returns the `{ update_target, order }` message body that the
 // route wraps in a context envelope and signs. The refund amount is ALWAYS
-// derived from the on_cancel `quote_trail` (see calculateRefundAmount) — never
-// hardcoded.
+// derived from the `quote_trail` the BPP returns at the refund-trigger state —
+// on_cancel (RTO / part-cancel) OR on_update (return / replacement liquidation) —
+// via calculateRefundAmount; it is never hardcoded. The generic-passthrough path
+// enforces the same rule (see update/route.ts enforceRefundAmount) so a raw
+// refund payload can't ship a wrong amount either.
 
 // One ONDC tag key/value entry, and a tag group (code + list).
 export type OndcTagEntry = { code: string; value: string };

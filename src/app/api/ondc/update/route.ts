@@ -47,6 +47,7 @@ import {
   buildReturnUpdate,
   buildReplacementUpdate,
   buildInstructionsUpdate,
+  calculateRefundAmount,
 } from "@/lib/ondc/update-builders";
 
 // ONDC signing uses node:crypto (via auth.ts), and the whole ondc/* stack is
@@ -172,6 +173,66 @@ function validateOrder(
     };
   }
   return { ok: true, order };
+}
+
+// Collect the refund-phase settlement_details entries from a passthrough order,
+// reading the singular `payment` object (the contract refund shape) and, defensively,
+// a `payments[]` array. Returned entries are the live objects so the caller can
+// correct their `settlement_amount` in place.
+function collectRefundSettlements(
+  order: Record<string, unknown>
+): Array<Record<string, unknown>> {
+  const out: Array<Record<string, unknown>> = [];
+  const scan = (pay: unknown) => {
+    if (!pay || typeof pay !== "object") return;
+    const det = (pay as Record<string, unknown>)["@ondc/org/settlement_details"];
+    if (!Array.isArray(det)) return;
+    for (const d of det) {
+      if (
+        d &&
+        typeof d === "object" &&
+        (d as Record<string, unknown>).settlement_phase === "refund"
+      ) {
+        out.push(d as Record<string, unknown>);
+      }
+    }
+  };
+  scan(order.payment);
+  if (Array.isArray(order.payments)) for (const p of order.payments) scan(p);
+  return out;
+}
+
+// Enforce the contract rule for a generic-passthrough refund `update`: the refund
+// `settlement_amount` MUST equal the absolute sum of the `quote_trail` the BPP
+// returned at the refund-trigger state (immutable, RET v1.2.5). A caller (frontend
+// or manual payload) that hardcodes/miscomputes the amount would fail certification
+// (QA 07-03: return/replacement refund amount wrong). We recompute it from the
+// persisted order's quote_trail (saved by on_cancel/on_update) and overwrite any
+// mismatched amount. Only refund-phase settlements are touched; when there is no
+// persisted quote_trail (computed 0.00) we leave the caller's value untouched.
+async function enforceRefundAmount(
+  order: Record<string, unknown>,
+  transactionId: string,
+  bppId: string
+): Promise<void> {
+  const refunds = collectRefundSettlements(order);
+  if (refunds.length === 0) return;
+  const stored = await getOrder(transactionId, bppId);
+  const computed = calculateRefundAmount(stored?.fulfillments);
+  if (computed.value === "0.00") return;
+  for (const r of refunds) {
+    const prev = r.settlement_amount;
+    if (prev !== computed.value) {
+      r.settlement_amount = computed.value;
+      console.log("ondc.update.refund_amount_enforced", {
+        transactionId,
+        bppId,
+        from: prev ?? null,
+        to: computed.value,
+        trail: computed.trail,
+      });
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -426,9 +487,20 @@ export async function POST(req: Request) {
     if (!orderResult.ok) {
       return NextResponse.json({ error: orderResult.reason }, { status: 400 });
     }
+    const passthroughOrder = orderResult.order as Record<string, unknown>;
+    // Refund updates (return/replacement/cancel settlement) must carry the
+    // quote_trail-derived amount even when built as a raw passthrough payload.
+    if (
+      updateTarget
+        .split(",")
+        .map((t) => t.trim())
+        .includes("payment")
+    ) {
+      await enforceRefundAmount(passthroughOrder, transactionId, bppId);
+    }
     message = {
       update_target: updateTarget,
-      order: orderResult.order as Record<string, unknown>,
+      order: passthroughOrder,
     };
   }
 

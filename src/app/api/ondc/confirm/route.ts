@@ -211,11 +211,15 @@ export async function POST(req: Request) {
     );
   }
 
-  // Fall back to the persisted on_init order when the caller omits it — the
-  // store holds the BPP's finalized order, keyed by (transaction_id, bpp_id).
+  // Load any persisted on_init order for this (transaction, bpp). The store holds
+  // the BPP's finalized order + quote (keyed by transaction_id, bpp_id); it is the
+  // authoritative source for both the fallback below and the quote overlay after
+  // validation.
+  const stored = await getOrder(transactionId, bppId);
+
+  // Fall back to the persisted on_init order when the caller omits it.
   let orderInput: unknown = body.order;
   if (orderInput == null) {
-    const stored = await getOrder(transactionId, bppId);
     console.log("ondc.confirm.lookup", {
       transactionId,
       bppId,
@@ -238,6 +242,23 @@ export async function POST(req: Request) {
   const orderResult = validateOrder(orderInput);
   if (!orderResult.ok) {
     return NextResponse.json({ error: orderResult.reason }, { status: 400 });
+  }
+
+  // Contract (RET v1.2.5 footnote 629): the order the BPP validates on /on_confirm
+  // must carry the SAME `quote` as /on_init. A caller that reconstructs an item-
+  // only quote (dropping the SNP commercials the seller added in on_init — the
+  // np_fees "Convenience Fee" and "Tax" breakup lines) fails that validation
+  // (QA 07-03 "confirm — quote.breakup is not correct as sent in on_init"). When
+  // we hold the finalized on_init quote, overlay it so /confirm mirrors /on_init
+  // exactly. Only the priced `quote` is overlaid — billing/fulfillment/payment on
+  // confirm legitimately carry the buyer's own values.
+  if (stored?.quote && typeof stored.quote === "object") {
+    orderResult.order.quote = stored.quote;
+    console.log("ondc.confirm.quote_overlay", {
+      transactionId,
+      bppId,
+      source: "on_init",
+    });
   }
 
   // Build the `context` envelope. Like init, confirm is directed: we reuse the
