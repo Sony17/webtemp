@@ -53,7 +53,11 @@ export type RefType =
   | "COMPLAINT"
   | "CUSTOMER"
   | "PAYMENT"
-  | "ACTION";
+  | "ACTION"
+  // Action-row ref pointing at a proposed resolution (e.g. RESOLUTION_ACCEPTED
+  // -> the accepted resolution id). Mirrors the seller's own RESOLVED action,
+  // which carries { ref_id, ref_type: "RESOLUTIONS" }.
+  | "RESOLUTIONS";
 
 export type ActorType =
   | "CUSTOMER"
@@ -103,8 +107,11 @@ export type IssueActionRow = {
   action_by: string;
   actor_details: { name: string };
   // QA: an INFO_PROVIDED action references the seller's INFO_REQUESTED via
-  // ref_id and carries the supporting images inline on the action itself.
+  // ref_id and carries the supporting images inline on the action itself. A
+  // RESOLUTION_ACCEPTED/REJECTED action references the proposed resolution via
+  // ref_id + ref_type "RESOLUTIONS" (mirrors the seller's RESOLVED action).
   ref_id?: string;
+  ref_type?: RefType;
   images?: IssueImage[];
 };
 
@@ -342,8 +349,11 @@ export function buildActionRow(params: {
   actionBy: string;
   actorName: string;
   // QA: carried on INFO_PROVIDED (ref_id -> the seller's INFO_REQUESTED, plus
-  // the supporting images). Omitted for actions that don't need them.
+  // the supporting images). Omitted for actions that don't need them. A
+  // resolution response also sets refType "RESOLUTIONS" so the ref_id names the
+  // proposed resolution (QA 07-03 "resolution accepted action> ref_id missing").
   refId?: string;
+  refType?: RefType;
   images?: IssueImage[];
 }): IssueActionRow {
   return {
@@ -353,6 +363,7 @@ export function buildActionRow(params: {
     action_by: params.actionBy,
     actor_details: { name: params.actorName },
     ...(params.refId ? { ref_id: params.refId } : {}),
+    ...(params.refId && params.refType ? { ref_type: params.refType } : {}),
     ...(params.images && params.images.length > 0
       ? { images: params.images }
       : {}),
@@ -430,9 +441,44 @@ export function projectStoredAction(
     return null;
   }
 
-  // Respondent: the seller's on_issue respondent_actions[] row, e.g.
-  // { id?, respondent_action, short_desc, updated_at }. Projected to the strict
-  // action shape (ref_id/images, if any, are the seller's concern).
+  // Respondent — two on-wire shapes:
+  //   v2.0.0: the seller's `issue.actions[]` row, carrying a descriptor{code,
+  //     short_desc}, its own action_by/actor_details, and (for resolution rows)
+  //     ref_id + ref_type. We echo it VERBATIM so the outbound issue carries the
+  //     FULL, faithful action trail (QA 07-03 "sellers actions not consumed").
+  //   v1.0.0: the flat respondent_actions[] row { respondent_action, short_desc,
+  //     updated_at }, projected into the strict shape.
+  const v2Desc = raw.descriptor as
+    | { code?: ActionCode; short_desc?: string }
+    | undefined;
+  if (v2Desc && typeof v2Desc === "object" && typeof v2Desc.code === "string") {
+    const actorName =
+      (raw.actor_details as { name?: string } | undefined)?.name ??
+      ctx.counterpartyNpId;
+    const row: IssueActionRow = {
+      id:
+        typeof raw.id === "string" && raw.id.trim()
+          ? raw.id
+          : `resp-${entry.updatedAt}-${v2Desc.code}`,
+      descriptor: {
+        code: v2Desc.code,
+        short_desc: v2Desc.short_desc ?? entry.shortDesc ?? "",
+      },
+      updated_at:
+        typeof raw.updated_at === "string" ? raw.updated_at : entry.updatedAt,
+      action_by:
+        typeof raw.action_by === "string"
+          ? raw.action_by
+          : ctx.counterpartyNpId,
+      actor_details: { name: actorName },
+      ...(typeof raw.ref_id === "string" ? { ref_id: raw.ref_id } : {}),
+      ...(typeof raw.ref_type === "string"
+        ? { ref_type: raw.ref_type as RefType }
+        : {}),
+    };
+    return row;
+  }
+
   const code = (raw.respondent_action ?? entry.action) as ActionCode;
   const id =
     typeof raw.id === "string" && raw.id.trim()

@@ -51,6 +51,10 @@ type IncomingIssue = {
   };
   resolution?: unknown;
   resolution_provider?: unknown;
+  // IGM v2.0.0: the full action trail (both parties) lives here.
+  actions?: unknown;
+  resolutions?: unknown;
+  // IGM v1.0.0: the split action arrays.
   issue_actions?: {
     respondent_actions?: unknown;
     complainant_actions?: unknown;
@@ -66,42 +70,84 @@ function str(v: unknown): string | undefined {
   return typeof v === "string" && v.trim() ? v.trim() : undefined;
 }
 
-// Pull out the action history rows the BPP sent us in respondent_actions and
-// project them to our IssueActionEntry shape. The respondent_actions array
-// is cumulative on the wire (the BPP always sends the full list), but we
-// only want to APPEND the rows we haven't seen yet — so we compare against
-// what's already in storage by (action + updated_at).
-function newRespondentActionsSince(
-  raw: unknown,
+// The IGM 2.0 action.descriptor.code values that are RESPONDENT (seller-side)
+// contributions. The seller's v2 `issue.actions[]` echoes BOTH parties' rows;
+// we only persist the seller's, since our own complainant rows are already
+// recorded by /issue. (Complainant codes — OPEN, INFO_PROVIDED, ESCALATED,
+// RESOLUTION_ACCEPTED/REJECTED, CLOSED — are skipped here.)
+const RESPONDENT_CODES = new Set([
+  "PROCESSING",
+  "INFO_REQUESTED",
+  "INFO_NOT_AVAILABLE",
+  "RESOLUTION_PROPOSED",
+  "RESOLVED",
+  "RESOLUTION_CASCADED",
+]);
+
+// Extract the NEW respondent action rows from the seller's on_issue, across both
+// wire shapes, and project them to our IssueActionEntry shape so the next /issue
+// can carry the FULL action trail (QA 07-03 "sellers actions not consumed"):
+//   - v1.0.0: issue.issue_actions.respondent_actions[] ({ respondent_action, … })
+//   - v2.0.0: issue.actions[] filtered to respondent descriptor.code values
+// The seller re-sends the cumulative list each call, so we APPEND only rows not
+// already in storage, deduped by (action + updated_at).
+function newRespondentActions(
+  issue: IncomingIssue | undefined,
   existingActions: IssueActionEntry[]
 ): IssueActionEntry[] {
-  if (!Array.isArray(raw)) return [];
   const seen = new Set(
     existingActions
       .filter((a) => a.actor === "respondent")
       .map((a) => `${a.action}|${a.updatedAt}`)
   );
   const out: IssueActionEntry[] = [];
-  for (const r of raw) {
-    if (!r || typeof r !== "object") continue;
-    const obj = r as {
-      respondent_action?: unknown;
-      short_desc?: unknown;
-      updated_at?: unknown;
-    };
-    const action = str(obj.respondent_action);
-    const updatedAt = str(obj.updated_at);
-    if (!action || !updatedAt) continue;
+  const push = (
+    action: string | undefined,
+    shortDesc: string | undefined,
+    updatedAt: string | undefined,
+    raw: unknown
+  ) => {
+    if (!action || !updatedAt) return;
     const key = `${action}|${updatedAt}`;
-    if (seen.has(key)) continue;
-    out.push({
-      actor: "respondent",
-      action,
-      shortDesc: str(obj.short_desc),
-      updatedAt,
-      raw: r,
-    });
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ actor: "respondent", action, shortDesc, updatedAt, raw });
+  };
+
+  // v1.0.0 shape.
+  const v1 = issue?.issue_actions?.respondent_actions;
+  if (Array.isArray(v1)) {
+    for (const r of v1) {
+      if (!r || typeof r !== "object") continue;
+      const obj = r as {
+        respondent_action?: unknown;
+        short_desc?: unknown;
+        updated_at?: unknown;
+      };
+      push(
+        str(obj.respondent_action),
+        str(obj.short_desc),
+        str(obj.updated_at),
+        r
+      );
+    }
   }
+
+  // v2.0.0 shape — the seller's contributions inside the combined actions[].
+  const v2 = issue?.actions;
+  if (Array.isArray(v2)) {
+    for (const r of v2) {
+      if (!r || typeof r !== "object") continue;
+      const obj = r as {
+        descriptor?: { code?: unknown; short_desc?: unknown };
+        updated_at?: unknown;
+      };
+      const code = str(obj.descriptor?.code);
+      if (!code || !RESPONDENT_CODES.has(code)) continue;
+      push(code, str(obj.descriptor?.short_desc), str(obj.updated_at), r);
+    }
+  }
+
   return out;
 }
 
@@ -150,10 +196,7 @@ export async function POST(req: Request) {
 
   // Find the existing record to know which respondent actions are new.
   const existing = await getIssue(transactionId, issueId);
-  const respondentActions = newRespondentActionsSince(
-    issue?.issue_actions?.respondent_actions,
-    existing?.actions ?? []
-  );
+  const respondentActions = newRespondentActions(issue, existing?.actions ?? []);
 
   try {
     await saveIssue({

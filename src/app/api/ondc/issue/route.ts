@@ -491,22 +491,51 @@ export async function POST(req: Request) {
     .filter((r): r is IssueActionRow => r !== null);
 
   // QA #4: resolve the action-level ref_id (and images for INFO_PROVIDED).
-  // ref_id ties INFO_PROVIDED -> the seller's INFO_REQUESTED, and a resolution
-  // response -> the proposed resolution. Prefer an explicit body value; else
-  // derive from the last matching respondent action in the history.
+  // ref_id ties INFO_PROVIDED -> the seller's INFO_REQUESTED action; a resolution
+  // response -> the PROPOSED RESOLUTION id (from the seller's resolutions[]),
+  // carried with ref_type "RESOLUTIONS" (QA 07-03 "resolution accepted action>
+  // ref_id missing"). Prefer an explicit body.refId (the buyer's chosen option);
+  // else derive from the persisted snapshot.
   const lastActionIdWithCode = (want: string): string | undefined => {
     for (let i = priorActions.length - 1; i >= 0; i--) {
       if (priorActions[i].descriptor.code === want) return priorActions[i].id;
     }
     return undefined;
   };
+  // The proposed resolution the buyer is accepting/rejecting. The seller sends
+  // resolutions[] on its on_issue (persisted in the snapshot). Prefer a concrete
+  // option (skip the "PARENT" grouping row the seller uses to bundle choices).
+  const proposedResolutionId = (): string | undefined => {
+    const res = (existing?.issue as { resolutions?: unknown } | undefined)
+      ?.resolutions;
+    if (!Array.isArray(res)) return undefined;
+    const idOf = (r: unknown): string | undefined =>
+      r && typeof r === "object" && typeof (r as { id?: unknown }).id === "string"
+        ? (r as { id: string }).id
+        : undefined;
+    const codeOf = (r: unknown): string | undefined =>
+      r &&
+      typeof r === "object" &&
+      typeof (r as { descriptor?: { code?: unknown } }).descriptor?.code ===
+        "string"
+        ? (r as { descriptor: { code: string } }).descriptor.code
+        : undefined;
+    const concrete = res.find((r) => idOf(r) && codeOf(r) !== "PARENT");
+    return idOf(concrete ?? res[0]);
+  };
+  const isResolutionResponse =
+    action === "RESOLUTION_ACCEPT" || action === "RESOLUTION_REJECT";
   const actionRefId =
     str(body.refId) ??
     (action === "INFO_PROVIDED"
       ? lastActionIdWithCode("INFO_REQUESTED")
-      : action === "RESOLUTION_ACCEPT" || action === "RESOLUTION_REJECT"
-        ? lastActionIdWithCode("RESOLUTION_PROPOSED")
+      : isResolutionResponse
+        ? proposedResolutionId()
         : undefined);
+  // Resolution responses name the resolution via ref_type "RESOLUTIONS"; an
+  // INFO_PROVIDED ref points at an action and carries no ref_type.
+  const actionRefType: RefType | undefined =
+    isResolutionResponse && actionRefId ? "RESOLUTIONS" : undefined;
   const actionImages: IssueImage[] | undefined =
     action === "INFO_PROVIDED" && Array.isArray(body.images)
       ? body.images.filter(
@@ -536,8 +565,10 @@ export async function POST(req: Request) {
     // interfacing NP does.
     actionBy: isGrievance ? ids.interfacingNpGroId : ids.interfacingNpId,
     actorName: isGrievance ? groName : personName,
-    // QA: ref_id + images ride ON the INFO_PROVIDED action itself.
+    // QA: ref_id (+ ref_type for resolution responses) + images ride ON the
+    // action row itself.
     refId: actionRefId,
+    refType: actionRefType,
     images: actionImages,
   });
 
