@@ -23,6 +23,7 @@ import {
   priceCeiling,
   type Product,
   type ShopFilters,
+  type CatalogRecord,
 } from "@/lib/shop/types";
 import * as api from "@/lib/shop/api";
 
@@ -41,6 +42,13 @@ function SearchScreen() {
   const [searching, setSearching] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [filters, setFilters] = React.useState<ShopFilters>({ sort: "relevance" });
+  // ACCUMULATED catalog slices for the current search, keyed by (bppId,messageId).
+  // Each /api/shop/state poll is load-balanced to one serverless instance and
+  // returns only the slices THAT instance persisted (the JSON /tmp store isn't
+  // shared across instances). By merging every poll's slices across the ~30s
+  // window we recover the full seller set instead of showing whichever single
+  // instance answered last. (Belt-and-suspenders until the shared DB is on.)
+  const [accum, setAccum] = React.useState<Map<string, CatalogRecord>>(new Map());
 
   const runSearch = React.useCallback(
     async (query: string) => {
@@ -50,6 +58,7 @@ function SearchScreen() {
       setSearching(true);
       setError(null);
       setTxn(null);
+      setAccum(new Map()); // fresh search → discard the previous seller set
       try {
         const res = await api.search({
           query: trimmed,
@@ -87,9 +96,30 @@ function SearchScreen() {
     enabled: !!txn,
   });
 
+  // Merge each poll's catalog slices into the accumulator (external system:
+  // async ONDC callbacks landing across instances over time).
+  /* eslint-disable react-hooks/set-state-in-effect */
+  React.useEffect(() => {
+    const cats = state?.catalogs;
+    if (!cats || cats.length === 0) return;
+    setAccum((prev) => {
+      let changed = false;
+      const next = new Map(prev);
+      for (const c of cats) {
+        const k = `${c.bppId}|${c.messageId}`;
+        if (!next.has(k)) {
+          next.set(k, c);
+          changed = true;
+        }
+      }
+      return changed ? next : prev; // no new slices → keep ref (avoids re-render)
+    });
+  }, [state]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
   const products: Product[] = React.useMemo(
-    () => (state ? parseCatalogs(state.catalogs) : []),
-    [state]
+    () => parseCatalogs([...accum.values()]),
+    [accum]
   );
   // Narrow the seller's full catalog to the user's query FIRST (ONDC returns the
   // whole catalog), THEN apply the price/sort filters on top of the matches.
@@ -102,9 +132,9 @@ function SearchScreen() {
     () => filterAndSortProducts(matched, filters),
     [matched, filters]
   );
-  const sellerCount = state
-    ? new Set(state.catalogs.map((c) => c.bppId)).size
-    : 0;
+  const sellerCount = new Set(
+    [...accum.values()].map((c) => c.bppId)
+  ).size;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
