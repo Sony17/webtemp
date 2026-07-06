@@ -29,15 +29,33 @@ export function isDatabaseConfigured(): boolean {
 // tree-shaking) does NOT throw when DATABASE_URL is unset. The thrown error
 // would mask the real, intended fallback path (JSON store).
 function buildClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL?.trim();
-  if (!connectionString) {
+  const raw = process.env.DATABASE_URL?.trim();
+  if (!raw) {
     throw new Error(
       "DATABASE_URL is not set. The Prisma-backed ONDC store requires a " +
         "Postgres connection string (postgres://…); without it, the JSON " +
         "store remains the active backend."
     );
   }
-  const adapter = new PrismaPg({ connectionString });
+  // Managed Postgres (Supabase / Neon / RDS) terminates TLS with a cert that is
+  // NOT in Node's default trust store, so node-postgres' strict verification
+  // fails with "self-signed certificate in certificate chain". We keep the
+  // connection ENCRYPTED but skip chain verification via the driver, and strip
+  // any `sslmode` from the URL so the string's mode can't re-enable strict
+  // verification and override this. (Migrations use a separate path — Prisma's
+  // engine treats sslmode=require as encrypt-without-verify already.)
+  let connectionString = raw;
+  try {
+    const u = new URL(raw);
+    u.searchParams.delete("sslmode");
+    connectionString = u.toString();
+  } catch {
+    /* not a parseable URL — pass through untouched */
+  }
+  const adapter = new PrismaPg({
+    connectionString,
+    ssl: { rejectUnauthorized: false },
+  });
   return new PrismaClient({ adapter });
 }
 
