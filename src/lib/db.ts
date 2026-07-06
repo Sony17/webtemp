@@ -9,8 +9,10 @@
 // Server-only on purpose: the Prisma client talks SQL — never let it leak into
 // a client bundle.
 import "server-only";
+import tls from "node:tls";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { SUPABASE_ROOT_CA_2021 } from "@/lib/supabase-ca";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -37,13 +39,14 @@ function buildClient(): PrismaClient {
         "store remains the active backend."
     );
   }
-  // Managed Postgres (Supabase / Neon / RDS) terminates TLS with a cert that is
-  // NOT in Node's default trust store, so node-postgres' strict verification
-  // fails with "self-signed certificate in certificate chain". We keep the
-  // connection ENCRYPTED but skip chain verification via the driver, and strip
-  // any `sslmode` from the URL so the string's mode can't re-enable strict
-  // verification and override this. (Migrations use a separate path — Prisma's
-  // engine treats sslmode=require as encrypt-without-verify already.)
+  // Managed Postgres (Supabase) terminates TLS with a cert signed by a PRIVATE
+  // root ("Supabase Root 2021 CA") that isn't in Node's default trust store, so
+  // node-postgres' verification fails with "self-signed certificate in chain".
+  // We keep FULL verification (rejectUnauthorized: true) but extend the trust
+  // anchors with that pinned root alongside the system CAs — encrypted AND
+  // authenticated, no MITM window. We also strip any `sslmode` from the URL so
+  // the string can't flip the driver into a conflicting mode. (Migrations use a
+  // separate path — Prisma's engine trusts the chain on its own.)
   let connectionString = raw;
   try {
     const u = new URL(raw);
@@ -54,7 +57,10 @@ function buildClient(): PrismaClient {
   }
   const adapter = new PrismaPg({
     connectionString,
-    ssl: { rejectUnauthorized: false },
+    ssl: {
+      ca: [...tls.rootCertificates, SUPABASE_ROOT_CA_2021],
+      rejectUnauthorized: true,
+    },
   });
   return new PrismaClient({ adapter });
 }
