@@ -318,13 +318,15 @@ export async function POST(req: Request) {
   // Build the `context` envelope. `search` is broadcast, so no bpp_id/bpp_uri.
   // transaction_id is minted fresh unless the caller is continuing a flow; we
   // return it so the caller can correlate the later on_search callback(s).
-  // An INCREMENTAL refresh is network-wide, so context.city must be "*" (QA #18)
-  // — a city-scoped value would limit the delta to one city. Full-catalog search
-  // keeps the configured city (unchanged behaviour).
+  // context.city is the configured STD-coded city (config.cityCode, e.g.
+  // "std:080") for BOTH full-catalog and incremental searches. Per ONDC
+  // certification guidance the search context MUST carry a specific city with an
+  // STD code — NOT the wildcard "*". (A prior QA note used "*" to mean a
+  // network-wide incremental delta, but the ONDC team / log validator require a
+  // concrete city; "*" is rejected.)
   const context = buildContext({
     action: "search",
     ...(transactionId ? { transactionId } : {}),
-    ...(incremental ? { city: "*" } : {}),
   });
 
   const message = buildSearchMessage({
