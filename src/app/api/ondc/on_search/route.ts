@@ -112,16 +112,9 @@ type ExtractedOnSearch = {
 // ACK / NACK responses (BAP → caller, the sync reply ONDC expects)
 // ---------------------------------------------------------------------------
 
-// DEBUG (temporary): stamp every response from THIS build so we can confirm in
-// Workbench whether openidea.co.in/ondc/on_search is served by this process or a
-// different/older deployment. Diagnostic only — not part of the ONDC envelope.
-// Remove (this const + the two `...body, debug_build` spreads below) after debugging.
-const DEBUG_BUILD = "local-20260616";
-
 function ack(trace?: AuditTrace, context?: unknown): NextResponse {
-  // Echoes the inbound `context` (when known) per ONDC's response contract; the
-  // debug_build stamp is diagnostic only (see DEBUG_BUILD note above).
-  return buildAck({ context, trace, extra: { debug_build: DEBUG_BUILD } });
+  // Echoes the inbound `context` (when known) per ONDC's response contract.
+  return buildAck({ context, trace });
 }
 
 // A NACK carries an error block and a non-2xx status so the sender can tell it
@@ -141,8 +134,7 @@ function nack(
   context?: unknown
 ): NextResponse {
   if (cacheKey) recordRejection(cacheKey, { httpStatus, error });
-  // DEBUG (temporary): debug_build stamp — see DEBUG_BUILD note above.
-  return buildNack({ httpStatus, error, context, trace, extra: { debug_build: DEBUG_BUILD } });
+  return buildNack({ httpStatus, error, context, trace });
 }
 
 // ---------------------------------------------------------------------------
