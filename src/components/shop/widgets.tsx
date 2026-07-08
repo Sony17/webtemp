@@ -307,8 +307,11 @@ export function ProductCard({
         <Link href={href} className="line-clamp-2 text-sm font-medium">
           {product.name}
         </Link>
+        {/* Seller name first (so buyers can tell sellers apart / pick a specific
+            one on ONDC), with the unit appended when present. */}
         <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-          {product.unit ?? product.providerName}
+          {product.providerName}
+          {product.unit ? ` · ${product.unit}` : ""}
         </p>
         {product.rating ? (
           <Rating value={product.rating} className="mt-1 w-fit" />
