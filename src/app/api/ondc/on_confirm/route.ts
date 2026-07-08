@@ -306,6 +306,20 @@ export async function POST(req: Request) {
   // (c/d) Structural validation + field extraction.
   const result = extractAndValidate(payload);
   if (!result.ok) {
+    // Log WHY we're rejecting so a 400 isn't a black box (the seller only sees
+    // our NACK, not the reason). Include the order's top-level keys to spot a
+    // misplaced/typed order id without dumping the whole payload.
+    const orderKeys =
+      payload.message?.order && typeof payload.message.order === "object"
+        ? Object.keys(payload.message.order as Record<string, unknown>)
+        : null;
+    console.warn("ondc.on_confirm structural reject", {
+      reason: result.reason,
+      transactionId: ctx?.transaction_id,
+      bppId: ctx?.bpp_id,
+      orderKeys,
+      orderIdType: typeof (payload.message?.order as { id?: unknown })?.id,
+    });
     return nack(400, contextError(ONDC_ERROR.CONTEXT_GENERIC, result.reason), trace, ctx);
   }
   annotateTrace(trace, {
