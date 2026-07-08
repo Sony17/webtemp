@@ -39,6 +39,8 @@ import { isOndcConfigured } from "@/lib/ondc/config";
 import { buildContext } from "@/lib/ondc/context";
 import { sendOndcRequest, OndcClientError } from "@/lib/ondc/client";
 import { getOrder, saveConfirmOrder } from "@/lib/ondc/store";
+import { sendEmail } from "@/lib/email/send";
+import { orderConfirmationEmail } from "@/lib/email/templates";
 
 // ONDC signing uses node:crypto (via auth.ts), and the whole ondc/* stack is
 // `import "server-only"` — so this handler must run on the Node runtime, not
@@ -337,6 +339,28 @@ export async function POST(req: Request) {
           orderId,
           msg: err instanceof Error ? err.message : String(err),
         });
+      }
+
+      // Fire-and-forget order-confirmation email to the buyer. Best-effort: it's
+      // a no-op until RESEND_API_KEY is set, and a failure must never affect the
+      // placed order (not awaited, errors swallowed inside sendEmail).
+      const billingEmail = str(
+        (confirmOrder.billing as { email?: unknown } | undefined)?.email
+      );
+      if (billingEmail) {
+        const providerName = str(
+          (confirmOrder.provider as { descriptor?: { name?: unknown } } | undefined)
+            ?.descriptor?.name
+        );
+        const orderUrl = `https://openidea.co.in/shop/order/${encodeURIComponent(
+          transactionId
+        )}/${encodeURIComponent(bppId)}`;
+        const { subject, html } = orderConfirmationEmail({
+          orderId,
+          providerName,
+          orderUrl,
+        });
+        void sendEmail({ to: billingEmail, subject, html });
       }
     }
 
