@@ -17,7 +17,7 @@
 // transaction.
 import { NextResponse } from "next/server";
 import { getPayment } from "@/lib/payments/store-json";
-import { PAYMENT_CONFIG } from "@/lib/payments/config";
+import { getPaymentConfig } from "@/lib/payments/config";
 
 // The payment store is `import "server-only"` and touches node:fs / @vercel/blob,
 // so this handler must run on the Node runtime, not Edge.
@@ -46,17 +46,18 @@ export async function GET(req: Request) {
     );
   }
 
+  // Ecosysz collection-account details from env (blank until set in Vercel).
+  const cfg = getPaymentConfig();
   return NextResponse.json(
     {
       transactionId: record.transactionId,
       paymentReference: record.paymentReference,
       amount: record.amount,
-      // Static Ecosysz collection-account details. Blank until filled in config.
-      accountName: PAYMENT_CONFIG.accountName,
-      accountNumber: PAYMENT_CONFIG.accountNumber,
-      ifsc: PAYMENT_CONFIG.ifsc,
-      upiId: PAYMENT_CONFIG.upiId,
-      qrCodeUrl: PAYMENT_CONFIG.qrCodeUrl,
+      accountName: cfg.accountName,
+      accountNumber: cfg.accountNumber,
+      ifsc: cfg.ifsc,
+      upiId: cfg.upiId,
+      qrCodeUrl: cfg.qrCodeUrl,
     },
     { status: 200 }
   );
