@@ -33,11 +33,12 @@
 //
 // Mirrors the conventions of the existing routes (init, select, deployments):
 // `NextResponse`, `runtime = "nodejs"`, JSON-body parsing with a 400 guard.
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { isOndcConfigured } from "@/lib/ondc/config";
 import { buildContext } from "@/lib/ondc/context";
 import { sendOndcRequest, OndcClientError } from "@/lib/ondc/client";
-import { getOrder } from "@/lib/ondc/store";
+import { getOrder, saveConfirmOrder } from "@/lib/ondc/store";
 
 // ONDC signing uses node:crypto (via auth.ts), and the whole ondc/* stack is
 // `import "server-only"` — so this handler must run on the Node runtime, not
@@ -261,6 +262,22 @@ export async function POST(req: Request) {
     });
   }
 
+  // ONDC RET v1.2.5: "BNP creates the order id which will be unique across the
+  // network" and sends it in /confirm; the SNP echoes the SAME order_id in
+  // /on_confirm. The on_init order we commit to has no id, so mint one here —
+  // otherwise the order is unaddressable (status/track/cancel/update all key on
+  // order_id) and a compliant SNP (e.g. the Pramaan mock) has no id to echo,
+  // which is exactly why on_confirm was arriving with `order.id` missing.
+  const confirmOrder = orderResult.order as OndcConfirmOrder & {
+    id?: string;
+    state?: unknown;
+  };
+  let orderId = str(confirmOrder.id);
+  if (!orderId) {
+    orderId = randomUUID();
+    confirmOrder.id = orderId;
+  }
+
   // Build the `context` envelope. Like init, confirm is directed: we reuse the
   // caller's transaction_id and thread bppId/bppUri through so buildContext
   // attaches bpp_id/bpp_uri (required for every non-search action). message_id
@@ -295,11 +312,40 @@ export async function POST(req: Request) {
     // rejected it (quote expired, payment terms changed, item now unavailable,
     // …); surface its error and use 422 so clients can distinguish "rejected"
     // from a transport failure.
+    // On ACK, persist the placed order immediately with the BNP-minted order id
+    // so the buyer app can act on it (cancel / track / status) right away,
+    // without waiting for the async on_confirm — which then overlays the SNP's
+    // authoritative state. Best-effort: a store hiccup must not fail a placed
+    // order the seller already accepted.
+    if (result.status === "ACK") {
+      try {
+        await saveConfirmOrder({
+          transactionId,
+          messageId: context.message_id,
+          bppId,
+          bppUri,
+          orderId,
+          state: confirmOrder.state ?? "Created",
+          order: confirmOrder,
+          quote: confirmOrder.quote,
+          fulfillments: confirmOrder.fulfillments,
+        });
+      } catch (err) {
+        console.warn("ondc.confirm persist failed", {
+          transactionId,
+          bppId,
+          orderId,
+          msg: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
     const payload = {
       status: result.status,
       transactionId: context.transaction_id,
       messageId: context.message_id,
       bppId,
+      ...(result.status === "ACK" ? { orderId } : {}),
       ...(result.status === "NACK" ? { error: result.error } : {}),
     };
 
