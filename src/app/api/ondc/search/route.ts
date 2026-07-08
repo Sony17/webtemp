@@ -63,10 +63,13 @@ type SearchRequestBody = {
   // Optional `incrementalStart` overrides start_time; default is now-1h.
   incremental?: boolean;
   incrementalStart?: string;
-  // Incremental refresh mode (QA #18): "start" begins a delta window, "stop"
-  // ends it. Emitted as the `mode` entry of the catalog_inc tag group. Defaults
-  // to "start" when an incremental search is requested without an explicit mode.
-  incrementalMode?: "start" | "stop";
+  // Pull-window end (RET10 1.2.5 incremental catalog refresh PULL): the
+  // catalog_inc `end_time`. Only used when incrementalMode === "pull".
+  incrementalEnd?: string;
+  // Incremental refresh mode: "start"/"stop" drive the PUSH subscription (emit a
+  // `mode` entry). "pull" drives the 1-time on-demand PULL (emit a start_time +
+  // end_time TIME WINDOW, no `mode`). Defaults to "start".
+  incrementalMode?: "start" | "stop" | "pull";
 };
 
 // The ONDC `search` message payload: a Beckn `intent`. Only the sub-objects we
@@ -153,7 +156,8 @@ function buildSearchMessage(input: {
   deliveryAreaCode?: string;
   incremental?: boolean;
   incrementalStart?: string;
-  incrementalMode?: "start" | "stop";
+  incrementalEnd?: string;
+  incrementalMode?: "start" | "stop" | "pull";
 }): OndcSearchMessage {
   // bap_terms is published on EVERY search. bap_features is added ONLY on a
   // NON-incremental search: the RET10 1.2.5 "Incremental catalog refresh"
@@ -195,9 +199,26 @@ function buildSearchMessage(input: {
   // drive from the Workbench incremental flow).
   if (input.incremental) {
     const mode = input.incrementalMode ?? "start";
-    const list: { code: string; value: string }[] = [{ code: "mode", value: mode }];
-    if (mode === "start" && input.incrementalStart) {
-      list.push({ code: "start_time", value: input.incrementalStart });
+    let list: { code: string; value: string }[];
+    if (mode === "pull") {
+      // PULL (1-time, on-demand): catalog_inc carries a TIME WINDOW
+      // (start_time + end_time) and NO `mode` entry. The seller returns the
+      // catalog changes within that window. (RET10 1.2.5 "Incremental catalog
+      // refresh" — pull example.)
+      list = [];
+      if (input.incrementalStart) {
+        list.push({ code: "start_time", value: input.incrementalStart });
+      }
+      if (input.incrementalEnd) {
+        list.push({ code: "end_time", value: input.incrementalEnd });
+      }
+    } else {
+      // PUSH subscribe/stop: catalog_inc carries the `mode` entry; start_time is
+      // optional on start (defaults to Context.timestamp).
+      list = [{ code: "mode", value: mode }];
+      if (mode === "start" && input.incrementalStart) {
+        list.push({ code: "start_time", value: input.incrementalStart });
+      }
     }
     intent.tags!.push({ code: "catalog_inc", list });
     return { intent };
@@ -273,8 +294,13 @@ export async function POST(req: Request) {
   const targetUrl = str(body.targetUrl);
   const incremental = body.incremental === true;
   const incrementalStart = str(body.incrementalStart);
-  const incrementalMode =
-    body.incrementalMode === "stop" ? "stop" : "start";
+  const incrementalEnd = str(body.incrementalEnd);
+  const incrementalMode: "start" | "stop" | "pull" =
+    body.incrementalMode === "stop"
+      ? "stop"
+      : body.incrementalMode === "pull"
+        ? "pull"
+        : "start";
 
   // Require at least one discovery criterion — a broadcast with an empty intent
   // is a misuse (and would flood the network for nothing). An INCREMENTAL (delta)
@@ -336,6 +362,7 @@ export async function POST(req: Request) {
     deliveryAreaCode,
     incremental,
     incrementalStart,
+    incrementalEnd,
     incrementalMode,
   });
 
