@@ -344,15 +344,19 @@ export async function POST(req: Request) {
   // Build the `context` envelope. `search` is broadcast, so no bpp_id/bpp_uri.
   // transaction_id is minted fresh unless the caller is continuing a flow; we
   // return it so the caller can correlate the later on_search callback(s).
-  // context.city is the configured STD-coded city (config.cityCode, e.g.
-  // "std:080") for BOTH full-catalog and incremental searches. Per ONDC
-  // certification guidance the search context MUST carry a specific city with an
-  // STD code — NOT the wildcard "*". (A prior QA note used "*" to mean a
-  // network-wide incremental delta, but the ONDC team / log validator require a
-  // concrete city; "*" is rejected.)
+  // context.city, per ONDC's incremental-pull flow guidance:
+  //   - a NORMAL "city call" search (the 1st discovery search) carries the
+  //     specific STD-coded city (config.cityCode, e.g. "std:080").
+  //   - an INCREMENTAL search (catalog_inc — push start/stop OR pull) carries
+  //     "*". The incremental catalog refresh PULL is sent with city "*"; the
+  //     workbench mock buckets its catalog by city and expects "*" on the
+  //     incremental request (a concrete city there makes its generator read an
+  //     undefined bucket and throw). ONDC QA flow: 1st = city-call search with
+  //     the specific city; 2nd = incremental-pull search with city "*".
   const context = buildContext({
     action: "search",
     ...(transactionId ? { transactionId } : {}),
+    ...(incremental ? { city: "*" } : {}),
   });
 
   const message = buildSearchMessage({
