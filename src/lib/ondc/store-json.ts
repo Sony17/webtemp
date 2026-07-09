@@ -726,3 +726,28 @@ export async function getIssuesByTransaction(
   }
   return out.sort((a, b) => b.updatedAt - a.updatedAt);
 }
+
+// ---------------------------------------------------------------------------
+// Admin dashboard reads — cross-transaction lists + counts. (On this JSON
+// backend the lists only reflect THIS instance's /tmp snapshot; Postgres is
+// what makes them complete — see store-db.ts.)
+// ---------------------------------------------------------------------------
+
+export async function listOrders(): Promise<OrderRecord[]> {
+  await ensureHydrated();
+  return [...getState().orders.values()].sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+export async function listIssues(): Promise<IssueRecord[]> {
+  await ensureHydrated();
+  return [...getState().issues.values()].sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+export async function countTransactions(): Promise<number> {
+  await ensureHydrated();
+  const s = getState();
+  const txns = new Set<string>();
+  for (const c of s.catalogs.values()) txns.add(c.transactionId);
+  for (const o of s.orders.values()) txns.add(o.transactionId);
+  return txns.size;
+}

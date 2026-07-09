@@ -720,3 +720,57 @@ export async function getIssuesByTransaction(
     return out;
   });
 }
+
+// ---------------------------------------------------------------------------
+// Admin dashboard reads — cross-transaction lists + counts. Bounded takes so a
+// large store doesn't blow up the dashboard payload.
+// ---------------------------------------------------------------------------
+
+// All orders across every transaction, most-recently-updated first.
+export async function listOrders(): Promise<OrderRecord[]> {
+  return run("list orders", async () => {
+    const prisma = getPrisma();
+    const rows = await prisma.order.findMany({
+      orderBy: { updatedAt: "desc" },
+      take: 500,
+    });
+    return rows.map(rowToOrder);
+  });
+}
+
+// All IGM issues across every transaction, newest update first. Folds the
+// kind=issue event rows per (transaction, issueId), same as getIssue.
+export async function listIssues(): Promise<IssueRecord[]> {
+  return run("list issues", async () => {
+    const prisma = getPrisma();
+    const rows = await prisma.event.findMany({
+      where: { kind: "issue" },
+      orderBy: { receivedAt: "desc" },
+      take: 2000,
+    });
+    const byTxn = new Map<string, typeof rows>();
+    for (const r of rows) {
+      const arr = byTxn.get(r.transactionId) ?? [];
+      arr.push(r);
+      byTxn.set(r.transactionId, arr);
+    }
+    const out: IssueRecord[] = [];
+    for (const [txn, txnRows] of byTxn) {
+      const seen = new Set<string>();
+      for (const r of txnRows) {
+        const p = r.payload as IssueEventPayload;
+        if (!p?.issueId || seen.has(p.issueId)) continue;
+        seen.add(p.issueId);
+        const rec = foldIssueEvents(txnRows, txn, p.issueId);
+        if (rec) out.push(rec);
+      }
+    }
+    out.sort((a, b) => b.updatedAt - a.updatedAt);
+    return out;
+  });
+}
+
+// Count of discovery sessions (one ondc_search row per transaction id).
+export async function countTransactions(): Promise<number> {
+  return run("count transactions", async () => getPrisma().ondcSearch.count());
+}

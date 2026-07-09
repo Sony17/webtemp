@@ -10,7 +10,7 @@ const ADMIN_PASSWORD = "admin";
 
 // Only allow `next` redirects to known internal admin paths, so a malicious
 // link can't bounce the user to an external URL after login.
-const ALLOWED_NEXT = new Set(["/admin", "/sai-admin"]);
+const ALLOWED_NEXT = new Set(["/admin", "/sai-admin", "/shop/admin"]);
 
 export default function AdminLoginPage() {
   const router = useRouter();

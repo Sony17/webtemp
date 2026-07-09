@@ -110,6 +110,15 @@ function BottomNav() {
 
 export default function Chrome({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
+  const pathname = usePathname();
+
+  // The ONDC admin dashboard (/shop/admin) is NOT the buyer app — render it
+  // full-bleed with its own styling, without the buyer header / bottom-nav /
+  // shop-theme scope.
+  if (pathname?.startsWith("/shop/admin")) {
+    return <>{children}</>;
+  }
+
   return (
     <div
       className={cn(
