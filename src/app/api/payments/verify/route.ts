@@ -22,7 +22,7 @@ import { NextResponse } from "next/server";
 import {
   updatePaymentStatus,
   PaymentStoreError,
-} from "@/lib/payments/store-json";
+} from "@/lib/payments/store";
 
 // The payment store is `import "server-only"` and touches node:fs / @vercel/blob,
 // so this handler must run on the Node runtime, not Edge.

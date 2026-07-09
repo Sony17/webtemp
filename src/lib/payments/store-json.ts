@@ -355,3 +355,18 @@ export async function getPaymentByReference(
   }
   return null;
 }
+
+// All tracked payments, newest first — optionally filtered by status. Backs the
+// admin reconcile console. (On this JSON backend the list only reflects THIS
+// instance's /tmp snapshot; the Postgres backend is what makes it complete —
+// see store-db.ts / the dispatcher in store.ts.)
+export async function listPayments(opts?: {
+  status?: "PENDING" | "PAID";
+}): Promise<PaymentRecord[]> {
+  await ensureHydrated();
+  const all = [...getState().payments.values()];
+  const filtered = opts?.status
+    ? all.filter((p) => p.status === opts.status)
+    : all;
+  return filtered.sort((a, b) => b.createdAt - a.createdAt);
+}

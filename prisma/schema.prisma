@@ -160,3 +160,26 @@ model Event {
   @@index([transactionId, kind])
   @@map("ondc_event")
 }
+
+// Payment ledger — the BAP's own record of "did the buyer pay for this
+// transaction, and what's the bank reference." ONDC settles funds out-of-band,
+// so this is an INDEPENDENT ledger (no FK to OndcSearch): a payment is tracked
+// by transaction id, created PENDING at checkout, and reconciled to PAID via the
+// admin console / bank check. paymentReference is deterministic from the txn id.
+model Payment {
+  id               String    @id @default(cuid())
+  transactionId    String    @unique
+  orderId          String?
+  amount           Float?
+  paymentReference String    @unique
+  // "PENDING" | "PAID" — kept as String (not enum) to mirror the JSON store.
+  status           String
+  bankReference    String?
+  // Write-once instant the payment first became PAID (settlement anchor).
+  verifiedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([status])
+  @@map("ondc_payment")
+}

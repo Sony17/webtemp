@@ -10,7 +10,7 @@
 // Mirrors the conventions of the other routes: `NextResponse`,
 // `runtime = "nodejs"`, a 400 guard on the required input.
 import { NextResponse } from "next/server";
-import { getPayment } from "@/lib/payments/store-json";
+import { getPayment } from "@/lib/payments/store";
 
 // The payment store is `import "server-only"` and touches node:fs / @vercel/blob,
 // so this handler must run on the Node runtime, not Edge.

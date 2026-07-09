@@ -16,7 +16,7 @@
 // `runtime = "nodejs"`, a 400 guard on the required input, 404 on an untracked
 // transaction.
 import { NextResponse } from "next/server";
-import { getPayment } from "@/lib/payments/store-json";
+import { getPayment } from "@/lib/payments/store";
 import { getPaymentConfig } from "@/lib/payments/config";
 
 // The payment store is `import "server-only"` and touches node:fs / @vercel/blob,
