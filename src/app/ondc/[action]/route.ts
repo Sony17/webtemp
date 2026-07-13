@@ -13,11 +13,12 @@
 //      Workbench/preprod issues are diagnosable from Vercel runtime logs alone.
 //   2. Delegating to the matching `src/app/api/ondc/<action>` POST handler so
 //      signatures are still verified and the persistence pipeline still runs.
-//      A simple ACK responder here would compromise the signature-verification
-//      chain in `auth.ts`; do NOT remove the delegation.
+//      `on_search` is special-cased to return its synchronous ACK immediately,
+//      then run the delegated verifier/storage pipeline after the response,
+//      because Workbench treats a slow callback response as "no response".
 //
 // Dynamic route note (this Next version): `params` is a Promise — `await` it.
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
@@ -62,6 +63,26 @@ const LOADERS: Record<Action, () => Promise<{ POST: (req: Request) => Promise<Re
   on_issue_status: () => import("@/app/api/ondc/on_issue/route"),
 };
 
+function parseCallbackBody(rawBody: string): { context?: unknown; hasTopLevelError: boolean } {
+  try {
+    const payload = JSON.parse(rawBody) as { context?: unknown; error?: unknown };
+    return {
+      context: payload.context,
+      hasTopLevelError: !!payload.error,
+    };
+  } catch {
+    return { hasTopLevelError: false };
+  }
+}
+
+function cloneForDelegate(req: Request, rawBody: string): Request {
+  return new Request(req.url, {
+    method: "POST",
+    headers: req.headers,
+    body: rawBody,
+  });
+}
+
 export async function POST(
   req: Request,
   ctx: { params: Promise<{ action: string }> }
@@ -102,6 +123,32 @@ export async function POST(
   });
 
   try {
+    if (action === "on_search") {
+      const parsed = parseCallbackBody(rawBody);
+      if (!parsed.hasTopLevelError) {
+        after(async () => {
+          try {
+            const mod = await LOADERS.on_search();
+            await mod.POST(cloneForDelegate(req, rawBody));
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : "delegation failed";
+            console.error("ondc.callback post-ack delegate fault", {
+              action,
+              msg,
+            });
+          }
+        });
+
+        return NextResponse.json(
+          {
+            ...(parsed.context ? { context: parsed.context } : {}),
+            message: { ack: { status: "ACK" } },
+          },
+          { status: 200 }
+        );
+      }
+    }
+
     const mod = await LOADERS[action]();
     return await mod.POST(forwarded);
   } catch (err) {
