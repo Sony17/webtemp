@@ -30,7 +30,7 @@
 // chosen provider came from.
 //
 // Mirrors the existing route conventions (NextResponse, runtime = "nodejs").
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { getOndcConfig, isOndcConfigured } from "@/lib/ondc/config";
 import { resolveBppSigningPublicKey } from "@/lib/ondc/registry";
 import {
@@ -601,63 +601,57 @@ export async function POST(req: Request) {
     );
   }
 
-  // (e) Hand off to persistence (currently a logging no-op). We await it so a
-  // future store failure can downgrade to a NACK rather than a silent drop.
-  try {
-    await persistOnSearchCatalog(result.data);
-  } catch (err) {
-    const e = err instanceof Error ? err : null;
-    // Surface the wrapped CAUSE so we can tell EROFS / EACCES (Vercel read-only
-    // FS) from a Blob auth failure from a real bug. Without this the route was
-    // logging only the wrapper message ("failed to persist snapshot").
-    const cause = e && "cause" in e ? (e.cause as Error | undefined) : undefined;
-    console.error("ondc.on_search persist failed", {
-      msg: e?.message ?? "persistence error",
-      causeMessage: cause?.message,
-      causeCode: (cause as NodeJS.ErrnoException | undefined)?.code,
-      transactionId: result.data.transactionId,
-      bppId: result.data.bppId,
-    });
-    return nack(500, coreError("could not store catalog"), trace, undefined, ctx);
-  }
+  // (e/f) Return the synchronous ACK immediately; do persistence and catalog
+  // rejection work after the response is committed. The Workbench ACK window is
+  // short, and waiting on JSON/blob/DB storage can be reported as "no response".
+  after(async () => {
+    try {
+      await persistOnSearchCatalog(result.data);
+    } catch (err) {
+      const e = err instanceof Error ? err : null;
+      // Surface the wrapped CAUSE so we can tell EROFS / EACCES (Vercel read-only
+      // FS) from a Blob auth failure from a real bug. Without this the route was
+      // logging only the wrapper message ("failed to persist snapshot").
+      const cause = e && "cause" in e ? (e.cause as Error | undefined) : undefined;
+      console.error("ondc.on_search persist failed", {
+        msg: e?.message ?? "persistence error",
+        causeMessage: cause?.message,
+        causeCode: (cause as NodeJS.ErrnoException | undefined)?.code,
+        transactionId: result.data.transactionId,
+        bppId: result.data.bppId,
+      });
+      return;
+    }
 
-  // Commit idempotency ONLY now that persistence has succeeded. Committing
-  // after persist (not before) is what prevents the ACK-without-persistence
-  // bug: the failed-persist branch above returned NACK 500 WITHOUT committing,
-  // so the sender's retry re-attempts persistence instead of replay-ACKing.
-  commitMessageId(
-    "on_search",
-    result.data.transactionId,
-    result.data.messageId
-  );
+    // Commit idempotency ONLY now that persistence has succeeded. Committing
+    // after persist (not before) is what prevents the ACK-without-persistence
+    // bug: a failed persist remains retryable on a fresh sender retry.
+    commitMessageId(
+      "on_search",
+      result.data.transactionId,
+      result.data.messageId
+    );
 
-  // RET 1.2.5 Catalog Validation & Rejection Flow — workbench tooltip:
-  // "Buyer rejects catalog partially/fully with item/store-level rejection
-  // details & reason codes." After ACKing the catalog, the BAP MUST walk
-  // it and, when it finds items/stores it refuses to ingest, POST a
-  // follow-up `catalog_rejection` callback to the SNP listing them with the
-  // contract reason codes (20003/20004/20005, comma-joined when combined).
-  //
-  // Fire-and-forget: we do NOT await this. The workbench's ACK clock on
-  // /on_search is short, and a slow catalog_rejection POST must not delay
-  // our sync reply. Failures inside postCatalogRejection are logged, never
-  // thrown — see the function for the contract.
-  const validation = validateCatalog(result.data.catalog);
-  if (!validation.ok && validation.error) {
-    console.log("ondc.on_search catalog rejected (firing callback)", {
-      transactionId: result.data.transactionId,
-      bppId: result.data.bppId,
-      errorCode: validation.error.code,
-      rejectionCount: validation.rejections.length,
-    });
-    void postCatalogRejection({
-      bppId: result.data.bppId,
-      bppUri: result.data.bppUri,
-      transactionId: result.data.transactionId,
-      city: result.data.city,
-      error: validation.error,
-    });
-  }
+    // RET 1.2.5 Catalog Validation & Rejection Flow: after ACKing the catalog,
+    // the BAP walks it and, when it finds items/stores it refuses to ingest,
+    // POSTs a follow-up `catalog_rejection` callback to the SNP.
+    const validation = validateCatalog(result.data.catalog);
+    if (!validation.ok && validation.error) {
+      console.log("ondc.on_search catalog rejected (firing callback)", {
+        transactionId: result.data.transactionId,
+        bppId: result.data.bppId,
+        errorCode: validation.error.code,
+        rejectionCount: validation.rejections.length,
+      });
+      await postCatalogRejection({
+        bppId: result.data.bppId,
+        bppUri: result.data.bppUri,
+        transactionId: result.data.transactionId,
+        city: result.data.city,
+        error: validation.error,
+      });
+    }
+  });
 
   // (f) Accept. The aggregated catalogs are now (will be) available for the
   // future Select API to read by transaction_id.
