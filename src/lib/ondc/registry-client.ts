@@ -65,7 +65,7 @@ const CLOCK_SKEW_SECONDS = 5;
 // RESPONSE record's `type` field uses Beckn's acronym "BPP" for the same role.
 // We accept either on the response side; we only send "sellerApp" as the
 // filter.
-const LOOKUP_FILTER_PARTICIPANT_TYPE = "sellerApp";
+const LOOKUP_FILTER_PARTICIPANT_TYPE = "BPP";
 const ACCEPTED_RESPONSE_PARTICIPANT_TYPES = new Set(["sellerApp", "BPP"]);
 
 // ---------------------------------------------------------------------------
