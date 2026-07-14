@@ -199,16 +199,17 @@ function buildSearchMessage(input: {
   // drive from the Workbench incremental flow).
   if (input.incremental) {
     const mode = input.incrementalMode ?? "start";
+    // Apply the documented default: start_time = now - 1h when not explicitly
+    // provided. This ensures the catalog_inc tag always carries a meaningful
+    // window even when the caller omits incrementalStart.
+    const startTime = input.incrementalStart ?? new Date(Date.now() - 3600_000).toISOString();
     let list: { code: string; value: string }[];
     if (mode === "pull") {
       // PULL (1-time, on-demand): catalog_inc carries a TIME WINDOW
       // (start_time + end_time) and NO `mode` entry. The seller returns the
       // catalog changes within that window. (RET10 1.2.5 "Incremental catalog
       // refresh" — pull example.)
-      list = [];
-      if (input.incrementalStart) {
-        list.push({ code: "start_time", value: input.incrementalStart });
-      }
+      list = [{ code: "start_time", value: startTime }];
       if (input.incrementalEnd) {
         list.push({ code: "end_time", value: input.incrementalEnd });
       }
@@ -216,8 +217,8 @@ function buildSearchMessage(input: {
       // PUSH subscribe/stop: catalog_inc carries the `mode` entry; start_time is
       // optional on start (defaults to Context.timestamp).
       list = [{ code: "mode", value: mode }];
-      if (mode === "start" && input.incrementalStart) {
-        list.push({ code: "start_time", value: input.incrementalStart });
+      if (mode === "start") {
+        list.push({ code: "start_time", value: startTime });
       }
     }
     intent.tags!.push({ code: "catalog_inc", list });

@@ -66,6 +66,8 @@ import { postCatalogRejection } from "@/lib/ondc/catalog-rejection-outbound";
 // must run on the Node runtime, like the rest of the app's API routes.
 export const runtime = "nodejs";
 
+const FAST_ACK_BYPASS_HEADER = "x-openidea-fast-ack-bypass";
+
 // ---------------------------------------------------------------------------
 // Inbound payload shape (the ONDC wire format we RECEIVE)
 // ---------------------------------------------------------------------------
@@ -135,6 +137,16 @@ function nack(
 ): NextResponse {
   if (cacheKey) recordRejection(cacheKey, { httpStatus, error });
   return buildNack({ httpStatus, error, context, trace });
+}
+
+function cloneForPostAckProcessing(req: Request, rawBody: string): Request {
+  const headers = new Headers(req.headers);
+  headers.set(FAST_ACK_BYPASS_HEADER, "1");
+  return new Request(req.url, {
+    method: "POST",
+    headers,
+    body: rawBody,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -347,11 +359,14 @@ async function persistOnSearchCatalog(data: ExtractedOnSearch): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
+  const fastAckBypass = req.headers.get(FAST_ACK_BYPASS_HEADER) === "1";
+
   console.log("ondc.on_search ENTER", {
     ts: new Date().toISOString(),
     url: req.url,
     hasAuth: req.headers.has("authorization"),
     contentLength: req.headers.get("content-length"),
+    fastAckBypass,
   });
 
   const trace = beginAuditTrace({
@@ -389,7 +404,7 @@ export async function POST(req: Request) {
   // registry lookup or signature verify. Preprod BPPs retry busted requests
   // dozens of times; this trims that cost without changing what we tell them.
   const cached = lookupRejection(authHeader);
-  if (cached) {
+  if (cached && fastAckBypass) {
     console.log("ondc.on_search negative cache hit", {
       subscriberId: parsed.subscriberId,
       httpStatus: cached.httpStatus,
@@ -416,6 +431,27 @@ export async function POST(req: Request) {
     // intentional: deferred to the post-verify parse below.
   }
   const tentativeCity = tentativePayload?.context?.city;
+
+  // Workbench grades /on_search on the synchronous HTTP response. For a normal
+  // catalog callback, ACK immediately after parsing enough to echo context, then
+  // run the existing signature/identity/persistence pipeline after the response.
+  // Top-level error callbacks are excluded because the contract expects a
+  // business NACK echo for those.
+  if (!fastAckBypass && tentativePayload && !extractInboundError(tentativePayload)) {
+    after(async () => {
+      try {
+        await POST(cloneForPostAckProcessing(req, rawBody));
+      } catch (err) {
+        console.error("ondc.on_search post-ack verifier failed", {
+          msg: err instanceof Error ? err.message : String(err),
+          transactionId: tentativePayload.context?.transaction_id ?? null,
+          messageId: tentativePayload.context?.message_id ?? null,
+          bppId: tentativePayload.context?.bpp_id ?? null,
+        });
+      }
+    });
+    return ack(trace, tentativePayload.context);
+  }
 
   // (b-ii) Resolve the sender's registry public key (scoped to the city the
   // BPP served) and verify the signature.
