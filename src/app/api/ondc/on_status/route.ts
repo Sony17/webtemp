@@ -58,6 +58,8 @@ import {
 } from "@/lib/ondc/audit";
 import { peekMessageId, commitMessageId } from "@/lib/ondc/idempotency";
 import { saveStatusUpdate } from "@/lib/ondc/store";
+import { sendBuyerEmail } from "@/lib/email/send";
+import { orderStatusEmail } from "@/lib/email/templates";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -371,6 +373,21 @@ export async function POST(req: Request) {
     console.error("ondc.on_status persist failed", { msg });
     return nack(500, coreError("could not store order"), trace, ctx);
   }
+
+  // Fire-and-forget status-update email to the buyer.
+  const raw = result.data.order as { state?: { code?: unknown; short_desc?: unknown } } | undefined;
+  const stateLabel =
+    typeof result.data.order.state === "string"
+      ? result.data.order.state
+      : raw?.state?.code
+        ? String(raw.state.code)
+        : undefined;
+  const { subject, html } = orderStatusEmail({
+    orderId: result.data.orderId,
+    state: stateLabel,
+    orderUrl: `https://openidea.co.in/shop/order/${encodeURIComponent(result.data.transactionId)}/${encodeURIComponent(result.data.bppId)}`,
+  });
+  void sendBuyerEmail(result.data.transactionId, result.data.bppId, subject, html);
 
   // Commit idempotency ONLY now that persistence has succeeded. Committing
   // after persist (not before) is what prevents the ACK-without-persistence

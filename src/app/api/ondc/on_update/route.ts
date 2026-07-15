@@ -63,6 +63,8 @@ import {
 } from "@/lib/ondc/audit";
 import { peekMessageId, commitMessageId } from "@/lib/ondc/idempotency";
 import { saveUpdateOrder } from "@/lib/ondc/store";
+import { sendBuyerEmail } from "@/lib/email/send";
+import { orderUpdatedEmail } from "@/lib/email/templates";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -252,6 +254,49 @@ async function persistOnUpdate(data: ExtractedOnUpdate): Promise<void> {
 // Handler
 // ---------------------------------------------------------------------------
 
+function extractState(state: unknown): string | undefined {
+  if (typeof state === "string") return state;
+  if (state && typeof state === "object") {
+    const s = state as { code?: unknown; short_desc?: unknown };
+    return String(s.code ?? s.short_desc ?? "");
+  }
+  return undefined;
+}
+
+function describeUpdate(data: ExtractedOnUpdate): string | undefined {
+  const rawOrder = data.order as {
+    fulfillments?: Array<{ type?: unknown; state?: { descriptor?: { code?: unknown } } }>;
+    payment?:
+      | { "@ondc/org/settlement_details"?: Array<{ settlement_phase?: unknown; settlement_amount?: unknown }> }
+      | undefined;
+    quote?: { price?: { value?: unknown } };
+  };
+  const types = new Set<string>();
+  if (Array.isArray(rawOrder.fulfillments)) {
+    for (const f of rawOrder.fulfillments) {
+      if (typeof f.type === "string") types.add(f.type);
+    }
+  }
+
+  // Detect refund from settlement_details with phase === "refund".
+  const settlements = rawOrder.payment?.["@ondc/org/settlement_details"];
+  const hasRefund = Array.isArray(settlements) && settlements.some(
+    (s) => String(s?.settlement_phase ?? "") === "refund"
+  );
+  if (hasRefund) {
+    const amount = settlements!.find(
+      (s) => String(s?.settlement_phase ?? "") === "refund"
+    )?.settlement_amount;
+    return amount ? `Refund of ₹${String(amount)} initiated` : "Refund initiated";
+  }
+
+  if (types.has("Return")) return "Return request update";
+  if (types.has("Cancel")) return "Cancellation update";
+  if (types.has("Replacement")) return "Replacement update";
+  if (types.has("RTO")) return "RTO update";
+  return undefined;
+}
+
 export async function POST(req: Request) {
   const trace = beginAuditTrace({
     action: "on_update",
@@ -385,6 +430,16 @@ export async function POST(req: Request) {
     console.error("ondc.on_update persist failed", { msg });
     return nack(500, coreError("could not store order"), trace, ctx);
   }
+
+  // Fire-and-forget update email to the buyer.
+  const updatedDesc = describeUpdate(result.data);
+  const { subject, html } = orderUpdatedEmail({
+    orderId: result.data.orderId,
+    state: extractState(result.data.order.state),
+    description: updatedDesc,
+    orderUrl: `https://openidea.co.in/shop/order/${encodeURIComponent(result.data.transactionId)}/${encodeURIComponent(result.data.bppId)}`,
+  });
+  void sendBuyerEmail(result.data.transactionId, result.data.bppId, subject, html);
 
   // Commit idempotency ONLY now that persistence has succeeded. Committing
   // after persist (not before) is what prevents the ACK-without-persistence

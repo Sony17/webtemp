@@ -21,6 +21,8 @@
 import { NextResponse } from "next/server";
 import { buildAck } from "@/lib/ondc/responses";
 import { saveIssue, getIssue, type IssueActionEntry } from "@/lib/ondc/store";
+import { sendBuyerEmail } from "@/lib/email/send";
+import { issueUpdateEmail } from "@/lib/email/templates";
 
 export const runtime = "nodejs";
 
@@ -235,6 +237,22 @@ export async function POST(req: Request) {
     newRespondentActions: respondentActions.length,
     hasResolution: resolution != null,
   });
+
+  // Fire-and-forget email to the buyer with the latest issue update.
+  const lastAction = respondentActions.length > 0
+    ? respondentActions[respondentActions.length - 1]
+    : undefined;
+  const { subject, html } = issueUpdateEmail({
+    issueId,
+    orderId: orderId ?? undefined,
+    status,
+    action: lastAction?.action,
+    shortDesc: lastAction?.shortDesc,
+    orderUrl: orderId
+      ? `https://openidea.co.in/shop/order/${encodeURIComponent(transactionId)}/${encodeURIComponent(bppId)}`
+      : undefined,
+  });
+  void sendBuyerEmail(transactionId, bppId, subject, html);
 
   return ack(ctx);
 }

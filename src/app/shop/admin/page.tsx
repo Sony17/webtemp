@@ -225,22 +225,25 @@ export default function OndcAdminPage() {
 
         {/* OVERVIEW */}
         {tab === "overview" ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <Stat label="Transactions" value={c?.transactions ?? "—"} />
-            <Stat label="Orders" value={c?.orders ?? "—"} />
-            <Stat
-              label="Payments"
-              value={c ? `${c.payments.paid}/${c.payments.total}` : "—"}
-              sub={c ? `${c.payments.pending} pending` : undefined}
-              accent={c && c.payments.pending > 0 ? "amber" : "emerald"}
-            />
-            <Stat
-              label="IGM issues"
-              value={c?.issues.total ?? "—"}
-              sub={c ? `${c.issues.open} open` : undefined}
-              accent={c && c.issues.open > 0 ? "amber" : "emerald"}
-            />
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <Stat label="Transactions" value={c?.transactions ?? "—"} />
+              <Stat label="Orders" value={c?.orders ?? "—"} />
+              <Stat
+                label="Payments"
+                value={c ? `${c.payments.paid}/${c.payments.total}` : "—"}
+                sub={c ? `${c.payments.pending} pending` : undefined}
+                accent={c && c.payments.pending > 0 ? "amber" : "emerald"}
+              />
+              <Stat
+                label="IGM issues"
+                value={c?.issues.total ?? "—"}
+                sub={c ? `${c.issues.open} open` : undefined}
+                accent={c && c.issues.open > 0 ? "amber" : "emerald"}
+              />
+            </div>
+            <TestEmailCard />
+          </>
         ) : null}
 
         {/* ORDERS */}
@@ -349,6 +352,59 @@ export default function OndcAdminPage() {
         </Link>
       </p>
     </main>
+  );
+}
+
+function TestEmailCard() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [sending, setSending] = useState(false);
+
+  const send = async () => {
+    if (!email.trim()) return;
+    setSending(true);
+    setStatus(null);
+    try {
+      const res = await fetch("/api/test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const d = (await res.json()) as { ok?: boolean; error?: string; id?: string };
+      setStatus(d.ok ? { ok: true, msg: `Sent! ID: ${d.id}` } : { ok: false, msg: d.error ?? "Failed" });
+    } catch {
+      setStatus({ ok: false, msg: "Network error" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
+      <h3 className="mb-1 text-sm font-semibold text-zinc-200">Test Email (Resend)</h3>
+      <p className="mb-3 text-xs text-zinc-500">Send a test email to verify Resend is configured and working.</p>
+      <div className="flex items-center gap-2">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="your@email.com"
+          className="flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-emerald-600"
+        />
+        <button
+          onClick={send}
+          disabled={sending || !email.trim()}
+          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+        >
+          {sending ? "Sending…" : "Send Test"}
+        </button>
+      </div>
+      {status ? (
+        <p className={`mt-2 text-xs ${status.ok ? "text-emerald-400" : "text-rose-400"}`}>
+          {status.msg}
+        </p>
+      ) : null}
+    </div>
   );
 }
 

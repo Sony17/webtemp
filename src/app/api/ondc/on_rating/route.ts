@@ -54,6 +54,8 @@ import {
 } from "@/lib/ondc/audit";
 import { peekMessageId, commitMessageId } from "@/lib/ondc/idempotency";
 import { saveRating } from "@/lib/ondc/store";
+import { sendBuyerEmail } from "@/lib/email/send";
+import { ratingAcknowledgedEmail } from "@/lib/email/templates";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -411,6 +413,15 @@ export async function POST(req: Request) {
     const msg = err instanceof Error ? err.message : "persistence error";
     console.error("ondc.on_rating persist failed", { msg });
     return nack(500, coreError("could not store rating"), trace, ctx);
+  }
+
+  // Fire-and-forget rating-acknowledgement email to the buyer.
+  if (result.data.ratingAck) {
+    const { subject, html } = ratingAcknowledgedEmail({
+      transactionId: result.data.transactionId,
+      orderUrl: `https://openidea.co.in/shop/order/${encodeURIComponent(result.data.transactionId)}/${encodeURIComponent(result.data.bppId)}`,
+    });
+    void sendBuyerEmail(result.data.transactionId, result.data.bppId, subject, html);
   }
 
   // Commit idempotency ONLY now that persistence has succeeded. Committing

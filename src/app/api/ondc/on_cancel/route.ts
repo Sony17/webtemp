@@ -57,6 +57,8 @@ import {
 } from "@/lib/ondc/audit";
 import { peekMessageId, commitMessageId } from "@/lib/ondc/idempotency";
 import { saveCancelUpdate } from "@/lib/ondc/store";
+import { sendBuyerEmail } from "@/lib/email/send";
+import { orderCancelledEmail } from "@/lib/email/templates";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -245,6 +247,38 @@ async function persistOnCancel(data: ExtractedOnCancel): Promise<void> {
 // Handler
 // ---------------------------------------------------------------------------
 
+// Extract a human-readable cancellation reason from the raw order object. The
+// reason can be in cancellation.reason.id, cancellation.reason.short_desc, or
+// the fulfillment state descriptor.
+function extractCancelReason(order: OnCancelOrder): string | undefined {
+  const raw = order as {
+    cancellation?: {
+      reason?: { id?: unknown; short_desc?: unknown };
+      cancelled_by?: unknown;
+    };
+    fulfillments?: Array<{
+      state?: { descriptor?: { code?: unknown } };
+      type?: unknown;
+    }>;
+  };
+  if (raw.cancellation?.reason?.short_desc) {
+    return String(raw.cancellation.reason.short_desc);
+  }
+  if (raw.cancellation?.reason?.id) {
+    return `Reason code: ${String(raw.cancellation.reason.id)}`;
+  }
+  // Fall back to the first cancelled fulfillment state.
+  const cancelled = raw.fulfillments?.find(
+    (f) =>
+      f?.state?.descriptor?.code === "Cancelled" ||
+      f?.type === "Cancel"
+  );
+  if (cancelled?.state?.descriptor?.code) {
+    return String(cancelled.state.descriptor.code);
+  }
+  return undefined;
+}
+
 export async function POST(req: Request) {
   const trace = beginAuditTrace({
     action: "on_cancel",
@@ -378,6 +412,15 @@ export async function POST(req: Request) {
     console.error("ondc.on_cancel persist failed", { msg });
     return nack(500, coreError("could not store order"), trace, ctx);
   }
+
+  // Fire-and-forget cancellation email to the buyer.
+  const cancelReason = extractCancelReason(result.data.order);
+  const { subject, html } = orderCancelledEmail({
+    orderId: result.data.orderId,
+    reason: cancelReason,
+    orderUrl: `https://openidea.co.in/shop/order/${encodeURIComponent(result.data.transactionId)}/${encodeURIComponent(result.data.bppId)}`,
+  });
+  void sendBuyerEmail(result.data.transactionId, result.data.bppId, subject, html);
 
   // Commit idempotency ONLY now that persistence has succeeded. Committing
   // after persist (not before) is what prevents the ACK-without-persistence

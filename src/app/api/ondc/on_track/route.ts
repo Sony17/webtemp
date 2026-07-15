@@ -54,6 +54,8 @@ import {
 } from "@/lib/ondc/audit";
 import { peekMessageId, commitMessageId } from "@/lib/ondc/idempotency";
 import { saveTrackingUpdate } from "@/lib/ondc/store";
+import { sendBuyerEmail } from "@/lib/email/send";
+import { orderTrackingEmail } from "@/lib/email/templates";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -216,6 +218,12 @@ async function persistOnTrack(data: ExtractedOnTrack): Promise<void> {
 // Handler
 // ---------------------------------------------------------------------------
 
+function extractTrackingUrl(tracking: unknown): string | undefined {
+  if (!tracking || typeof tracking !== "object") return undefined;
+  const t = tracking as { url?: unknown };
+  return typeof t.url === "string" && t.url.trim() ? t.url.trim() : undefined;
+}
+
 export async function POST(req: Request) {
   const trace = beginAuditTrace({
     action: "on_track",
@@ -348,6 +356,21 @@ export async function POST(req: Request) {
     console.error("ondc.on_track persist failed", { msg });
     return nack(500, coreError("could not store tracking"), trace, ctx);
   }
+
+  // Fire-and-forget tracking email to the buyer. We need the orderId from the
+  // stored OrderRecord since on_track doesn't carry one.
+  const orderRecord = await (await import("@/lib/ondc/store")).getOrder(
+    result.data.transactionId,
+    result.data.bppId
+  );
+  const trackingOrderId = orderRecord?.orderId ?? result.data.transactionId;
+  const trackingUrl = extractTrackingUrl(result.data.tracking);
+  const { subject, html } = orderTrackingEmail({
+    orderId: trackingOrderId,
+    trackingUrl,
+    orderUrl: `https://openidea.co.in/shop/order/${encodeURIComponent(result.data.transactionId)}/${encodeURIComponent(result.data.bppId)}`,
+  });
+  void sendBuyerEmail(result.data.transactionId, result.data.bppId, subject, html);
 
   // Commit idempotency ONLY now that persistence has succeeded. Committing
   // after persist (not before) is what prevents the ACK-without-persistence

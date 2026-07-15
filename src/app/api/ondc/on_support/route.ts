@@ -54,6 +54,8 @@ import {
 } from "@/lib/ondc/audit";
 import { peekMessageId, commitMessageId } from "@/lib/ondc/idempotency";
 import { saveSupport } from "@/lib/ondc/store";
+import { sendBuyerEmail } from "@/lib/email/send";
+import { supportContactEmail } from "@/lib/email/templates";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -379,6 +381,15 @@ export async function POST(req: Request) {
     console.error("ondc.on_support persist failed", { msg });
     return nack(500, coreError("could not store support"), trace, ctx);
   }
+
+  // Fire-and-forget support-contact email to the buyer.
+  const { subject, html } = supportContactEmail({
+    transactionId: result.data.transactionId,
+    phone: result.data.phone,
+    email: result.data.email,
+    orderUrl: `https://openidea.co.in/shop/order/${encodeURIComponent(result.data.transactionId)}/${encodeURIComponent(result.data.bppId)}`,
+  });
+  void sendBuyerEmail(result.data.transactionId, result.data.bppId, subject, html);
 
   // Commit idempotency ONLY now that persistence has succeeded. Committing
   // after persist (not before) is what prevents the ACK-without-persistence

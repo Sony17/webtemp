@@ -12,10 +12,49 @@
 //   3. Create an API key → set RESEND_API_KEY in Vercel (Production).
 //   4. Optionally set EMAIL_FROM (defaults to "OpenIdea <support@openidea.co.in>").
 //
+// Shared helper: sendBuyerEmail extracts billing.email from the stored order and
+// sends the provided subject/html. All callers fire-and-forget so a failure never
+// blocks the callback ACK.
+//
 // Server-only: holds the API key, must never reach the client bundle.
 import "server-only";
+import { getOrder } from "@/lib/ondc/store";
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
+
+// Look up billing email from the stored order. Async so both backend (sync JSON
+// and async Prisma) work — returns undefined when no order or no billing is known.
+async function extractBillingEmail(
+  transactionId: string,
+  bppId: string
+): Promise<string | undefined> {
+  const record = await getOrder(transactionId, bppId);
+  if (!record) return undefined;
+  const rawOrder = record.order as
+    | { billing?: { email?: string } }
+    | undefined;
+  return rawOrder?.billing?.email?.trim() || undefined;
+}
+
+// Fire-and-forget an email to the buyer associated with (transactionId, bppId).
+// Looks up billing.email from the stored order. No-op when email is unconfigured
+// or no billing email is known — never throws.
+export async function sendBuyerEmail(
+  transactionId: string,
+  bppId: string,
+  subject: string,
+  html: string
+): Promise<void> {
+  const email = await extractBillingEmail(transactionId, bppId);
+  if (!email) {
+    console.log("email.sendBuyerEmail skipped — no billing email", {
+      transactionId,
+      bppId,
+    });
+    return;
+  }
+  await sendEmail({ to: email, subject, html });
+}
 
 // The verified From identity. Must be an address on a domain verified in Resend
 // (or Resend's onboarding@resend.dev while testing). Override via EMAIL_FROM.
