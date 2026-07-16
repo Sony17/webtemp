@@ -83,6 +83,7 @@ const RESPONDENT_CODES = new Set([
   "INFO_NOT_AVAILABLE",
   "RESOLUTION_PROPOSED",
   "RESOLVED",
+  "CASCADED",
   "RESOLUTION_CASCADED",
 ]);
 
@@ -195,6 +196,11 @@ export async function POST(req: Request) {
   const subCategory = str(issue?.sub_category);
   const orderId = str(issue?.order_details?.id);
   const resolution = issue?.resolution;
+  // IGM 2.0: the BPP sends resolution_provider to carry GRO info and the
+  // proposed resolution. Persist it so the buyer's RESOLUTION_ACCEPT/REJECT
+  // /issue can carry it forward (QA: "resolution section needs to carry
+  // forward in issue call").
+  const resolutionProvider = issue?.resolution_provider;
 
   // Find the existing record to know which respondent actions are new.
   const existing = await getIssue(transactionId, issueId);
@@ -214,6 +220,7 @@ export async function POST(req: Request) {
       lastTouchedBy: "respondent",
       newActions: respondentActions,
       resolution,
+      resolutionProvider,
       issue,
     });
   } catch (err) {

@@ -40,7 +40,7 @@
 //
 // Mirrors the existing route conventions (NextResponse, runtime = "nodejs").
 import { NextResponse } from "next/server";
-import { isOndcConfigured } from "@/lib/ondc/config";
+import { isOndcConfigured, getOndcConfig } from "@/lib/ondc/config";
 import { resolveBppSigningPublicKey } from "@/lib/ondc/registry";
 import {
   parseAuthorizationHeader,
@@ -48,7 +48,8 @@ import {
   verifyOndcSignature,
 } from "@/lib/ondc/auth";
 import type { OndcError } from "@/lib/ondc/client";
-import { validateContextFreshness } from "@/lib/ondc/context";
+import { sendOndcRequest } from "@/lib/ondc/client";
+import { buildContext, validateContextFreshness } from "@/lib/ondc/context";
 import {
   ONDC_ERROR,
   contextError,
@@ -65,6 +66,7 @@ import { peekMessageId, commitMessageId } from "@/lib/ondc/idempotency";
 import { saveUpdateOrder } from "@/lib/ondc/store";
 import { sendBuyerEmail } from "@/lib/email/send";
 import { orderUpdatedEmail } from "@/lib/email/templates";
+import { buildRefundUpdate } from "@/lib/ondc/update-builders";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -297,6 +299,62 @@ function describeUpdate(data: ExtractedOnUpdate): string | undefined {
   return undefined;
 }
 
+// Auto-trigger refund update after the BPP settles a return/replacement.
+// Scans the inbound on_update for settlement_details with phase === "refund"
+// and, if found, fires a signed /update with the refund amount derived from
+// the callback's own quote_trail fulfillments (QA: "refund update call missing").
+async function triggerRefundIfSettled(data: ExtractedOnUpdate): Promise<void> {
+  const rawOrder = data.order as {
+    payment?:
+      | { "@ondc/org/settlement_details"?: Array<{ settlement_phase?: unknown; settlement_amount?: unknown }> }
+      | undefined;
+    fulfillments?: unknown;
+  };
+  const settlements = rawOrder.payment?.["@ondc/org/settlement_details"];
+  const hasRefundSettlement = Array.isArray(settlements) && settlements.some(
+    (s) => String(s?.settlement_phase ?? "") === "refund"
+  );
+  if (!hasRefundSettlement) return;
+
+  // Use the fulfillments from this callback as the quote_trail source.
+  const fulfillments = rawOrder.fulfillments;
+  if (!Array.isArray(fulfillments) || fulfillments.length === 0) return;
+
+  try {
+    const config = getOndcConfig();
+    const context = buildContext({
+      action: "update",
+      transactionId: data.transactionId,
+      bppId: data.bppId,
+      bppUri: data.bppUri,
+    });
+    const { message } = buildRefundUpdate({
+      orderId: data.orderId,
+      fulfillments,
+      timestamp: new Date().toISOString(),
+    });
+    await sendOndcRequest({
+      url: `${data.bppUri}/update`,
+      action: "update",
+      context,
+      message,
+    });
+    console.log("ondc.on_update auto-triggered refund update", {
+      transactionId: data.transactionId,
+      bppId: data.bppId,
+      orderId: data.orderId,
+    });
+  } catch (err) {
+    // Fire-and-forget: failures are logged but never block the ACK.
+    console.warn("ondc.on_update auto-trigger refund failed", {
+      transactionId: data.transactionId,
+      bppId: data.bppId,
+      orderId: data.orderId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
 export async function POST(req: Request) {
   const trace = beginAuditTrace({
     action: "on_update",
@@ -440,6 +498,13 @@ export async function POST(req: Request) {
     orderUrl: `https://openidea.co.in/shop/order/${encodeURIComponent(result.data.transactionId)}/${encodeURIComponent(result.data.bppId)}`,
   });
   void sendBuyerEmail(result.data.transactionId, result.data.bppId, subject, html);
+
+  // Auto-trigger refund update: when the BPP's on_update carries
+  // settlement_details with settlement_phase === "refund", the BAP must send
+  // a follow-up /update with the refund derived from the quote_trail in the
+  // fulfillments (QA Iter 4: "refund update call missing" for return/replacement
+  // flows). Fire-and-forget so this ACK is never blocked.
+  void triggerRefundIfSettled(result.data);
 
   // Commit idempotency ONLY now that persistence has succeeded. Committing
   // after persist (not before) is what prevents the ACK-without-persistence

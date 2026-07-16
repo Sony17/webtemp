@@ -164,6 +164,9 @@ export type IssueRecord = {
   actions: IssueActionEntry[];
   // Resolution proposed by the BPP (if any).
   resolution?: unknown;
+  // Resolution provider details from on_issue (IGM 2.0: carries GRO info,
+  // resolution support contact, and the actual resolution data).
+  resolutionProvider?: unknown;
   // Full last opaque issue object retained for debugging.
   issue: unknown;
   createdAt: number;
@@ -298,5 +301,6 @@ export type SaveIssueInput = {
   lastTouchedBy: "complainant" | "respondent";
   newActions: IssueActionEntry[];
   resolution?: unknown;
+  resolutionProvider?: unknown;
   issue: unknown;
 };

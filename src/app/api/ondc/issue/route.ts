@@ -505,10 +505,20 @@ export async function POST(req: Request) {
   // The proposed resolution the buyer is accepting/rejecting. The seller sends
   // resolutions[] on its on_issue (persisted in the snapshot). Prefer a concrete
   // option (skip the "PARENT" grouping row the seller uses to bundle choices).
+  // Fall back to resolution_provider.resolution (IGM 2.0: the BPP may send the
+  // resolution inside resolution_provider instead of a top-level resolutions[]
+  // — QA: "resolution section needs to carry forward in issue call").
   const proposedResolutionId = (): string | undefined => {
     const res = (existing?.issue as { resolutions?: unknown } | undefined)
       ?.resolutions;
-    if (!Array.isArray(res)) return undefined;
+    if (!Array.isArray(res)) {
+      // Fallback: try resolution_provider[0].resolution.id for IGM 2.0
+      const rp = (existing?.issue as { resolution_provider?: unknown } | undefined)
+        ?.resolution_provider;
+      const providers = Array.isArray(rp) ? rp : undefined;
+      const first = providers?.[0] as { resolution?: { id?: string } } | undefined;
+      return first?.resolution?.id;
+    }
     const idOf = (r: unknown): string | undefined =>
       r && typeof r === "object" && typeof (r as { id?: unknown }).id === "string"
         ? (r as { id: string }).id
@@ -645,6 +655,16 @@ export async function POST(req: Request) {
         descriptor: issueDescriptor,
         priorActions,
         newAction,
+        // IGM 2.0: carry forward the BPP's resolution so the outbound
+        // RESOLUTION_ACCEPT/REJECT echoes the proposed resolution back
+        // (QA: "resolution section needs to carry forward in issue call").
+        resolution: existing?.issue
+          ? (
+              existing.issue as {
+                resolution?: IssueV2Message["issue"]["resolution"];
+              }
+            ).resolution
+          : undefined,
       });
 
   // Persist FIRST. A transport failure shouldn't leave us forgetful — we need

@@ -139,6 +139,16 @@ export type IssueV2Message = {
     };
     last_action_id: string;
     actions: IssueActionRow[];
+    // IGM 2.0: resolution section carried forward from the BPP's on_issue
+    // so the outbound /issue (RESOLUTION_ACCEPT/REJECT) echoes the proposed
+    // resolution back (QA: "resolution section needs to carry forward in
+    // issue call").
+    resolution?: {
+      short_desc?: string;
+      long_desc?: string;
+      action_triggered?: string;
+      refund_amount?: string;
+    };
   };
 };
 
@@ -768,6 +778,12 @@ export function buildIssueV2(params: {
   newAction: IssueActionRow;
   responseDuration?: string;
   resolutionDuration?: string;
+  // IGM 2.0: resolution block carried forward from BPP's on_issue when the
+  // buyer is responding to a proposed resolution (RESOLUTION_ACCEPT/REJECT).
+  // Must be included in the outbound /issue so the BPP can match the response
+  // to the proposed resolution (QA: "resolution section needs to carry forward
+  // in issue call").
+  resolution?: IssueV2Message["issue"]["resolution"];
 }): IssueV2Message {
   return {
     ...(params.action !== "OPEN"
@@ -799,6 +815,7 @@ export function buildIssueV2(params: {
       descriptor: params.descriptor,
       last_action_id: params.newAction.id,
       actions: [...params.priorActions, params.newAction],
+      ...(params.resolution ? { resolution: params.resolution } : {}),
     },
   };
 }

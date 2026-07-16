@@ -146,11 +146,14 @@ export function buildRefundUpdate(params: {
   const settlementDetail: Record<string, unknown> = {
     settlement_counterparty: "buyer",
     settlement_phase: "refund",
-    settlement_type: s.type ?? "upi",
     settlement_amount: refund.value,
     settlement_timestamp: params.timestamp,
-    ...(s.upiAddress ? { upi_address: s.upiAddress } : {}),
   };
+  // Only include settlement_type and upi_address when explicitly provided by
+  // the BPP's settlement info — never default to "upi" (QA: "Some additional
+  // settlement_details are given" flagged extraneous fields).
+  if (s.type) settlementDetail.settlement_type = s.type;
+  if (s.upiAddress) settlementDetail.upi_address = s.upiAddress;
 
   // Contract "settlement trail for refund initiation": the refund /update carries
   // the payment settlement in the SINGULAR `payment` object (not `payments[]`),
@@ -159,13 +162,14 @@ export function buildRefundUpdate(params: {
   // fulfillments that carry the refund `quote_trail` (the same source the amount
   // is computed from). The bare shape avoids echoing quote_trail tags (which the
   // BPP rejects with FULFILLMENTS_TAGS_VALID_TAGS) while still including the
-  // required `fulfillments` attribute (QA: "fulfillment attribute is missing").
+  // required `fulfillments` attribute (QA: "fulfillment attribute is missing" —
+  // always include fulfillments even when reverse is empty).
   // `settlement_status` is NOT part of the contract settlement_details object and
   // is dropped (QA: "Some additional settlement_details are given").
   const reverse = extractReverseFulfillments(params.fulfillments);
   const order: Record<string, unknown> = {
     id: params.orderId,
-    ...(reverse.length > 0 ? { fulfillments: reverse } : {}),
+    fulfillments: reverse,
     payment: { "@ondc/org/settlement_details": [settlementDetail] },
   };
 
