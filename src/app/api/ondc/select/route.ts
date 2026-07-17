@@ -222,25 +222,27 @@ function buildSelectMessage(input: {
     })),
   };
 
-  // Attach a fulfillment when we have a destination OR when the buyer chose
-  // Self-Pickup (the BPP needs to see the type to skip last-mile pricing and
-  // emit pickup-store details on the quote).
-  if (input.deliveryGps || input.deliveryAreaCode || input.fulfillmentType !== "Delivery") {
-    order.fulfillments = [
-      {
-        id: FULFILLMENT_ID,
-        type: input.fulfillmentType,
-        end: {
-          location: {
-            ...(input.deliveryGps ? { gps: input.deliveryGps } : {}),
-            ...(input.deliveryAreaCode
-              ? { address: { area_code: input.deliveryAreaCode } }
-              : {}),
-          },
-        },
-      },
-    ];
-  }
+  // Fulfillments are contract-mandatory on select (Retail v1.2.5). Always
+  // include at least the type + id; GPS/areaCode are added when the caller
+  // provides them for the delivery destination.
+  order.fulfillments = [
+    {
+      id: FULFILLMENT_ID,
+      type: input.fulfillmentType,
+      ...(input.deliveryGps || input.deliveryAreaCode
+        ? {
+            end: {
+              location: {
+                ...(input.deliveryGps ? { gps: input.deliveryGps } : {}),
+                ...(input.deliveryAreaCode
+                  ? { address: { area_code: input.deliveryAreaCode } }
+                  : {}),
+              },
+            },
+          }
+        : {}),
+    },
+  ];
 
   return { order };
 }

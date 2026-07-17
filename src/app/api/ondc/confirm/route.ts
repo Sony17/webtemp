@@ -240,6 +240,11 @@ export async function POST(req: Request) {
       );
     }
     orderInput = stored.order;
+    // Ensure state is set on the stored order — the BPP needs it for validation
+    // and on_init may not have included it.
+    if (orderInput && typeof orderInput === "object" && !(orderInput as Record<string, unknown>).state) {
+      (orderInput as Record<string, unknown>).state = "Created";
+    }
   }
 
   const orderResult = validateOrder(orderInput);
