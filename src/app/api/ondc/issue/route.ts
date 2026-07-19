@@ -607,6 +607,23 @@ export async function POST(req: Request) {
   };
 
   const createdAt = (isV2Snap && (v2Snap!.created_at as string)) || now;
+  const carriedResolution = (): IssueV2Message["issue"]["resolution"] | undefined => {
+    const issue = existing?.issue as
+      | {
+          resolution?: IssueV2Message["issue"]["resolution"];
+          resolution_provider?: unknown;
+        }
+      | undefined;
+    if (issue?.resolution) return issue.resolution;
+
+    const providers = Array.isArray(issue?.resolution_provider)
+      ? issue.resolution_provider
+      : [];
+    const first = providers[0] as
+      | { resolution?: IssueV2Message["issue"]["resolution"] }
+      | undefined;
+    return first?.resolution;
+  };
 
   // Version select: IGM 1.0.0 (legacy, domain ONDC:IGM) uses the flat v1 shape;
   // everything else builds the v2 snapshot. Both share the resolved business
@@ -658,13 +675,7 @@ export async function POST(req: Request) {
         // IGM 2.0: carry forward the BPP's resolution so the outbound
         // RESOLUTION_ACCEPT/REJECT echoes the proposed resolution back
         // (QA: "resolution section needs to carry forward in issue call").
-        resolution: existing?.issue
-          ? (
-              existing.issue as {
-                resolution?: IssueV2Message["issue"]["resolution"];
-              }
-            ).resolution
-          : undefined,
+        resolution: carriedResolution(),
       });
 
   // Persist FIRST. A transport failure shouldn't leave us forgetful — we need

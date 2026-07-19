@@ -33,7 +33,7 @@
 // here on.
 //
 // Mirrors the existing route conventions (NextResponse, runtime = "nodejs").
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { isOndcConfigured } from "@/lib/ondc/config";
 import { resolveBppSigningPublicKey } from "@/lib/ondc/registry";
 import {
@@ -61,6 +61,8 @@ import { saveConfirmOrder } from "@/lib/ondc/store";
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
 export const runtime = "nodejs";
+
+const FAST_ACK_BYPASS_HEADER = "x-openidea-fast-ack-bypass";
 
 // ---------------------------------------------------------------------------
 // Inbound payload shape (the ONDC wire format we RECEIVE)
@@ -128,6 +130,16 @@ function nack(
   context?: unknown
 ): NextResponse {
   return buildNack({ httpStatus, error, context, trace });
+}
+
+function cloneForPostAckProcessing(req: Request, rawBody: string): Request {
+  const headers = new Headers(req.headers);
+  headers.set(FAST_ACK_BYPASS_HEADER, "1");
+  return new Request(req.url, {
+    method: "POST",
+    headers,
+    body: rawBody,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -238,6 +250,7 @@ async function persistOnConfirmOrder(data: ExtractedOnConfirm): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
+  const fastAckBypass = req.headers.get(FAST_ACK_BYPASS_HEADER) === "1";
   const trace = beginAuditTrace({
     action: "on_confirm",
     requestHeaders: Object.fromEntries(req.headers),
@@ -249,6 +262,37 @@ export async function POST(req: Request) {
     return nack(500, coreError("BAP not configured"), trace);
   }
 
+  const rawBody = await req.text();
+  annotateTrace(trace, { rawBody });
+
+  let tentativePayload: OnConfirmCallback | null = null;
+  try {
+    tentativePayload = JSON.parse(rawBody) as OnConfirmCallback;
+  } catch {
+    tentativePayload = null;
+  }
+
+  if (
+    !fastAckBypass &&
+    tentativePayload?.context?.action === "on_confirm" &&
+    tentativePayload.message?.order &&
+    typeof tentativePayload.message.order === "object"
+  ) {
+    after(async () => {
+      try {
+        await POST(cloneForPostAckProcessing(req, rawBody));
+      } catch (err) {
+        console.error("ondc.on_confirm post-ack verifier failed", {
+          msg: err instanceof Error ? err.message : String(err),
+          transactionId: tentativePayload.context?.transaction_id ?? null,
+          messageId: tentativePayload.context?.message_id ?? null,
+          bppId: tentativePayload.context?.bpp_id ?? null,
+        });
+      }
+    });
+    return ack(trace, tentativePayload.context);
+  }
+
   // (b-i) Authorization header must be present and parseable.
   const authHeader = req.headers.get("authorization");
   if (!authHeader) {
@@ -258,11 +302,6 @@ export async function POST(req: Request) {
   if (!parsed) {
     return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"), trace);
   }
-
-  // (a) Read the EXACT raw bytes BEFORE parsing JSON — the digest is computed
-  // over these bytes, so re-serializing would break verification.
-  const rawBody = await req.text();
-  annotateTrace(trace, { rawBody });
 
   // (b-ii) Resolve the sender's registry public key and verify the signature.
   const publicKey = await resolveBppSigningPublicKey(

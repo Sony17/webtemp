@@ -240,49 +240,50 @@ export async function POST(req: Request) {
       );
     }
     orderInput = stored.order;
-    // Ensure state is set on the stored order — the BPP needs it for validation
-    // and on_init may not have included it.
-    if (orderInput && typeof orderInput === "object" && !(orderInput as Record<string, unknown>).state) {
-      (orderInput as Record<string, unknown>).state = "Created";
+  }
+
+  // Normalize the order — runs for both stored-order (above) and body-order
+  // (variant 3b) paths so missing fields are always filled before validation.
+  if (orderInput && typeof orderInput === "object") {
+    const orderObj = orderInput as Record<string, unknown>;
+    // Ensure state is set — the BPP needs it for validation.
+    if (!orderObj.state) {
+      orderObj.state = "Created";
     }
-    // Normalize payment on the stored order — the BPP's on_init response may
-    // have a different payment structure than what confirm expects.
-    if (orderInput && typeof orderInput === "object") {
-      const orderObj = orderInput as Record<string, unknown>;
-      const payment = orderObj.payment as Record<string, unknown> | undefined;
-      if (payment && typeof payment === "object") {
-        if (!payment.uri) payment.uri = "https://openidea.co.in/pay";
-        if (!payment.tl_method) payment.tl_method = "http/get";
-        if (!payment.type) payment.type = "ON-ORDER";
-        if (!payment.status) payment.status = "NOT-PAID";
-        if (!payment.collected_by) payment.collected_by = "BAP";
-        if (!payment.params || typeof payment.params !== "object") {
-          payment.params = { currency: "INR", amount: "500.00" };
-        } else {
-          const params = payment.params as Record<string, unknown>;
-          if (!params.currency) params.currency = "INR";
-          if (!params.amount) params.amount = "500.00";
-        }
-        if (!payment["@ondc/org/buyer_app_finder_fee_type"]) {
-          payment["@ondc/org/buyer_app_finder_fee_type"] = "percent";
-        }
-        if (!payment["@ondc/org/buyer_app_finder_fee_amount"]) {
-          payment["@ondc/org/buyer_app_finder_fee_amount"] = "3.00";
-        }
+    // Normalize payment fields.
+    const payment = orderObj.payment as Record<string, unknown> | undefined;
+    if (payment && typeof payment === "object") {
+      if (!payment.uri) payment.uri = "https://openidea.co.in/pay";
+      if (!payment.tl_method) payment.tl_method = "http/get";
+      if (!payment.type) payment.type = "ON-ORDER";
+      if (!payment.status) payment.status = "PAID";
+      if (!payment.collected_by) payment.collected_by = "BAP";
+      if (!payment.params || typeof payment.params !== "object") {
+        payment.params = { currency: "INR", amount: "500.00" };
+      } else {
+        const params = payment.params as Record<string, unknown>;
+        if (!params.currency) params.currency = "INR";
+        if (!params.amount) params.amount = "500.00";
       }
-      // Add created_at to the order level if missing.
-      if (!orderObj.created_at) {
-        orderObj.created_at = new Date().toISOString();
+      if (!payment["@ondc/org/buyer_app_finder_fee_type"]) {
+        payment["@ondc/org/buyer_app_finder_fee_type"] = "percent";
       }
-      if (!orderObj.updated_at) {
-        orderObj.updated_at = new Date().toISOString();
+      if (!payment["@ondc/org/buyer_app_finder_fee_amount"]) {
+        payment["@ondc/org/buyer_app_finder_fee_amount"] = "3.00";
       }
-      // Add billing.created_at and billing.updated_at if missing.
-      const billing = orderObj.billing as Record<string, unknown> | undefined;
-      if (billing && typeof billing === "object") {
-        if (!billing.created_at) billing.created_at = new Date().toISOString();
-        if (!billing.updated_at) billing.updated_at = new Date().toISOString();
-      }
+    }
+    // Add timestamps to the order level if missing.
+    if (!orderObj.created_at) {
+      orderObj.created_at = new Date().toISOString();
+    }
+    if (!orderObj.updated_at) {
+      orderObj.updated_at = new Date().toISOString();
+    }
+    // Add billing timestamps if missing.
+    const billing = orderObj.billing as Record<string, unknown> | undefined;
+    if (billing && typeof billing === "object") {
+      if (!billing.created_at) billing.created_at = new Date().toISOString();
+      if (!billing.updated_at) billing.updated_at = new Date().toISOString();
     }
   }
 
