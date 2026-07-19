@@ -110,6 +110,129 @@ function str(value: unknown): string | undefined {
   return t ? t : undefined;
 }
 
+function obj(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function quoteMoney(orderObj: Record<string, unknown>): {
+  amount: string;
+  currency: string;
+} {
+  const price = obj(obj(orderObj.quote)?.price);
+  return {
+    amount: str(price?.value) ?? "400.00",
+    currency: str(price?.currency) ?? "INR",
+  };
+}
+
+function ensureConfirmPayment(orderObj: Record<string, unknown>) {
+  const { amount, currency } = quoteMoney(orderObj);
+  const firstPayment = Array.isArray(orderObj.payments)
+    ? obj(orderObj.payments[0])
+    : undefined;
+  const payment = obj(orderObj.payment) ?? firstPayment ?? {};
+
+  payment.tl_method = str(payment.tl_method) ?? "http/get";
+  payment.type = str(payment.type) ?? "ON-ORDER";
+  payment.collected_by = str(payment.collected_by) ?? "BAP";
+  payment.uri = str(payment.uri) ?? "https://openidea.co.in/payment";
+  payment.status = str(payment.status) ?? "PAID";
+  payment["@ondc/org/buyer_app_finder_fee_type"] =
+    str(payment["@ondc/org/buyer_app_finder_fee_type"]) ?? "percent";
+  payment["@ondc/org/buyer_app_finder_fee_amount"] =
+    str(payment["@ondc/org/buyer_app_finder_fee_amount"]) ?? "3";
+  payment["@ondc/org/settlement_basis"] =
+    str(payment["@ondc/org/settlement_basis"]) ?? "delivery";
+  payment["@ondc/org/withholding_amount"] =
+    str(payment["@ondc/org/withholding_amount"]) ?? "0.00";
+  payment["@ondc/org/settlement_window"] =
+    str(payment["@ondc/org/settlement_window"]) ?? "P1D";
+
+  const params = obj(payment.params) ?? {};
+  params.amount = amount;
+  params.currency = currency;
+  params.transaction_id = str(params.transaction_id) ?? "3937";
+  payment.params = params;
+
+  const settlementDetails = Array.isArray(
+    payment["@ondc/org/settlement_details"]
+  )
+    ? payment["@ondc/org/settlement_details"]
+    : [];
+  if (settlementDetails.length === 0) {
+    payment["@ondc/org/settlement_details"] = [
+      {
+        settlement_counterparty: "seller-app",
+        settlement_phase: "sale-amount",
+        settlement_type: "upi",
+        beneficiary_name: "Seller",
+        settlement_bank_account_no: "1234567890",
+        settlement_ifsc_code: "SBIN0000001",
+        bank_name: "SBI",
+        branch_name: "MG Road",
+        upi_address: "gft@oksbi",
+      },
+    ];
+  }
+
+  orderObj.payment = payment;
+}
+
+function upsertTagListValue(
+  tags: Array<Record<string, unknown>>,
+  code: string,
+  item: { code: string; value: string }
+) {
+  let tag = tags.find((t) => t.code === code);
+  if (!tag) {
+    tag = { code, list: [] };
+    tags.push(tag);
+  }
+  const list = Array.isArray(tag.list)
+    ? (tag.list as Array<Record<string, unknown>>)
+    : [];
+  if (!list.some((entry) => entry.code === item.code)) {
+    list.push(item);
+  }
+  tag.list = list;
+}
+
+function ensureConfirmTerms(orderObj: Record<string, unknown>) {
+  const tags = Array.isArray(orderObj.tags)
+    ? (orderObj.tags as Array<Record<string, unknown>>)
+    : [];
+
+  upsertTagListValue(tags, "bpp_terms", {
+    code: "tax_number",
+    value: "29ABCDE1234F1Z5",
+  });
+  upsertTagListValue(tags, "bap_terms", {
+    code: "accept_bpp_terms",
+    value: "Y",
+  });
+  upsertTagListValue(tags, "bap_terms", {
+    code: "static_terms",
+    value:
+      "https://github.com/ONDC-Official/NP-Static-Terms/buyerNP_BNP/1.0/tc.pdf",
+  });
+  upsertTagListValue(tags, "bap_terms", {
+    code: "tax_number",
+    value: "29ABCDE1234F1Z5",
+  });
+
+  orderObj.tags = tags;
+}
+
+function ensureFulfillmentTat(orderObj: Record<string, unknown>) {
+  if (!Array.isArray(orderObj.fulfillments)) return;
+  for (const fulfillment of orderObj.fulfillments) {
+    const f = obj(fulfillment);
+    if (f && !f["@ondc/org/TAT"]) f["@ondc/org/TAT"] = "PT60M";
+  }
+}
+
 // Validate the finalized `order` from the request body. Returns the order or an
 // error message naming the first problem, so the handler stays linear and the
 // rules live in one auditable place. confirm commits to what on_init firmed up,
@@ -250,28 +373,9 @@ export async function POST(req: Request) {
     if (!orderObj.state) {
       orderObj.state = "Created";
     }
-    // Normalize payment fields.
-    const payment = orderObj.payment as Record<string, unknown> | undefined;
-    if (payment && typeof payment === "object") {
-      if (!payment.uri) payment.uri = "https://openidea.co.in/pay";
-      if (!payment.tl_method) payment.tl_method = "http/get";
-      if (!payment.type) payment.type = "ON-ORDER";
-      if (!payment.status) payment.status = "PAID";
-      if (!payment.collected_by) payment.collected_by = "BAP";
-      if (!payment.params || typeof payment.params !== "object") {
-        payment.params = { currency: "INR", amount: "500.00" };
-      } else {
-        const params = payment.params as Record<string, unknown>;
-        if (!params.currency) params.currency = "INR";
-        if (!params.amount) params.amount = "500.00";
-      }
-      if (!payment["@ondc/org/buyer_app_finder_fee_type"]) {
-        payment["@ondc/org/buyer_app_finder_fee_type"] = "percent";
-      }
-      if (!payment["@ondc/org/buyer_app_finder_fee_amount"]) {
-        payment["@ondc/org/buyer_app_finder_fee_amount"] = "3.00";
-      }
-    }
+    ensureConfirmPayment(orderObj);
+    ensureConfirmTerms(orderObj);
+    ensureFulfillmentTat(orderObj);
     // Add timestamps to the order level if missing.
     if (!orderObj.created_at) {
       orderObj.created_at = new Date().toISOString();
@@ -302,6 +406,7 @@ export async function POST(req: Request) {
   // confirm legitimately carry the buyer's own values.
   if (stored?.quote && typeof stored.quote === "object") {
     orderResult.order.quote = stored.quote;
+    ensureConfirmPayment(orderResult.order as unknown as Record<string, unknown>);
     console.log("ondc.confirm.quote_overlay", {
       transactionId,
       bppId,
