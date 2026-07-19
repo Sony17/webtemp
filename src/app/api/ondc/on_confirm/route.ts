@@ -275,8 +275,8 @@ export async function POST(req: Request) {
   if (
     !fastAckBypass &&
     tentativePayload?.context?.action === "on_confirm" &&
-    tentativePayload.message?.order &&
-    typeof tentativePayload.message.order === "object"
+    isNonEmptyString(tentativePayload.context.transaction_id) &&
+    isNonEmptyString(tentativePayload.context.message_id)
   ) {
     after(async () => {
       try {
