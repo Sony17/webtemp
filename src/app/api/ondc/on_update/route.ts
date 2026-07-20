@@ -66,7 +66,7 @@ import { peekMessageId, commitMessageId } from "@/lib/ondc/idempotency";
 import { saveUpdateOrder } from "@/lib/ondc/store";
 import { sendBuyerEmail } from "@/lib/email/send";
 import { orderUpdatedEmail } from "@/lib/email/templates";
-import { buildRefundUpdate } from "@/lib/ondc/update-builders";
+import { buildRefundUpdate, type UpdateMessage } from "@/lib/ondc/update-builders";
 
 // auth.ts (node:crypto) + config are `import "server-only"`, so this callback
 // must run on the Node runtime, like the rest of the app's API routes.
@@ -299,26 +299,141 @@ function describeUpdate(data: ExtractedOnUpdate): string | undefined {
   return undefined;
 }
 
+// Extract return_request tags from a Return fulfillment to detect replacement.
+// Returns { fulfillmentId, itemId, quantity } when replace=yes is found.
+function extractReplacementDetails(
+  rawOrder: Record<string, unknown>
+): { fulfillmentId: string; itemId: string; quantity: number } | null {
+  const fulfillments = rawOrder.fulfillments;
+  if (!Array.isArray(fulfillments)) return null;
+  for (const f of fulfillments) {
+    if (!f || typeof f !== "object") continue;
+    const o = f as { id?: unknown; type?: unknown; tags?: Array<{ code?: unknown; list?: Array<{ code?: unknown; value?: unknown }> }> };
+    if (String(o.type ?? "") !== "Return" || !Array.isArray(o.tags)) continue;
+    for (const tag of o.tags) {
+      if (!tag || typeof tag !== "object") continue;
+      if (String((tag as { code?: unknown }).code ?? "") !== "return_request") continue;
+      const list = (tag as { list?: unknown }).list;
+      if (!Array.isArray(list)) continue;
+      let fulfillmentId = "";
+      let itemId = "";
+      let quantity = 0;
+      let isReplace = false;
+      for (const entry of list) {
+        if (!entry || typeof entry !== "object") continue;
+        const e = entry as { code?: unknown; value?: unknown };
+        const code = String(e.code ?? "");
+        const value = String(e.value ?? "");
+        if (code === "id") fulfillmentId = value;
+        if (code === "item_id") itemId = value;
+        if (code === "item_quantity") quantity = Number(value);
+        if (code === "replace" && value === "yes") isReplace = true;
+      }
+      if (isReplace && fulfillmentId && itemId) {
+        return { fulfillmentId, itemId, quantity: quantity || 1 };
+      }
+    }
+  }
+  return null;
+}
+
+// Calculate refund amount from the order's quote.breakup for a replacement
+// where the BPP has not yet provided quote_trail (state < Return_Picked).
+// Per contract section 00B footnote 1115, quote_trail appears at Return_Picked.
+function calculateRefundFromQuote(
+  rawOrder: Record<string, unknown>,
+  itemId: string,
+  quantity: number
+): string {
+  const quote = rawOrder.quote as { breakup?: Array<Record<string, unknown>> } | undefined;
+  if (!quote || !Array.isArray(quote.breakup)) return "0.00";
+  for (const b of quote.breakup) {
+    if (String((b as Record<string, unknown>)["@ondc/org/item_id"] ?? "") !== itemId) continue;
+    const itemQty = (b as Record<string, unknown>)["@ondc/org/item_quantity"] as { count?: number } | undefined;
+    const price = (b as Record<string, unknown>).price as { value?: string } | undefined;
+    if (!itemQty || !price) continue;
+    const qty = Number(itemQty.count ?? 0);
+    const total = Number(price.value ?? 0);
+    if (qty <= 0 || total <= 0) continue;
+    return ((total / qty) * quantity).toFixed(2);
+  }
+  return "0.00";
+}
+
 // Auto-trigger refund update after the BPP settles a return/replacement.
-// Scans the inbound on_update for settlement_details with phase === "refund"
-// and, if found, fires a signed /update with the refund amount derived from
-// the callback's own quote_trail fulfillments (QA: "refund update call missing").
+// Scans the inbound on_update for:
+//   1. settlement_details with phase === "refund" (BPP-initiated refund), OR
+//   2. Return fulfillment with replace=yes in return_request (replacement flow)
+// and fires a signed /update with the refund amount derived from
+// quote_trail (return) or quote.breakup (replacement at < Return_Picked).
 async function triggerRefundIfSettled(data: ExtractedOnUpdate): Promise<void> {
-  const rawOrder = data.order as {
-    payment?:
-      | { "@ondc/org/settlement_details"?: Array<{ settlement_phase?: unknown; settlement_amount?: unknown }> }
-      | undefined;
-    fulfillments?: unknown;
-  };
-  const settlements = rawOrder.payment?.["@ondc/org/settlement_details"];
+  const rawOrder = data.order as Record<string, unknown>;
+  const payment = rawOrder.payment as Record<string, unknown> | undefined;
+  const settlements = payment?.["@ondc/org/settlement_details"] as Array<Record<string, unknown>> | undefined;
   const hasRefundSettlement = Array.isArray(settlements) && settlements.some(
     (s) => String(s?.settlement_phase ?? "") === "refund"
   );
-  if (!hasRefundSettlement) return;
 
-  // Use the fulfillments from this callback as the quote_trail source.
+  // When BPP includes refund settlement, use quote_trail from fulfillments (return flow).
+  if (hasRefundSettlement) {
+    const fulfillments = rawOrder.fulfillments;
+    if (!Array.isArray(fulfillments) || fulfillments.length === 0) return;
+    try {
+      const config = getOndcConfig();
+      const context = buildContext({
+        action: "update",
+        transactionId: data.transactionId,
+        bppId: data.bppId,
+        bppUri: data.bppUri,
+      });
+      const { message } = buildRefundUpdate({
+        orderId: data.orderId,
+        fulfillments,
+        timestamp: new Date().toISOString(),
+      });
+      await sendOndcRequest({
+        url: `${data.bppUri}/update`,
+        action: "update",
+        context,
+        message,
+      });
+      console.log("ondc.on_update auto-triggered refund update", {
+        transactionId: data.transactionId,
+        bppId: data.bppId,
+        orderId: data.orderId,
+        mode: "return (settlement)",
+      });
+    } catch (err) {
+      console.warn("ondc.on_update auto-trigger refund failed", {
+        transactionId: data.transactionId,
+        bppId: data.bppId,
+        orderId: data.orderId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+    return;
+  }
+
+  // Check for replacement flow: Return fulfillment with replace=yes.
+  const replacement = extractReplacementDetails(rawOrder);
+  if (!replacement) return;
+
   const fulfillments = rawOrder.fulfillments;
   if (!Array.isArray(fulfillments) || fulfillments.length === 0) return;
+
+  // Prefer quote_trail when BPP already sent it (state >= Return_Picked).
+  const { refund } = buildRefundUpdate({
+    orderId: data.orderId,
+    fulfillments,
+    timestamp: new Date().toISOString(),
+  });
+  let refundAmount = refund.value;
+  if (refundAmount === "0.00" || refundAmount === "0") {
+    // No quote_trail yet (state = Return_Initiated / < Return_Picked).
+    // Calculate from the order's quote.breakup per the contract.
+    refundAmount = calculateRefundFromQuote(rawOrder, replacement.itemId, replacement.quantity);
+  }
+  if (refundAmount === "0.00" || refundAmount === "0") return;
 
   try {
     const config = getOndcConfig();
@@ -328,11 +443,23 @@ async function triggerRefundIfSettled(data: ExtractedOnUpdate): Promise<void> {
       bppId: data.bppId,
       bppUri: data.bppUri,
     });
-    const { message } = buildRefundUpdate({
-      orderId: data.orderId,
-      fulfillments,
-      timestamp: new Date().toISOString(),
-    });
+
+    // Build the refund payload per contract "settlement trail for refund initiation".
+    const order: Record<string, unknown> = {
+      id: data.orderId,
+      fulfillments: [{ id: replacement.fulfillmentId, type: "Return" }],
+      payment: {
+        "@ondc/org/settlement_details": [{
+          settlement_counterparty: "buyer",
+          settlement_phase: "refund",
+          settlement_type: "upi",
+          settlement_amount: refundAmount,
+          settlement_timestamp: new Date().toISOString(),
+        }],
+      },
+    };
+    const message: UpdateMessage = { update_target: "payment", order };
+
     await sendOndcRequest({
       url: `${data.bppUri}/update`,
       action: "update",
@@ -343,9 +470,10 @@ async function triggerRefundIfSettled(data: ExtractedOnUpdate): Promise<void> {
       transactionId: data.transactionId,
       bppId: data.bppId,
       orderId: data.orderId,
+      amount: refundAmount,
+      mode: "replacement",
     });
   } catch (err) {
-    // Fire-and-forget: failures are logged but never block the ACK.
     console.warn("ondc.on_update auto-trigger refund failed", {
       transactionId: data.transactionId,
       bppId: data.bppId,

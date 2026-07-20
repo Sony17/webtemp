@@ -626,6 +626,7 @@ export async function saveIssue(input: SaveIssueInput): Promise<void> {
       lastTouchedBy: input.lastTouchedBy,
       actions: mergedActions,
       resolution: input.resolution ?? existing?.resolution,
+      resolutionProvider: input.resolutionProvider ?? existing?.resolutionProvider,
       issue: input.issue,
       createdAt: existing?.createdAt ?? ts,
       updatedAt: ts,

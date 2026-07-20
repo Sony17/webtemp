@@ -422,6 +422,7 @@ export async function saveIssue(input: SaveIssueInput): Promise<void> {
           lastTouchedBy: input.lastTouchedBy,
           newActions: input.newActions,
           resolution: input.resolution,
+          resolutionProvider: input.resolutionProvider,
           issue: input.issue,
         }),
       },
@@ -634,6 +635,7 @@ type IssueEventPayload = {
   lastTouchedBy: "complainant" | "respondent";
   newActions: IssueActionEntry[];
   resolution?: unknown;
+  resolutionProvider?: unknown;
   issue: unknown;
 };
 
@@ -676,6 +678,7 @@ function foldIssueEvents(
     lastTouchedBy: pLast.lastTouchedBy,
     actions,
     resolution: pLast.resolution,
+    resolutionProvider: pLast.resolutionProvider,
     issue: pLast.issue,
     createdAt: first.r.receivedAt.getTime(),
     updatedAt: last.r.receivedAt.getTime(),

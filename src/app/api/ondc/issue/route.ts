@@ -503,22 +503,41 @@ export async function POST(req: Request) {
     return undefined;
   };
   // The proposed resolution the buyer is accepting/rejecting. The seller sends
-  // resolutions[] on its on_issue (persisted in the snapshot). Prefer a concrete
-  // option (skip the "PARENT" grouping row the seller uses to bundle choices).
-  // Fall back to resolution_provider.resolution (IGM 2.0: the BPP may send the
-  // resolution inside resolution_provider instead of a top-level resolutions[]
-  // — QA: "resolution section needs to carry forward in issue call").
+  // resolutions[] on its on_issue (persisted in the snapshot). The dedicated
+  // IssueRecord.resolutionProvider is checked first since it persists across
+  // on_issue callbacks (IssueRecord.issue gets overwritten by subsequent BPP
+  // callbacks). Fall back to the issue snapshot for legacy records.
+  // Prefer a concrete option (skip the "PARENT" grouping row the seller uses
+  // to bundle choices).
   const proposedResolutionId = (): string | undefined => {
+    // Dedicated fields persist across on_issue overwrites.
+    // resolutionProvider can be an array (BPP sends multiple providers) or
+    // a single object — handle both.
+    const rp = existing?.resolutionProvider;
+    if (rp !== null && rp !== undefined) {
+      const candidates = Array.isArray(rp)
+        ? (rp as Array<{ resolution?: { id?: string } }>)
+        : [rp as { resolution?: { id?: string } }];
+      for (const c of candidates) {
+        const id = c?.resolution?.id;
+        if (id) return id;
+      }
+    }
+
+    // Fallback: try resolution_provider[0].resolution.id inside the issue
+    // snapshot (legacy records stored on_issue without resolutionProvider).
+    const issueRp = (existing?.issue as { resolution_provider?: unknown } | undefined)
+      ?.resolution_provider;
+    if (Array.isArray(issueRp)) {
+      const first = issueRp[0] as { resolution?: { id?: string } } | undefined;
+      const rpId = first?.resolution?.id;
+      if (rpId) return rpId;
+    }
+
+    // Final fallback: resolutions[] from the issue snapshot.
     const res = (existing?.issue as { resolutions?: unknown } | undefined)
       ?.resolutions;
-    if (!Array.isArray(res)) {
-      // Fallback: try resolution_provider[0].resolution.id for IGM 2.0
-      const rp = (existing?.issue as { resolution_provider?: unknown } | undefined)
-        ?.resolution_provider;
-      const providers = Array.isArray(rp) ? rp : undefined;
-      const first = providers?.[0] as { resolution?: { id?: string } } | undefined;
-      return first?.resolution?.id;
-    }
+    if (!Array.isArray(res)) return undefined;
     const idOf = (r: unknown): string | undefined =>
       r && typeof r === "object" && typeof (r as { id?: unknown }).id === "string"
         ? (r as { id: string }).id
@@ -608,6 +627,9 @@ export async function POST(req: Request) {
 
   const createdAt = (isV2Snap && (v2Snap!.created_at as string)) || now;
   const carriedResolution = (): IssueV2Message["issue"]["resolution"] | undefined => {
+    // Dedicated field persists across on_issue overwrites — check first.
+    if (existing?.resolution) return existing.resolution as IssueV2Message["issue"]["resolution"];
+
     const issue = existing?.issue as
       | {
           resolution?: IssueV2Message["issue"]["resolution"];
