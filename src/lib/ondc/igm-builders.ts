@@ -424,10 +424,7 @@ export function projectStoredAction(
 ): IssueActionRow | null {
   const raw = (entry.raw ?? {}) as Record<string, unknown>;
 
-  if (entry.actor === "complainant") {
-    // Rebuild a CLEAN strict row from the stored fields. Never return the stored
-    // object verbatim — a legacy/pre-fix record may carry now-disallowed props
-    // (images/ref_id/tags) that would re-pollute the strict action object.
+    if (entry.actor === "complainant") {
     if (
       raw &&
       typeof raw === "object" &&
@@ -446,6 +443,13 @@ export function projectStoredAction(
           typeof raw.updated_at === "string" ? raw.updated_at : entry.updatedAt,
         actionBy: typeof raw.action_by === "string" ? raw.action_by : "",
         actorName,
+        refId: typeof raw.ref_id === "string" ? raw.ref_id : undefined,
+        refType: typeof raw.ref_type === "string"
+          ? (raw.ref_type as RefType)
+          : undefined,
+        images: Array.isArray(raw.images) && raw.images.length > 0
+          ? (raw.images as IssueImage[])
+          : undefined,
       });
     }
     return null;
@@ -503,6 +507,13 @@ export function projectStoredAction(
     updatedAt: entry.updatedAt,
     actionBy: ctx.counterpartyNpId,
     actorName: ctx.counterpartyNpId,
+    refId: typeof raw.ref_id === "string" ? raw.ref_id : undefined,
+    refType: typeof raw.ref_type === "string"
+      ? (raw.ref_type as RefType)
+      : undefined,
+    images: Array.isArray(raw.images) && raw.images.length > 0
+      ? (raw.images as IssueImage[])
+      : undefined,
   });
 }
 
