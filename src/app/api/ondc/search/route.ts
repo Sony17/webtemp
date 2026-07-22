@@ -209,10 +209,12 @@ function buildSearchMessage(input: {
       // (start_time + end_time) and NO `mode` entry. The seller returns the
       // catalog changes within that window. (RET10 1.2.5 "Incremental catalog
       // refresh" — pull example.)
-      list = [{ code: "start_time", value: startTime }];
-      if (input.incrementalEnd) {
-        list.push({ code: "end_time", value: input.incrementalEnd });
-      }
+      // end_time is REQUIRED per contract; default to now when not provided.
+      const endTime = input.incrementalEnd ?? new Date().toISOString();
+      list = [
+        { code: "start_time", value: startTime },
+        { code: "end_time", value: endTime },
+      ];
     } else {
       // PUSH subscribe/stop: catalog_inc carries the `mode` entry; start_time is
       // optional on start (defaults to Context.timestamp).
