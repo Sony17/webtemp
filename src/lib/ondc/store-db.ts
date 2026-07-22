@@ -423,6 +423,8 @@ export async function saveIssue(input: SaveIssueInput): Promise<void> {
           newActions: input.newActions,
           resolution: input.resolution,
           resolutionProvider: input.resolutionProvider,
+          resolutions: input.resolutions,
+          resolverIds: input.resolverIds,
           issue: input.issue,
         }),
       },
@@ -636,6 +638,8 @@ type IssueEventPayload = {
   newActions: IssueActionEntry[];
   resolution?: unknown;
   resolutionProvider?: unknown;
+  resolutions?: unknown[];
+  resolverIds?: string[];
   issue: unknown;
 };
 
@@ -679,6 +683,8 @@ function foldIssueEvents(
     actions,
     resolution: pLast.resolution,
     resolutionProvider: pLast.resolutionProvider,
+    resolutions: pLast.resolutions,
+    resolverIds: pLast.resolverIds,
     issue: pLast.issue,
     createdAt: first.r.receivedAt.getTime(),
     updatedAt: last.r.receivedAt.getTime(),

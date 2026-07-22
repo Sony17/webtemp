@@ -167,6 +167,12 @@ export type IssueRecord = {
   // Resolution provider details from on_issue (IGM 2.0: carries GRO info,
   // resolution support contact, and the actual resolution data).
   resolutionProvider?: unknown;
+  // IGM v2.0.0: the full array of resolution options from the BPP's on_issue
+  // (plural — issue.resolutions[]), carried forward verbatim in buyer's
+  // subsequent issue calls (QA: "Resolution attribute is missing").
+  resolutions?: unknown[];
+  // IGM v2.0.0: resolver participant ids from the BPP's on_issue.
+  resolverIds?: string[];
   // Full last opaque issue object retained for debugging.
   issue: unknown;
   createdAt: number;
@@ -302,5 +308,7 @@ export type SaveIssueInput = {
   newActions: IssueActionEntry[];
   resolution?: unknown;
   resolutionProvider?: unknown;
+  resolutions?: unknown[];
+  resolverIds?: string[];
   issue: unknown;
 };

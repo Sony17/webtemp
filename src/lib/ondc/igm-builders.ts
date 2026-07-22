@@ -149,6 +149,11 @@ export type IssueV2Message = {
       action_triggered?: string;
       refund_amount?: string;
     };
+    // IGM v2.0.0: the full array of resolution options from the BPP (plural),
+    // carried forward from on_issue so the outbound /issue echoes them back
+    // (QA: "Resolution attribute is missing").
+    resolutions?: unknown[];
+    resolver_ids?: string[];
   };
 };
 
@@ -215,10 +220,13 @@ export function actionCodeFor(action: ComplainantAction): ActionCode {
 // Actors (QA #1)
 // ---------------------------------------------------------------------------
 
-// Build the three parties IGM 2.0 expects on a buyer-initiated issue:
+// Build the parties IGM 2.0 expects on a buyer-initiated OPEN:
 //   CONSUMER         — the buyer (person raising the complaint)
 //   INTERFACING_NP   — the BAP (buyer app), the source of the issue
-//   COUNTERPARTY_NP  — the BPP (seller app), the respondent
+// COUNTERPARTY_NP is NOT included here — the seller (BPP) adds it in its
+// on_issue callback (QA: "COUNTERPARTY_NP actor is not required from buyer").
+// After on_issue, the snapshot carries the BPP's full actor set (including
+// COUNTERPARTY_NP) so follow-up issue calls pick it up from the snap.
 // The CONSUMER id is kept distinct from the INTERFACING_NP id so source_id
 // (interfacing NP) and complainant_id (consumer) differ — the audit flagged
 // both pointing at the BAP because the interfacing-NP actor was missing.
@@ -288,14 +296,6 @@ export function buildActors(params: {
       info: {
         org: { name: params.bapId },
         contact: { phone: c.phone, email: c.email ?? "" },
-      },
-    },
-    {
-      id: ids.counterpartyNpId,
-      type: "COUNTERPARTY_NP",
-      info: {
-        org: { name: params.bppId },
-        contact: { phone: "", email: "" },
       },
     },
   ];
@@ -795,6 +795,11 @@ export function buildIssueV2(params: {
   // to the proposed resolution (QA: "resolution section needs to carry forward
   // in issue call").
   resolution?: IssueV2Message["issue"]["resolution"];
+  // IGM v2.0.0: the full array of resolution options + resolver ids from the
+  // BPP's on_issue snapshot. Carried forward verbatim for RESOLUTION_ACCEPT,
+  // RESOLUTION_REJECT, and CLOSE (QA: "Resolution attribute is missing").
+  resolutions?: unknown[];
+  resolverIds?: string[];
 }): IssueV2Message {
   return {
     ...(params.action !== "OPEN"
@@ -827,6 +832,12 @@ export function buildIssueV2(params: {
       last_action_id: params.newAction.id,
       actions: [...params.priorActions, params.newAction],
       ...(params.resolution ? { resolution: params.resolution } : {}),
+      ...(params.resolutions !== undefined
+        ? { resolutions: params.resolutions }
+        : {}),
+      ...(params.resolverIds !== undefined
+        ? { resolver_ids: params.resolverIds }
+        : {}),
     },
   };
 }

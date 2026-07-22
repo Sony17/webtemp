@@ -56,6 +56,7 @@ type IncomingIssue = {
   // IGM v2.0.0: the full action trail (both parties) lives here.
   actions?: unknown;
   resolutions?: unknown;
+  resolver_ids?: unknown;
   // IGM v1.0.0: the split action arrays.
   issue_actions?: {
     respondent_actions?: unknown;
@@ -201,6 +202,16 @@ export async function POST(req: Request) {
   // /issue can carry it forward (QA: "resolution section needs to carry
   // forward in issue call").
   const resolutionProvider = issue?.resolution_provider;
+  // IGM v2.0.0: the BPP sends resolutions[] (plural array) + resolver_ids[]
+  // instead of the v1 singular resolution/resolution_provider. Persist them
+  // so the buyer's subsequent issue calls can carry them forward verbatim
+  // (QA: "Resolution attribute is missing").
+  const resolutions = Array.isArray(issue?.resolutions)
+    ? (issue!.resolutions as unknown[])
+    : undefined;
+  const resolverIds = Array.isArray(issue?.resolver_ids)
+    ? (issue!.resolver_ids as string[])
+    : undefined;
 
   // Find the existing record to know which respondent actions are new.
   const existing = await getIssue(transactionId, issueId);
@@ -221,6 +232,8 @@ export async function POST(req: Request) {
       newActions: respondentActions,
       resolution,
       resolutionProvider,
+      resolutions,
+      resolverIds,
       issue,
     });
   } catch (err) {

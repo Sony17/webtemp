@@ -698,6 +698,8 @@ export async function POST(req: Request) {
         // RESOLUTION_ACCEPT/REJECT echoes the proposed resolution back
         // (QA: "resolution section needs to carry forward in issue call").
         resolution: carriedResolution(),
+        resolutions: existing?.resolutions as unknown[] | undefined,
+        resolverIds: existing?.resolverIds,
       });
 
   // Persist FIRST. A transport failure shouldn't leave us forgetful — we need
