@@ -93,6 +93,8 @@ export type IssueRecord = {
   subCategory?: string;
   orderId?: string;
   status: string;
+  shortDesc?: string;
+  longDesc?: string;
   actions: {
     actor: "complainant" | "respondent";
     action: string;
@@ -103,6 +105,9 @@ export type IssueRecord = {
   resolution?: unknown;
   createdAt: number;
   updatedAt: number;
+  resolvedAt?: number;
+  processingStartedAt?: number;
+  resolutionProposedAt?: number;
 };
 
 export type ShopState = {

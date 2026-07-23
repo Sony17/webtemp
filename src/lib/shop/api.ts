@@ -259,6 +259,7 @@ export function openIssue(body: {
   shortDesc: string;
   longDesc: string;
   complainant: { name?: string; phone: string; email?: string };
+  images?: { url: string; size_type?: string }[];
 }): Promise<AckEnvelope & { issueId?: string }> {
   return postJSON("/api/ondc/issue", body);
 }

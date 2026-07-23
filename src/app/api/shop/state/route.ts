@@ -75,7 +75,51 @@ export async function GET(req: Request) {
   // A quote/order can also exist for a BPP that we never saw a catalog slice
   // for (e.g. a flow resumed mid-lifecycle). The catalog footprint covers the
   // normal case; issues are read by transaction regardless.
-  const issues = await store.getIssuesByTransaction(transactionId);
+  const rawIssues = await store.getIssuesByTransaction(transactionId);
+
+  // Map server-side IssueRecord to client-safe shape, extracting short/long
+  // descriptions from the stored issue snapshot's descriptor.
+  const issues = rawIssues.map((r) => {
+    const snap = r.issue as
+      | { descriptor?: { short_desc?: string; long_desc?: string } }
+      | undefined;
+    // Compute timing milestones from action history for the audit trail.
+    let resolvedAt: number | undefined;
+    let processingStartedAt: number | undefined;
+    let resolutionProposedAt: number | undefined;
+    for (const a of r.actions) {
+      const t = new Date(a.updatedAt).getTime();
+      if (!Number.isFinite(t)) continue;
+      if (a.action === "PROCESSING" && !processingStartedAt) processingStartedAt = t;
+      if (a.action === "RESOLUTION_PROPOSED" && !resolutionProposedAt) resolutionProposedAt = t;
+      if (a.action === "RESOLVED" || a.action === "CLOSED") resolvedAt = t;
+    }
+    return {
+      transactionId: r.transactionId,
+      bppId: r.bppId,
+      bppUri: r.bppUri,
+      issueId: r.issueId,
+      category: r.category,
+      subCategory: r.subCategory,
+      orderId: r.orderId,
+      status: r.status,
+      shortDesc: snap?.descriptor?.short_desc,
+      longDesc: snap?.descriptor?.long_desc,
+      actions: r.actions.map((a) => ({
+        actor: a.actor,
+        action: a.action,
+        shortDesc: a.shortDesc,
+        updatedAt: a.updatedAt,
+        raw: a.raw,
+      })),
+      resolution: r.resolution,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+      resolvedAt,
+      processingStartedAt,
+      resolutionProposedAt,
+    };
+  });
 
   return NextResponse.json(
     { transactionId, catalogs, bpps, issues },

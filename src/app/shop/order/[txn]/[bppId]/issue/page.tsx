@@ -1,9 +1,5 @@
 "use client";
 
-// Buyer-app IGM (Issue & Grievance Management) — opens a grievance via
-// POST /api/ondc/issue, then shows the issue's action timeline (complainant +
-// respondent) from /api/shop/state and offers the follow-up complainant
-// actions (escalate, accept/reject resolution, close).
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -12,6 +8,9 @@ import {
   AlertTriangle,
   ArrowUpCircle,
   XCircle,
+  Clock,
+  ImagePlus,
+  X,
 } from "lucide-react";
 import { Button, Card, Input, Label, Textarea, Badge } from "@/components/shop/ui";
 import { EmptyState, Spinner } from "@/components/shop/widgets";
@@ -21,11 +20,41 @@ import * as api from "@/lib/shop/api";
 import type { IssueRecord, ShopState } from "@/lib/shop/types";
 
 const CATEGORIES = [
-  { c: "ITEM", s: "ITM01", label: "Item issue" },
-  { c: "FULFILLMENT", s: "FLM01", label: "Delivery issue" },
-  { c: "PAYMENT", s: "PMT01", label: "Payment issue" },
-  { c: "ORDER", s: "ORD01", label: "Order issue" },
+  { c: "ITEM", s: "ITM01", label: "Item not received", requiresImage: false },
+  { c: "ITEM", s: "ITM02", label: "Defective / Damaged", requiresImage: true },
+  { c: "ITEM", s: "ITM03", label: "Expired / Poor quality", requiresImage: true },
+  { c: "ITEM", s: "ITM04", label: "Incorrect item", requiresImage: true },
+  { c: "ITEM", s: "ITM05", label: "Missing item / Parts", requiresImage: true },
+  { c: "FULFILLMENT", s: "FLM01", label: "Delayed delivery", requiresImage: false },
+  { c: "FULFILLMENT", s: "FLM04", label: "Package damaged", requiresImage: true },
+  { c: "PAYMENT", s: "PMT01", label: "Payment issue", requiresImage: false },
+  { c: "ORDER", s: "ORD01", label: "Order issue", requiresImage: false },
 ];
+
+function elapsed(from: string, to?: string): string {
+  const a = new Date(from).getTime();
+  if (!Number.isFinite(a)) return "";
+  const b = to ? new Date(to).getTime() : Date.now();
+  if (!Number.isFinite(b)) return "";
+  const diff = Math.max(0, b - a);
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return `${sec}s`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ${sec % 60}s`;
+  const hr = Math.floor(min / 60);
+  return `${hr}h ${min % 60}m`;
+}
+
+function formatTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
 
 export default function IssuePage() {
   const { txn, bppId } = useParams<{ txn: string; bppId: string }>();
@@ -42,7 +71,6 @@ export default function IssuePage() {
       s.issues.some((i) => ["RESOLVED", "CLOSED"].includes(i.status)),
   });
 
-  // Poll refetch until `pred` holds (the on_issue callback landed) or ~16s.
   const pollUntil = async (pred: (s: ShopState) => boolean) => {
     const deadline = Date.now() + 16_000;
     for (;;) {
@@ -63,6 +91,7 @@ export default function IssuePage() {
   const [shortDesc, setShortDesc] = React.useState("");
   const [longDesc, setLongDesc] = React.useState("");
   const [phone, setPhone] = React.useState(address?.phone ?? "");
+  const [images, setImages] = React.useState<{ url: string; size_type?: string }[]>([]);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -75,6 +104,10 @@ export default function IssuePage() {
     }
     if (!shortDesc.trim() || !phone.trim()) {
       setError("A short description and contact phone are required.");
+      return;
+    }
+    if (cat.requiresImage && images.length === 0) {
+      setError(`Photo(s) are required for "${cat.label}". Please upload at least one image.`);
       return;
     }
     if (!/^\d{10}$/.test(phone.trim())) {
@@ -94,17 +127,32 @@ export default function IssuePage() {
         shortDesc: shortDesc.trim(),
         longDesc: longDesc.trim() || shortDesc.trim(),
         complainant: { name: address?.name, phone: phone.trim(), email: address?.email },
+        images: images.length > 0 ? images : undefined,
       });
       if (res.status === "NACK")
         throw new Error(res.error?.message ?? "Issue rejected.");
-      // Wait for the grievance to actually appear (on_issue) before dropping
-      // the busy state, so the timeline renders instead of a blank form.
       await pollUntil((s) => s.issues.some((i) => i.bppId === bpp));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to raise issue.");
     } finally {
       setBusy(null);
     }
+  };
+
+  const addImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = reader.result as string;
+      setImages((prev) => [...prev, { url, size_type: "original" }]);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const removeImage = (idx: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const followUp = async (
@@ -122,8 +170,6 @@ export default function IssuePage() {
         issueId: issue.issueId,
         complainantAction: action,
       });
-      // Poll until the respondent's on_issue reflects our action (new entry or
-      // a status/resolution change) rather than a fixed 1.5s guess.
       await pollUntil((s) => {
         const i = s.issues.find((x) => x.bppId === bpp);
         return !!i && (i.actions.length !== beforeCount || i.updatedAt !== beforeRev);
@@ -135,9 +181,12 @@ export default function IssuePage() {
     }
   };
 
-  // Issue exists → timeline + actions
   if (issue) {
     const closed = ["CLOSED", "RESOLVED"].includes(issue.status);
+    const hasRespondentAction = issue.actions.some((a) => a.actor === "respondent");
+    const openAction = issue.actions.find((a) => a.action === "OPEN");
+    const firstRespondent = issue.actions.find((a) => a.actor === "respondent");
+
     return (
       <div className="space-y-4 pb-8">
         <div className="flex items-center gap-2">
@@ -148,30 +197,111 @@ export default function IssuePage() {
         </div>
         <p className="text-xs text-muted-foreground">Issue #{issue.issueId}</p>
 
+        <Card className="p-4 space-y-2">
+          <h2 className="text-sm font-semibold">Details</h2>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            <span className="text-muted-foreground">Category</span>
+            <span>{issue.category ?? "—"}</span>
+            <span className="text-muted-foreground">Sub-category</span>
+            <span>{issue.subCategory ?? "—"}</span>
+            {issue.shortDesc ? (
+              <>
+                <span className="text-muted-foreground">Summary</span>
+                <span>{issue.shortDesc}</span>
+              </>
+            ) : null}
+            {issue.longDesc ? (
+              <>
+                <span className="text-muted-foreground">Description</span>
+                <span className="text-muted-foreground text-xs">{issue.longDesc}</span>
+              </>
+            ) : null}
+          </div>
+        </Card>
+
+        <Card className="p-4 space-y-2">
+          <h2 className="text-sm font-semibold flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5" /> Audit Trail
+          </h2>
+          <div className="grid grid-cols-3 gap-3 text-xs">
+            <div className="rounded-lg bg-accent/30 p-2.5 text-center">
+              <p className="text-muted-foreground">Response</p>
+              <p className="font-semibold">
+                {openAction && firstRespondent
+                  ? elapsed(openAction.updatedAt, firstRespondent.updatedAt)
+                  : hasRespondentAction
+                    ? "—"
+                    : "Awaiting…"}
+              </p>
+            </div>
+            <div className="rounded-lg bg-accent/30 p-2.5 text-center">
+              <p className="text-muted-foreground">Processing</p>
+              <p className="font-semibold">
+                {openAction && issue.resolutionProposedAt
+                  ? elapsed(openAction.updatedAt, new Date(issue.resolutionProposedAt).toISOString())
+                  : issue.status === "RESOLUTION_PROPOSED" || closed
+                    ? "—"
+                    : "In progress…"}
+              </p>
+            </div>
+            <div className="rounded-lg bg-accent/30 p-2.5 text-center">
+              <p className="text-muted-foreground">Resolution</p>
+              <p className="font-semibold">
+                {openAction && issue.resolvedAt
+                  ? elapsed(openAction.updatedAt, new Date(issue.resolvedAt).toISOString())
+                  : closed
+                    ? "—"
+                    : "Pending…"}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {hasRespondentAction ? (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <p className="font-medium">Response received from seller</p>
+            <p className="mt-0.5 text-xs text-emerald-600">
+              {issue.actions
+                .filter((a) => a.actor === "respondent")
+                .slice(-1)[0]
+                ?.action.replace(/_/g, " ") ?? ""}
+            </p>
+          </div>
+        ) : null}
+
         <Card className="p-4">
           <h2 className="mb-3 text-sm font-semibold">Timeline</h2>
           <div className="space-y-3">
-            {issue.actions.map((a, i) => (
-              <div key={i} className="flex gap-3">
-                <div className="mt-1 flex flex-col items-center">
-                  <span
-                    className={`h-2.5 w-2.5 rounded-full ${
-                      a.actor === "complainant" ? "bg-primary" : "bg-emerald-500"
-                    }`}
-                  />
-                  {i < issue.actions.length - 1 ? (
-                    <span className="my-0.5 w-px flex-1 bg-border" />
-                  ) : null}
+            {issue.actions.map((a, i) => {
+              const prev = i > 0 ? issue.actions[i - 1] : null;
+              return (
+                <div key={i} className="flex gap-3">
+                  <div className="mt-1 flex flex-col items-center">
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        a.actor === "complainant" ? "bg-primary" : "bg-emerald-500"
+                      }`}
+                    />
+                    {i < issue.actions.length - 1 ? (
+                      <span className="my-0.5 w-px flex-1 bg-border" />
+                    ) : null}
+                  </div>
+                  <div className="flex-1 pb-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="text-sm font-medium">{a.action.replace(/_/g, " ")}</p>
+                      <span className="shrink-0 text-[11px] text-muted-foreground">
+                        {formatTime(a.updatedAt)}
+                        {prev ? ` (+${elapsed(prev.updatedAt, a.updatedAt)})` : ""}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {a.actor === "complainant" ? "You" : "Seller"}
+                      {a.shortDesc ? ` · ${a.shortDesc}` : ""}
+                    </p>
+                  </div>
                 </div>
-                <div className="pb-1">
-                  <p className="text-sm font-medium">{a.action}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {a.actor === "complainant" ? "You" : "Seller"}
-                    {a.shortDesc ? ` · ${a.shortDesc}` : ""}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
 
@@ -230,7 +360,6 @@ export default function IssuePage() {
     );
   }
 
-  // No issue yet → open form
   if (!orderId) {
     return (
       <EmptyState
@@ -250,20 +379,38 @@ export default function IssuePage() {
 
       <div>
         <Label className="mb-1.5 block">Category</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {CATEGORIES.map((c) => (
-            <button
-              key={c.c}
-              onClick={() => setCat(c)}
-              className={`rounded-lg border p-2.5 text-sm font-medium ${
-                cat.c === c.c
-                  ? "border-primary bg-accent/40 ring-1 ring-primary"
-                  : "border-border"
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-1.5">
+          {["ITEM", "FULFILLMENT", "PAYMENT", "ORDER"].map((group) => {
+            const items = CATEGORIES.filter((c) => c.c === group);
+            return (
+              <div key={group} className="w-full">
+                <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  {group === "ITEM"
+                    ? "Item Issues"
+                    : group === "FULFILLMENT"
+                      ? "Delivery Issues"
+                      : group === "PAYMENT"
+                        ? "Payment"
+                        : "Order"}
+                </p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {items.map((c) => (
+                    <button
+                      key={c.s}
+                      onClick={() => setCat(c)}
+                      className={`rounded-lg border px-2.5 py-2 text-left text-sm leading-tight ${
+                        cat.s === c.s
+                          ? "border-primary bg-accent/40 ring-1 ring-primary"
+                          : "border-border"
+                      } ${c.requiresImage ? "after:ml-1 after:text-[10px] after:text-amber-500 after:content-['*']" : ""}`}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -283,6 +430,40 @@ export default function IssuePage() {
           placeholder="Describe the issue…"
         />
       </div>
+
+      <div>
+        <Label className="mb-1.5 block">
+          Photo{cat.requiresImage ? " (required)" : ""}
+        </Label>
+        <div className="flex flex-wrap gap-2">
+          {images.map((img, i) => (
+            <div key={i} className="relative h-16 w-16 overflow-hidden rounded-lg border">
+              <img
+                src={img.url}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(i)}
+                className="absolute right-0.5 top-0.5 grid h-4 w-4 place-items-center rounded-full bg-black/50 text-white"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+          <label className="grid h-16 w-16 cursor-pointer place-items-center rounded-lg border border-dashed text-muted-foreground hover:border-primary hover:text-primary">
+            <ImagePlus className="h-5 w-5" />
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={addImage}
+            />
+          </label>
+        </div>
+      </div>
+
       <div>
         <Label className="mb-1.5 block">Contact phone</Label>
         <Input
