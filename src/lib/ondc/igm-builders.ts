@@ -277,6 +277,7 @@ export function buildActors(params: {
   bapId: string;
   bppId: string;
   consumer: ConsumerInfo;
+  interfacingPersonName?: string;
 }): IssueActor[] {
   const ids = actorIds(params.bapId, params.bppId);
   const c = params.consumer;
@@ -295,6 +296,7 @@ export function buildActors(params: {
       type: "INTERFACING_NP",
       info: {
         org: { name: params.bapId },
+        person: { name: params.interfacingPersonName ?? c.name },
         contact: { phone: c.phone, email: c.email ?? "" },
       },
     },

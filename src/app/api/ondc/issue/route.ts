@@ -134,6 +134,8 @@ type IssueRequestBody = {
   groName?: string;
   groPhone?: string;
   groEmail?: string;
+  // Person name for the INTERFACING_NP actor in the actors section.
+  interfacingPersonName?: string;
 };
 
 // IGM v2.0.0 wire types and the state machine (statusForAction/actionCodeFor)
@@ -456,6 +458,7 @@ export async function POST(req: Request) {
           bapId: config.bapId,
           bppId,
           consumer: { name: personName, phone, email },
+          interfacingPersonName: str(body.interfacingPersonName) ?? personName,
         });
 
   // QA #5: once escalated to grievance/dispute, surface the complainant NP's GRO
