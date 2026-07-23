@@ -5,8 +5,8 @@
 // the seller's on_cancel/on_update quote_trail, so we just collect intent.
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { RotateCcw, Repeat, CheckCircle2, AlertTriangle } from "lucide-react";
-import { Button, Card, Input, Label, Textarea } from "@/components/shop/ui";
+import { RotateCcw, Repeat, CheckCircle2, AlertTriangle, ImagePlus, X } from "lucide-react";
+import { Button, Card, Input, Label } from "@/components/shop/ui";
 import { EmptyState, Spinner } from "@/components/shop/widgets";
 import { useShopState } from "@/lib/shop/useShopState";
 import * as api from "@/lib/shop/api";
@@ -16,6 +16,18 @@ const RETURN_REASONS = [
   { id: "002", label: "Wrong item delivered" },
   { id: "003", label: "Item does not match description" },
   { id: "004", label: "Quality not as expected" },
+];
+
+const CATEGORIES = [
+  { c: "ITEM", s: "ITM01", label: "Item not received" },
+  { c: "ITEM", s: "ITM02", label: "Defective / Damaged" },
+  { c: "ITEM", s: "ITM03", label: "Expired / Poor quality" },
+  { c: "ITEM", s: "ITM04", label: "Incorrect item" },
+  { c: "ITEM", s: "ITM05", label: "Missing item / Parts" },
+  { c: "FULFILLMENT", s: "FLM01", label: "Delayed delivery" },
+  { c: "FULFILLMENT", s: "FLM04", label: "Package damaged" },
+  { c: "PAYMENT", s: "PMT01", label: "Payment issue" },
+  { c: "ORDER", s: "ORD01", label: "Order issue" },
 ];
 
 export default function ReturnPage() {
@@ -33,7 +45,8 @@ export default function ReturnPage() {
   const [reasonId, setReasonId] = React.useState(RETURN_REASONS[0].id);
   const [itemId, setItemId] = React.useState("");
   const [quantity, setQuantity] = React.useState(1);
-  const [images, setImages] = React.useState("");
+  const [cat, setCat] = React.useState(CATEGORIES[0]);
+  const [photoImages, setPhotoImages] = React.useState<{ url: string; size_type?: string }[]>([]);
   const [done, setDone] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -64,14 +77,23 @@ export default function ReturnPage() {
     );
   }
 
+  const addImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = reader.result as string;
+      setPhotoImages((prev) => [...prev, { url, size_type: "original" }]);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const removeImage = (idx: number) => {
+    setPhotoImages((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const submit = async () => {
-    const imageList = images.trim()
-      ? images.split(",").map((s) => s.trim()).filter(Boolean)
-      : [];
-    if (imageList.some((u) => !/^https?:\/\/.+/i.test(u))) {
-      setError("Photo URLs must start with http:// or https://");
-      return;
-    }
     setBusy(true);
     setError(null);
     try {
@@ -80,6 +102,8 @@ export default function ReturnPage() {
         itemId: itemId.trim() || undefined,
         quantity,
         reasonId,
+        category: cat.c,
+        subCategory: cat.s,
       };
       const res =
         mode === "return"
@@ -89,7 +113,7 @@ export default function ReturnPage() {
               bppUri,
               return: {
                 ...payload,
-                images: imageList.length ? imageList : undefined,
+                images: photoImages.length > 0 ? photoImages.map((i) => i.url) : undefined,
               },
             })
           : await api.update({
@@ -135,6 +159,43 @@ export default function ReturnPage() {
 
       <Card className="space-y-4 p-4">
         <div>
+          <Label className="mb-1.5 block">Category</Label>
+          <div className="flex flex-wrap gap-1.5">
+            {["ITEM", "FULFILLMENT", "PAYMENT", "ORDER"].map((group) => {
+              const items = CATEGORIES.filter((c) => c.c === group);
+              return (
+                <div key={group} className="w-full">
+                  <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    {group === "ITEM"
+                      ? "Item Issues"
+                      : group === "FULFILLMENT"
+                        ? "Delivery Issues"
+                        : group === "PAYMENT"
+                          ? "Payment"
+                          : "Order"}
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {items.map((c) => (
+                      <button
+                        key={c.s}
+                        onClick={() => setCat(c)}
+                        className={`rounded-lg border px-2.5 py-2 text-left text-sm leading-tight ${
+                          cat.s === c.s
+                            ? "border-primary bg-accent/40 ring-1 ring-primary"
+                            : "border-border"
+                        }`}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
           <Label className="mb-1.5 block">Reason</Label>
           <div className="space-y-2">
             {RETURN_REASONS.map((r) => (
@@ -173,12 +234,30 @@ export default function ReturnPage() {
 
         {mode === "return" ? (
           <div>
-            <Label className="mb-1.5 block">Photo URLs (optional, comma-separated)</Label>
-            <Textarea
-              value={images}
-              onChange={(e) => setImages(e.target.value)}
-              placeholder="https://…/photo1.jpg, https://…/photo2.jpg"
-            />
+            <Label className="mb-1.5 block">Photos (optional)</Label>
+            <div className="flex flex-wrap gap-2">
+              {photoImages.map((img, i) => (
+                <div key={i} className="relative h-16 w-16 overflow-hidden rounded-lg border">
+                  <img src={img.url} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    className="absolute right-0.5 top-0.5 grid h-4 w-4 place-items-center rounded-full bg-black/50 text-white"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              <label className="grid h-16 w-16 cursor-pointer place-items-center rounded-lg border border-dashed text-muted-foreground hover:border-primary hover:text-primary">
+                <ImagePlus className="h-5 w-5" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={addImage}
+                />
+              </label>
+            </div>
           </div>
         ) : null}
       </Card>

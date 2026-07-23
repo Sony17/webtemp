@@ -6,7 +6,7 @@
 // The product data comes from the active discovery transaction's catalogs.
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Check, ShoppingCart, Store, Star, PackageSearch, Truck } from "lucide-react";
+import { Check, ShoppingCart, Store, Star, PackageSearch, Truck, Tags } from "lucide-react";
 import { Button, Card, Separator, Badge } from "@/components/shop/ui";
 import {
   EmptyState,
@@ -246,6 +246,57 @@ export default function ProductPage() {
           </div>
         </div>
       ) : null}
+
+      {/* More from this seller — grouped by category */}
+      {(() => {
+        const sameProvider = products.filter(
+          (p) => p.bppId === bppId && p.providerId === providerId && p.itemId !== itemId
+        );
+        if (sameProvider.length === 0) return null;
+        const groups = new Map<string, Product[]>();
+        for (const p of sameProvider) {
+          const key = p.categoryId ?? "Other";
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key)!.push(p);
+        }
+        return (
+          <div>
+            <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
+              <Tags className="h-4 w-4" /> More from {activeOffer!.providerName}
+            </h2>
+            <div className="space-y-3">
+              {[...groups.entries()].map(([cat, items]) => (
+                <div key={cat}>
+                  <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    {cat}
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {items.map((p) => (
+                      <button
+                        key={p.itemId}
+                        onClick={() =>
+                          router.push(
+                            `/shop/product/${encodeURIComponent(bppId)}/${encodeURIComponent(providerId)}/${encodeURIComponent(p.itemId)}`
+                          )
+                        }
+                        className="rounded-lg border border-border px-2.5 py-2 text-left text-sm leading-tight hover:bg-accent/30"
+                      >
+                        <p className="font-medium">{p.name}</p>
+                        {p.price ? (
+                          <p className="text-xs text-muted-foreground">
+                            ₹{p.price.toLocaleString("en-IN")}
+                            {p.unit ? ` / ${p.unit}` : ""}
+                          </p>
+                        ) : null}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       <Separator />
 

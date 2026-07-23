@@ -205,6 +205,8 @@ export function update(
           itemId?: string;
           quantity?: number;
           reasonId?: string;
+          category?: string;
+          subCategory?: string;
           images?: string[];
         };
       }
@@ -218,6 +220,8 @@ export function update(
           itemId?: string;
           quantity?: number;
           reasonId?: string;
+          category?: string;
+          subCategory?: string;
         };
       }
     | {
