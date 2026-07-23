@@ -569,7 +569,7 @@ export async function POST(req: Request) {
   const actionRefType: RefType | undefined =
     isResolutionResponse && actionRefId ? "RESOLUTIONS" : undefined;
   const actionImages: IssueImage[] | undefined =
-    (action === "OPEN" || action === "INFO_PROVIDED") && Array.isArray(body.images)
+    Array.isArray(body.images)
       ? body.images.filter(
           (i): i is IssueImage => typeof i?.url === "string"
         )

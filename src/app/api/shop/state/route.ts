@@ -110,6 +110,9 @@ export async function GET(req: Request) {
         action: a.action,
         shortDesc: a.shortDesc,
         updatedAt: a.updatedAt,
+        images: a.raw && typeof a.raw === "object" && "images" in a.raw
+          ? (a.raw as { images?: { url: string; size_type?: string }[] }).images
+          : undefined,
         raw: a.raw,
       })),
       resolution: r.resolution,

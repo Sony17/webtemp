@@ -92,6 +92,7 @@ export default function IssuePage() {
   const [longDesc, setLongDesc] = React.useState("");
   const [phone, setPhone] = React.useState(address?.phone ?? "");
   const [images, setImages] = React.useState<{ url: string; size_type?: string }[]>([]);
+  const [followUpImages, setFollowUpImages] = React.useState<{ url: string; size_type?: string }[]>([]);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -155,6 +156,22 @@ export default function IssuePage() {
     setImages((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const addFollowUpImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = reader.result as string;
+      setFollowUpImages((prev) => [...prev, { url, size_type: "original" }]);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const removeFollowUpImage = (idx: number) => {
+    setFollowUpImages((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const followUp = async (
     action: "ESCALATE" | "RESOLUTION_ACCEPT" | "RESOLUTION_REJECT" | "CLOSE"
   ) => {
@@ -169,7 +186,9 @@ export default function IssuePage() {
         bppUri,
         issueId: issue.issueId,
         complainantAction: action,
+        images: followUpImages.length > 0 ? followUpImages : undefined,
       });
+      setFollowUpImages([]);
       await pollUntil((s) => {
         const i = s.issues.find((x) => x.bppId === bpp);
         return !!i && (i.actions.length !== beforeCount || i.updatedAt !== beforeRev);
@@ -298,6 +317,18 @@ export default function IssuePage() {
                       {a.actor === "complainant" ? "You" : "Seller"}
                       {a.shortDesc ? ` · ${a.shortDesc}` : ""}
                     </p>
+                    {a.images && a.images.length > 0 ? (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {a.images.map((img, j) => (
+                          <img
+                            key={j}
+                            src={img.url}
+                            alt=""
+                            className="h-10 w-10 rounded border object-cover"
+                          />
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               );
@@ -321,7 +352,36 @@ export default function IssuePage() {
         ) : null}
 
         {!closed ? (
-          <div className="grid grid-cols-2 gap-3">
+          <>
+            <div>
+              <Label className="mb-1.5 block text-xs text-muted-foreground">
+                Attach images (optional)
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {followUpImages.map((img, i) => (
+                  <div key={i} className="relative h-14 w-14 overflow-hidden rounded-lg border">
+                    <img src={img.url} alt="" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeFollowUpImage(i)}
+                      className="absolute right-0.5 top-0.5 grid h-3.5 w-3.5 place-items-center rounded-full bg-black/50 text-white text-[10px]"
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  </div>
+                ))}
+                <label className="grid h-14 w-14 cursor-pointer place-items-center rounded-lg border border-dashed text-muted-foreground hover:border-primary hover:text-primary">
+                  <ImagePlus className="h-4 w-4" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={addFollowUpImage}
+                  />
+                </label>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
               disabled={busy != null}
@@ -350,7 +410,7 @@ export default function IssuePage() {
             >
               Close issue
             </Button>
-          </div>
+          </div></>
         ) : (
           <Button onClick={() => router.push(`/shop/order/${txn}/${bppId}`)}>
             Back to order

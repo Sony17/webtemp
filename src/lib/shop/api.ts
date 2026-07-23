@@ -277,6 +277,7 @@ export function issueAction(body: {
     | "RESOLUTION_REJECT"
     | "CLOSE";
   actionDesc?: string;
+  images?: { url: string; size_type?: string }[];
 }): Promise<AckEnvelope> {
   return postJSON<AckEnvelope>("/api/ondc/issue", body);
 }

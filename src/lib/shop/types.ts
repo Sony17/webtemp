@@ -100,6 +100,7 @@ export type IssueRecord = {
     action: string;
     shortDesc?: string;
     updatedAt: string;
+    images?: { url: string; size_type?: string }[];
     raw: unknown;
   }[];
   resolution?: unknown;
