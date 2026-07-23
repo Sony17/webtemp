@@ -7,7 +7,7 @@
 import * as React from "react";
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search as SearchIcon, SearchX, Store } from "lucide-react";
+import { RefreshCw, Search as SearchIcon, SearchX, Store } from "lucide-react";
 import { Button } from "@/components/shop/ui";
 import { EmptyState, ProductCard, Spinner } from "@/components/shop/widgets";
 import { ErrorState } from "@/components/shop/ErrorState";
@@ -42,6 +42,31 @@ function SearchScreen() {
   const [searching, setSearching] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [filters, setFilters] = React.useState<ShopFilters>({ sort: "relevance" });
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const refreshCatalog = React.useCallback(async () => {
+    if (!txn) return;
+    setRefreshing(true);
+    setError(null);
+    try {
+      const res = await api.search({
+        query: activeQuery,
+        deliveryAreaCode: address?.areaCode,
+        deliveryGps: address?.gps,
+        incremental: true,
+        incrementalMode: "pull",
+        transactionId: txn,
+      });
+      if (res.status === "NACK") {
+        setError(res.error?.message ?? "Refresh rejected by the network.");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Refresh failed.");
+    } finally {
+      setRefreshing(false);
+    }
+  }, [txn, activeQuery, address]);
+
   // ACCUMULATED catalog slices for the current search, keyed by (bppId,messageId).
   // Each /api/shop/state poll is load-balanced to one serverless instance and
   // returns only the slices THAT instance persisted (the JSON /tmp store isn't
@@ -177,6 +202,18 @@ function SearchScreen() {
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
                 Finding more…
               </span>
+            ) : products.length > 0 ? (
+              <button
+                type="button"
+                disabled={refreshing}
+                onClick={refreshCatalog}
+                className="inline-flex items-center gap-1 text-primary hover:underline disabled:pointer-events-none disabled:opacity-50"
+              >
+                <RefreshCw
+                  className={`h-3 w-3${refreshing ? " animate-spin" : ""}`}
+                />
+                Refresh
+              </button>
             ) : null}
             {products.length > 0 ? (
               <FilterSheet

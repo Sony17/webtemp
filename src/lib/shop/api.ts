@@ -51,6 +51,7 @@ export function search(body: {
   deliveryAreaCode?: string;
   transactionId?: string;
   incremental?: boolean;
+  incrementalMode?: "start" | "stop" | "pull";
   targetUrl?: string;
 }): Promise<AckEnvelope> {
   return postJSON<AckEnvelope>("/api/ondc/search", body);
