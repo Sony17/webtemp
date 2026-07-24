@@ -17,7 +17,7 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* ── Buyer app (shadcn/ui) palette ──────────────────────────────────────
+  /* -- Buyer app (shadcn/ui) palette --------------------------------------
      These map Tailwind color utilities (bg-card, text-muted-foreground,
      bg-primary, border-border, …) onto CSS variables that are only defined
      inside `.shop-theme` (see below). The SaaS site never uses these classes,
@@ -69,7 +69,7 @@
   }
 }
 
-/* ── Buyer app theme scope ────────────────────────────────────────────────
+/* -- Buyer app theme scope ------------------------------------------------
    The recovered "approved" buyer-app palette (shadcn tokens, blue primary).
    Scoped to `.shop-theme` so it applies to the buyer app subtree (src/app/shop)
    only and never restyles the SaaS website-builder pages. Token values were
@@ -141,7 +141,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* ── Buyer-app utilities (migrated from prototype) ────────────────────────── */
+/* -- Buyer-app utilities (migrated from prototype) -------------------------- */
 @utility scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;

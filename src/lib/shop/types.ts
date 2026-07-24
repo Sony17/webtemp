@@ -6,7 +6,7 @@
 // the cards render. Keeping the parsing here means every screen reads the same
 // normalized shape.
 
-/* ── Normalized display types ─────────────────────────────────────────────── */
+/* -- Normalized display types ----------------------------------------------- */
 
 export type Product = {
   // Identity needed to drive select → init → confirm against the right BPP.
@@ -45,7 +45,7 @@ export type SellerOffer = {
   rating?: number;
 };
 
-/* ── /api/shop/state response shape ───────────────────────────────────────── */
+/* -- /api/shop/state response shape ----------------------------------------- */
 
 export type CatalogRecord = {
   transactionId: string;
@@ -118,7 +118,7 @@ export type ShopState = {
   issues: IssueRecord[];
 };
 
-/* ── Catalog parsing ──────────────────────────────────────────────────────── */
+/* -- Catalog parsing -------------------------------------------------------- */
 
 type AnyObj = Record<string, unknown>;
 const obj = (v: unknown): AnyObj => (v && typeof v === "object" ? (v as AnyObj) : {});
@@ -196,7 +196,7 @@ export function parseCatalogs(catalogs: CatalogRecord[]): Product[] {
   return products;
 }
 
-/* ── Quote + order parsing ────────────────────────────────────────────────── */
+/* -- Quote + order parsing -------------------------------------------------- */
 
 export type QuoteBreakupLine = {
   title: string;
@@ -255,7 +255,7 @@ export function trackingUrl(order: OrderRecord | null | undefined): string | und
   return str(t.url) ?? str(obj(t.location).gps);
 }
 
-/* ── Search filters (client-side over the live catalog) ───────────────────── */
+/* -- Search filters (client-side over the live catalog) --------------------- */
 
 export type ShopSort = "relevance" | "price_low" | "price_high";
 export type ShopFilters = { sort?: ShopSort; maxPrice?: number };
@@ -308,7 +308,7 @@ export function activeFilterCount(f: ShopFilters): number {
   );
 }
 
-/* ── Fulfillment options (from the on_select quote) ───────────────────────── */
+/* -- Fulfillment options (from the on_select quote) ------------------------- */
 
 export type FulfillmentOption = {
   id: string;
@@ -389,7 +389,7 @@ export function parseFulfillmentOptions(source: unknown): FulfillmentOption[] {
   return out;
 }
 
-/* ── Payment terms (from the on_init order) ───────────────────────────────── */
+/* -- Payment terms (from the on_init order) --------------------------------- */
 
 export type PaymentOption = {
   type: string; // PRE-FULFILLMENT | ON-FULFILLMENT | POST-FULFILLMENT | ON-ORDER
@@ -427,7 +427,7 @@ export function parsePaymentTerms(order: OrderRecord | null | undefined): Paymen
   return out;
 }
 
-/* ── Order fulfillments (multi-fulfillment + per-shipment tracking) ────────── */
+/* -- Order fulfillments (multi-fulfillment + per-shipment tracking) ---------- */
 
 export type OrderFulfillment = {
   id?: string;
@@ -473,7 +473,7 @@ export function parseOrderFulfillments(
   });
 }
 
-/* ── Unified order timeline ───────────────────────────────────────────────── */
+/* -- Unified order timeline ------------------------------------------------- */
 
 export type TimelineEvent = {
   label: string;
@@ -567,7 +567,7 @@ export function buildOrderTimeline(
   );
 }
 
-/* ── Refund (from on_cancel/on_update quote_trail) ────────────────────────── */
+/* -- Refund (from on_cancel/on_update quote_trail) -------------------------- */
 
 export type RefundLine = { title: string; amount: number; currency: string };
 export type ParsedRefund = { total: number; currency: string; lines: RefundLine[] };

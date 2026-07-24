@@ -8,7 +8,7 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/shop/cn";
 
-/* ── Button ──────────────────────────────────────────────────────────────── */
+/* -- Button ---------------------------------------------------------------- */
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
   {
@@ -50,7 +50,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 Button.displayName = "Button";
 
-/* ── Card ────────────────────────────────────────────────────────────────── */
+/* -- Card ------------------------------------------------------------------ */
 export function Card({
   className,
   ...props
@@ -101,7 +101,7 @@ export function CardFooter({
   );
 }
 
-/* ── Input ───────────────────────────────────────────────────────────────── */
+/* -- Input ----------------------------------------------------------------- */
 export const Input = React.forwardRef<
   HTMLInputElement,
   React.InputHTMLAttributes<HTMLInputElement>
@@ -117,7 +117,7 @@ export const Input = React.forwardRef<
 ));
 Input.displayName = "Input";
 
-/* ── Textarea ────────────────────────────────────────────────────────────── */
+/* -- Textarea -------------------------------------------------------------- */
 export const Textarea = React.forwardRef<
   HTMLTextAreaElement,
   React.TextareaHTMLAttributes<HTMLTextAreaElement>
@@ -133,7 +133,7 @@ export const Textarea = React.forwardRef<
 ));
 Textarea.displayName = "Textarea";
 
-/* ── Label ───────────────────────────────────────────────────────────────── */
+/* -- Label ----------------------------------------------------------------- */
 export function Label({
   className,
   ...props
@@ -146,7 +146,7 @@ export function Label({
   );
 }
 
-/* ── Badge ───────────────────────────────────────────────────────────────── */
+/* -- Badge ----------------------------------------------------------------- */
 const badgeVariants = cva(
   "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors",
   {
@@ -178,7 +178,7 @@ export function Badge({
   );
 }
 
-/* ── Skeleton ────────────────────────────────────────────────────────────── */
+/* -- Skeleton -------------------------------------------------------------- */
 export function Skeleton({
   className,
   ...props
@@ -191,7 +191,7 @@ export function Skeleton({
   );
 }
 
-/* ── Separator ───────────────────────────────────────────────────────────── */
+/* -- Separator ------------------------------------------------------------- */
 export function Separator({
   className,
   ...props

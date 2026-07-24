@@ -215,7 +215,7 @@ function LoginPageInner() {
   );
 }
 
-/* ────────────────  SIGN IN  ──────────────── */
+/* ----------------  SIGN IN  ---------------- */
 
 function SignInForm(props: {
   authMode: AuthMode;
@@ -311,7 +311,7 @@ function SignInForm(props: {
   );
 }
 
-/* ────────────────  SIGN UP  ──────────────── */
+/* ----------------  SIGN UP  ---------------- */
 
 function SignUpForm(props: {
   authMode: AuthMode;
@@ -447,7 +447,7 @@ function SignUpForm(props: {
   );
 }
 
-/* ────────────────  FORGOT  ──────────────── */
+/* ----------------  FORGOT  ---------------- */
 
 function ForgotForm(props: {
   email: string;
@@ -533,7 +533,7 @@ function ForgotSent({ email, onBack }: { email: string; onBack: () => void }) {
   );
 }
 
-/* ────────────────  SHARED PIECES  ──────────────── */
+/* ----------------  SHARED PIECES  ---------------- */
 
 function SocialButtons() {
   return (

@@ -18,7 +18,7 @@ export function formatINR(value: number | string | null | undefined): string {
   }).format(n);
 }
 
-// ── Date / misc formatters (migrated from the prototype's lib/format) ───────
+// -- Date / misc formatters (migrated from the prototype's lib/format) -------
 
 /** "12 Jun 2026" */
 export function formatDate(iso: string | number | Date): string {

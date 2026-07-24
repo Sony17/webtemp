@@ -42,7 +42,7 @@ async function getJSON<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-/* ── Discovery ────────────────────────────────────────────────────────────── */
+/* -- Discovery -------------------------------------------------------------- */
 
 export function search(body: {
   query?: string;
@@ -97,7 +97,7 @@ export async function waitFor(
   }
 }
 
-/* ── Order lifecycle ──────────────────────────────────────────────────────── */
+/* -- Order lifecycle -------------------------------------------------------- */
 
 export type SelectItem = {
   id: string;
@@ -252,7 +252,7 @@ export function rating(body: {
   return postJSON<AckEnvelope>("/api/ondc/rating", body);
 }
 
-/* ── IGM ──────────────────────────────────────────────────────────────────── */
+/* -- IGM -------------------------------------------------------------------- */
 
 export function openIssue(body: {
   transactionId: string;
@@ -286,7 +286,7 @@ export function issueAction(body: {
   return postJSON<AckEnvelope>("/api/ondc/issue", body);
 }
 
-/* ── Payments (out-of-band settlement) ────────────────────────────────────── */
+/* -- Payments (out-of-band settlement) -------------------------------------- */
 
 export function createPayment(body: {
   transactionId: string;
