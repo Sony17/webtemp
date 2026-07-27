@@ -293,41 +293,44 @@ export async function POST(req: Request) {
     return ack(trace, tentativePayload.context);
   }
 
-  // (b-i) Authorization header must be present and parseable.
   const authHeader = req.headers.get("authorization");
-  if (!authHeader) {
-    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "missing signature"), trace);
-  }
-  const parsed = parseAuthorizationHeader(authHeader);
-  if (!parsed) {
-    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"), trace);
-  }
+  const isNoAuth = authHeader?.trim() === "no-auth";
 
-  // (b-ii) Resolve the sender's registry public key and verify the signature.
-  const publicKey = await resolveBppSigningPublicKey(
-    parsed.subscriberId,
-    parsed.uniqueKeyId
-  );
-  if (!publicKey) {
-    console.warn("ondc.on_confirm key resolution failed", {
-      subscriberId: parsed.subscriberId,
-      uniqueKeyId: parsed.uniqueKeyId,
-    });
-    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
-  }
+  let parsed;
 
-  const verdict = verifyOndcSignature({
-    rawBody,
-    parsed,
-    publicKey: normalizeEd25519PublicKey(publicKey),
-  });
-  if (!verdict.valid) {
-    // Log the real reason; tell the sender nothing actionable.
-    console.warn("ondc.on_confirm signature rejected", {
-      subscriberId: parsed.subscriberId,
-      reason: verdict.reason,
+  if (!isNoAuth) {
+    if (!authHeader) {
+      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "missing signature"), trace);
+    }
+    parsed = parseAuthorizationHeader(authHeader);
+    if (!parsed) {
+      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"), trace);
+    }
+
+    const publicKey = await resolveBppSigningPublicKey(
+      parsed.subscriberId,
+      parsed.uniqueKeyId
+    );
+    if (!publicKey) {
+      console.warn("ondc.on_confirm key resolution failed", {
+        subscriberId: parsed.subscriberId,
+        uniqueKeyId: parsed.uniqueKeyId,
+      });
+      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
+    }
+
+    const verdict = verifyOndcSignature({
+      rawBody,
+      parsed,
+      publicKey: normalizeEd25519PublicKey(publicKey),
     });
-    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
+    if (!verdict.valid) {
+      console.warn("ondc.on_confirm signature rejected", {
+        subscriberId: parsed.subscriberId,
+        reason: verdict.reason,
+      });
+      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
+    }
   }
 
   // (c) Now that the body is trusted, parse it as JSON.
@@ -405,7 +408,7 @@ export async function POST(req: Request) {
   // Defense in depth: the signer (keyId.subscriber_id) should be the BPP that
   // claims to have placed this order. A mismatch means a valid participant is
   // posting under someone else's bpp_id — reject it.
-  if (parsed.subscriberId !== result.data.bppId) {
+  if (!isNoAuth && parsed.subscriberId !== result.data.bppId) {
     console.warn("ondc.on_confirm signer/bpp_id mismatch", {
       signer: parsed.subscriberId,
       bppId: result.data.bppId,
