@@ -205,6 +205,8 @@ export default function IssuePage() {
     const hasRespondentAction = issue.actions.some((a) => a.actor === "respondent");
     const openAction = issue.actions.find((a) => a.action === "OPEN");
     const firstRespondent = issue.actions.find((a) => a.actor === "respondent");
+    const resolutionProposed = issue.status === "RESOLUTION_PROPOSED" || !!issue.resolution;
+    const res = issue.resolution as Record<string, unknown> | undefined;
 
     return (
       <div className="space-y-4 pb-8">
@@ -240,9 +242,44 @@ export default function IssuePage() {
 
         <Card className="p-4 space-y-2">
           <h2 className="text-sm font-semibold flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5" /> Audit Trail
+            <Clock className="h-3.5 w-3.5" /> Process
           </h2>
-          <div className="grid grid-cols-3 gap-3 text-xs">
+          <div className="flex items-center gap-0">
+            {["OPEN", "PROCESSING", "RESOLUTION_PROPOSED", "RESOLVED"].map(
+              (step, idx) => {
+                const stepIdx = ["OPEN", "PROCESSING", "RESOLUTION_PROPOSED", "RESOLVED"];
+                const currentIdx = stepIdx.indexOf(issue.status);
+                const done = idx < currentIdx;
+                const active = idx === currentIdx;
+                return (
+                  <React.Fragment key={step}>
+                    {idx > 0 ? (
+                      <div
+                        className={`h-px flex-1 ${done || active ? "bg-primary" : "bg-border"}`}
+                      />
+                    ) : null}
+                    <div className="flex flex-col items-center gap-1 shrink-0">
+                      <span
+                        className={`grid h-6 w-6 place-items-center rounded-full text-[11px] font-bold ${
+                          done
+                            ? "bg-primary text-primary-foreground"
+                            : active
+                              ? "ring-2 ring-primary ring-offset-2 bg-primary text-primary-foreground"
+                              : "bg-accent text-muted-foreground"
+                        }`}
+                      >
+                        {done ? "✓" : idx + 1}
+                      </span>
+                      <span className={`text-[10px] leading-tight text-center max-w-16 ${active ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                        {step === "RESOLUTION_PROPOSED" ? "RESOLUTION" : step}
+                      </span>
+                    </div>
+                  </React.Fragment>
+                );
+              }
+            )}
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-xs pt-1">
             <div className="rounded-lg bg-accent/30 p-2.5 text-center">
               <p className="text-muted-foreground">Response</p>
               <p className="font-semibold">
@@ -258,7 +295,7 @@ export default function IssuePage() {
               <p className="font-semibold">
                 {openAction && issue.resolutionProposedAt
                   ? elapsed(openAction.updatedAt, new Date(issue.resolutionProposedAt).toISOString())
-                  : issue.status === "RESOLUTION_PROPOSED" || closed
+                  : resolutionProposed || closed
                     ? "—"
                     : "In progress…"}
               </p>
@@ -336,12 +373,39 @@ export default function IssuePage() {
           </div>
         </Card>
 
-        {issue.resolution ? (
-          <Card className="p-4">
-            <h2 className="mb-1 text-sm font-semibold">Proposed resolution</h2>
-            <pre className="whitespace-pre-wrap break-words text-xs text-muted-foreground">
-              {JSON.stringify(issue.resolution, null, 2)}
-            </pre>
+        {resolutionProposed && res ? (
+          <Card className="p-4 border-emerald-200 bg-emerald-50/50">
+            <h2 className="mb-2 text-sm font-semibold flex items-center gap-1.5 text-emerald-800">
+              <CheckCircle2 className="h-4 w-4" /> Resolution proposed by seller
+            </h2>
+            <div className="space-y-1.5 text-sm">
+              {typeof res.refund_amount === "string" ? (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Refund amount</span>
+                  <span className="font-semibold">
+                    {String(res.refund_currency ?? "INR")} {String(res.refund_amount)}
+                  </span>
+                </div>
+              ) : null}
+              {typeof res.replacement_item_id === "string" ? (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Replacement</span>
+                  <span className="font-semibold">Item {String(res.replacement_item_id)}</span>
+                </div>
+              ) : null}
+              {typeof res.replacement_count === "number" ? (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Qty</span>
+                  <span className="font-semibold">{String(res.replacement_count)}</span>
+                </div>
+              ) : null}
+              {typeof res.resolution_type === "string" ? (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Type</span>
+                  <span className="font-semibold capitalize">{String(res.resolution_type).replace(/_/g, " ")}</span>
+                </div>
+              ) : null}
+            </div>
           </Card>
         ) : null}
 
@@ -381,36 +445,41 @@ export default function IssuePage() {
                 </label>
               </div>
             </div>
+            {resolutionProposed ? (
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="default"
+                  disabled={busy != null}
+                  onClick={() => followUp("RESOLUTION_ACCEPT")}
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Accept resolution
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={busy != null}
+                  onClick={() => followUp("RESOLUTION_REJECT")}
+                >
+                  <XCircle className="h-4 w-4" /> Reject
+                </Button>
+              </div>
+            ) : null}
             <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              disabled={busy != null}
-              onClick={() => followUp("RESOLUTION_ACCEPT")}
-            >
-              <CheckCircle2 className="h-4 w-4" /> Accept resolution
-            </Button>
-            <Button
-              variant="outline"
-              disabled={busy != null}
-              onClick={() => followUp("RESOLUTION_REJECT")}
-            >
-              <XCircle className="h-4 w-4" /> Reject
-            </Button>
-            <Button
-              variant="outline"
-              disabled={busy != null}
-              onClick={() => followUp("ESCALATE")}
-            >
-              <ArrowUpCircle className="h-4 w-4" /> Escalate
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={busy != null}
-              onClick={() => followUp("CLOSE")}
-            >
-              Close issue
-            </Button>
-          </div></>
+              <Button
+                variant="outline"
+                disabled={busy != null}
+                onClick={() => followUp("ESCALATE")}
+              >
+                <ArrowUpCircle className="h-4 w-4" /> Escalate
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={busy != null}
+                onClick={() => followUp("CLOSE")}
+              >
+                Close issue
+              </Button>
+            </div>
+          </>
         ) : (
           <Button onClick={() => router.push(`/shop/order/${txn}/${bppId}`)}>
             Back to order
