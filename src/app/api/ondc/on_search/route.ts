@@ -381,35 +381,36 @@ export async function POST(req: Request) {
   }
   const config = getOndcConfig();
 
-// Authorization: workbench sends "no-auth" for mock BPPs — skip verification.
+  // (b-i) Authorization header must be present and parseable.
   const authHeader = req.headers.get("authorization");
-  const isNoAuth = !authHeader || authHeader === "no-auth";
-  let payloadSigner: string | undefined;
-  let parsed: ReturnType<typeof parseAuthorizationHeader> | undefined;
+  if (!authHeader) {
+    return nack(
+      401,
+      contextError(ONDC_ERROR.INVALID_SIGNATURE, "missing signature"),
+      trace
+    );
+  }
+  const parsed = parseAuthorizationHeader(authHeader);
+  if (!parsed) {
+    return nack(
+      401,
+      contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"),
+      trace
+    );
+  }
 
-  if (!isNoAuth) {
-    parsed = parseAuthorizationHeader(authHeader);
-    if (!parsed) {
-      return nack(
-        401,
-        contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"),
-        trace
-      );
-    }
-
-    // Negative cache: an identical retry (same Authorization header, same body
-    // digest) within the short TTL replays the prior NACK without re-running the
-    // registry lookup or signature verify. Preprod BPPs retry busted requests
-    // dozens of times; this trims that cost without changing what we tell them.
-    const cached = lookupRejection(authHeader);
-    if (cached && fastAckBypass) {
-      console.log("ondc.on_search negative cache hit", {
-        subscriberId: parsed.subscriberId,
-        httpStatus: cached.httpStatus,
-        code: cached.error.code,
-      });
-      return nack(cached.httpStatus, cached.error, trace);
-    }
+  // Negative cache: an identical retry (same Authorization header, same body
+  // digest) within the short TTL replays the prior NACK without re-running the
+  // registry lookup or signature verify. Preprod BPPs retry busted requests
+  // dozens of times; this trims that cost without changing what we tell them.
+  const cached = lookupRejection(authHeader);
+  if (cached && fastAckBypass) {
+    console.log("ondc.on_search negative cache hit", {
+      subscriberId: parsed.subscriberId,
+      httpStatus: cached.httpStatus,
+      code: cached.error.code,
+    });
+    return nack(cached.httpStatus, cached.error, trace);
   }
 
   // (a) Read the EXACT raw bytes — the digest is computed over these, so
@@ -452,70 +453,62 @@ export async function POST(req: Request) {
     return ack(trace, tentativePayload.context);
   }
 
-  // If no-auth, skip signature verification entirely — trust the payload.
-  if (!isNoAuth) {
-    // (b-ii) Resolve the sender's registry public key (scoped to the city the
-    // BPP served) and verify the signature.
-    const publicKey = await resolveBppSigningPublicKey(
-      parsed!.subscriberId,
-      parsed!.uniqueKeyId,
-      typeof tentativeCity === "string" && tentativeCity.trim().length > 0
-        ? tentativeCity
-        : undefined
-    );
-    if (!publicKey) {
-      console.warn("ondc.on_search key resolution failed", {
-        gate: 5,
-        subscriberId: parsed!.subscriberId,
-        uniqueKeyId: parsed!.uniqueKeyId,
-        city: tentativeCity,
-      });
-      return nack(
-        401,
-        contextError(ONDC_ERROR.INVALID_KEY, "unauthorized"),
-        trace
-      );
-    }
-
-    const verdict = verifyOndcSignature({
-      rawBody,
-      parsed: parsed!,
-      publicKey: normalizeEd25519PublicKey(publicKey),
+  // (b-ii) Resolve the sender's registry public key (scoped to the city the
+  // BPP served) and verify the signature.
+  const publicKey = await resolveBppSigningPublicKey(
+    parsed.subscriberId,
+    parsed.uniqueKeyId,
+    typeof tentativeCity === "string" && tentativeCity.trim().length > 0
+      ? tentativeCity
+      : undefined
+  );
+  if (!publicKey) {
+    console.warn("ondc.on_search key resolution failed", {
+      gate: 5, // DEBUG (temporary): registry key resolution
+      subscriberId: parsed.subscriberId,
+      uniqueKeyId: parsed.uniqueKeyId,
+      city: tentativeCity,
     });
-    if (!verdict.valid) {
-      console.warn("ondc.on_search signature rejected", {
-        gate:
-          verdict.reason === "expired" ||
-          verdict.reason === "created in the future"
-            ? 6
-            : 7,
-        subscriberId: parsed!.subscriberId,
-        reason: verdict.reason,
-      });
-      return nack(
-        401,
-        contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"),
-        trace
-      );
-    }
+    return nack(
+      401,
+      contextError(ONDC_ERROR.INVALID_KEY, "unauthorized"),
+      trace
+    );
+  }
 
-    // (c) Body is trusted — now demand a parseable shape.
-    if (!tentativePayload) {
-      return nack(
-        400,
-        contextError(ONDC_ERROR.CONTEXT_GENERIC, "invalid JSON"),
-        trace,
-        authHeader ?? undefined
-      );
-    }
+  const verdict = verifyOndcSignature({
+    rawBody,
+    parsed,
+    publicKey: normalizeEd25519PublicKey(publicKey),
+  });
+  if (!verdict.valid) {
+    // Log the real reason; tell the sender nothing actionable.
+    console.warn("ondc.on_search signature rejected", {
+      // DEBUG (temporary): gate 6 = signature freshness window, gate 7 = digest/
+      // Ed25519 verify. verdict.reason already discriminates the two.
+      gate:
+        verdict.reason === "expired" ||
+        verdict.reason === "created in the future"
+          ? 6
+          : 7,
+      subscriberId: parsed.subscriberId,
+      reason: verdict.reason,
+    });
+    return nack(
+      401,
+      contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"),
+      trace
+    );
+  }
 
-    payloadSigner = parsed!.subscriberId;
-  } else if (!tentativePayload) {
+  // (c) Body is trusted — now demand a parseable shape (we could not 400 on
+  // bad JSON earlier without leaking which-stage-failed signal to forgers).
+  if (!tentativePayload) {
     return nack(
       400,
       contextError(ONDC_ERROR.CONTEXT_GENERIC, "invalid JSON"),
       trace,
-      authHeader ?? undefined
+      authHeader
     );
   }
 
@@ -542,7 +535,7 @@ export async function POST(req: Request) {
       errorCode: inboundError.code,
       errorType: inboundError.type,
     });
-    return nack(200, inboundError, trace, authHeader ?? undefined, ctx);
+    return nack(200, inboundError, trace, authHeader, ctx);
   }
 
   // (c/d) Full structural + identity validation. bap_id/bap_uri/domain must
@@ -582,7 +575,7 @@ export async function POST(req: Request) {
       400,
       contextError(ONDC_ERROR.CONTEXT_GENERIC, result.reason),
       trace,
-      authHeader ?? undefined,
+      authHeader,
       ctx
     );
   }
@@ -603,7 +596,7 @@ export async function POST(req: Request) {
       transactionId: result.data.transactionId,
       bppId: result.data.bppId,
     });
-    return nack(400, freshnessError(fresh.failure), trace, authHeader ?? undefined, ctx);
+    return nack(400, freshnessError(fresh.failure), trace, authHeader, ctx);
   }
 
   // Idempotency CHECK (read-only): a same (action, txn, msg) re-send is
@@ -629,19 +622,17 @@ export async function POST(req: Request) {
   // Defense in depth: the signer (keyId.subscriber_id) should be the BPP that
   // claims to have sent this catalog. A mismatch means a valid participant is
   // posting under someone else's bpp_id — reject it.
-  // For no-auth (workbench mock BPPs), trust the context's bpp_id.
-  const searchResolvedSigner = isNoAuth ? result.data.bppId : payloadSigner;
-  if (searchResolvedSigner !== result.data.bppId) {
+  if (parsed.subscriberId !== result.data.bppId) {
     console.warn("ondc.on_search signer/bpp_id mismatch", {
       gate: 22, // DEBUG (temporary): signer subscriber_id ≠ context.bpp_id
-      signer: searchResolvedSigner,
+      signer: parsed.subscriberId,
       bppId: result.data.bppId,
     });
     return nack(
       401,
       contextError(ONDC_ERROR.IDENTITY_MISMATCH, "unauthorized"),
       trace,
-      authHeader ?? undefined,
+      authHeader,
       ctx
     );
   }
