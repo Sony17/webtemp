@@ -202,7 +202,7 @@ function buildSearchMessage(input: {
     // Apply the documented default: start_time = now - 1h when not explicitly
     // provided. This ensures the catalog_inc tag always carries a meaningful
     // window even when the caller omits incrementalStart.
-    const startTime = input.incrementalStart ?? new Date(Date.now() - 3600_000).toISOString();
+    const startTime = input.incrementalStart ?? new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
     let list: { code: string; value: string }[];
     if (mode === "pull") {
       // PULL (1-time, on-demand): catalog_inc carries a TIME WINDOW

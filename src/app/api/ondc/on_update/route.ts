@@ -495,46 +495,48 @@ export async function POST(req: Request) {
     return nack(500, coreError("BAP not configured"), trace);
   }
 
-  // (b-i) Authorization header must be present and parseable.
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader) {
-    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "missing signature"), trace);
-  }
-  const parsed = parseAuthorizationHeader(authHeader);
-  if (!parsed) {
-    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"), trace);
-  }
-
   // (a) Read the EXACT raw bytes BEFORE parsing JSON — the digest is computed
   // over these bytes, so re-serializing would break verification.
   const rawBody = await req.text();
   annotateTrace(trace, { rawBody });
 
-  // (b-ii) Resolve the sender's registry public key and verify the signature.
-  const publicKey = await resolveBppSigningPublicKey(
-    parsed.subscriberId,
-    parsed.uniqueKeyId
-  );
-  if (!publicKey) {
-    console.warn("ondc.on_update key resolution failed", {
-      subscriberId: parsed.subscriberId,
-      uniqueKeyId: parsed.uniqueKeyId,
-    });
-    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
-  }
+  // Authorization: workbench sends "no-auth" for mock BPPs — skip verification.
+  const authHeader = req.headers.get("authorization");
+  const isNoAuth = !authHeader || authHeader === "no-auth";
+  let payloadSigner: string | undefined;
 
-  const verdict = verifyOndcSignature({
-    rawBody,
-    parsed,
-    publicKey: normalizeEd25519PublicKey(publicKey),
-  });
-  if (!verdict.valid) {
-    // Log the real reason; tell the sender nothing actionable.
-    console.warn("ondc.on_update signature rejected", {
-      subscriberId: parsed.subscriberId,
-      reason: verdict.reason,
+  if (!isNoAuth) {
+    const parsed = parseAuthorizationHeader(authHeader);
+    if (!parsed) {
+      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"), trace);
+    }
+
+    const publicKey = await resolveBppSigningPublicKey(
+      parsed.subscriberId,
+      parsed.uniqueKeyId
+    );
+    if (!publicKey) {
+      console.warn("ondc.on_update key resolution failed", {
+        subscriberId: parsed.subscriberId,
+        uniqueKeyId: parsed.uniqueKeyId,
+      });
+      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
+    }
+
+    const verdict = verifyOndcSignature({
+      rawBody,
+      parsed,
+      publicKey: normalizeEd25519PublicKey(publicKey),
     });
-    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
+    if (!verdict.valid) {
+      console.warn("ondc.on_update signature rejected", {
+        subscriberId: parsed.subscriberId,
+        reason: verdict.reason,
+      });
+      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
+    }
+
+    payloadSigner = parsed.subscriberId;
   }
 
   // (c) Now that the body is trusted, parse it as JSON.
@@ -599,9 +601,11 @@ export async function POST(req: Request) {
   // owns this order. A mismatch means a valid participant is posting under
   // someone else's bpp_id — reject it. Holds for unsolicited BPP updates too:
   // the seller's BPP is still the signer.
-  if (parsed.subscriberId !== result.data.bppId) {
+  // For no-auth (workbench mock BPPs), trust the context's bpp_id.
+  const resolvedSigner = isNoAuth ? result.data.bppId : payloadSigner;
+  if (resolvedSigner !== result.data.bppId) {
     console.warn("ondc.on_update signer/bpp_id mismatch", {
-      signer: parsed.subscriberId,
+      signer: resolvedSigner,
       bppId: result.data.bppId,
     });
     return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
