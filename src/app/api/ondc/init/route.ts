@@ -342,6 +342,14 @@ function pickFulfillmentIdFromQuote(
   return chosen && typeof chosen.id === "string" ? chosen.id : undefined;
 }
 
+// Fallback serving-location id used when the caller omits items[].locationId.
+// Mirrors select's constant: ONDC RET10 makes order.provider.locations[].id and
+// each item's location_id mandatory, so we never ship an order without them.
+// Override via ONDC_DEFAULT_LOCATION_ID; multi-location providers must send
+// explicit locationIds rather than rely on this default.
+const DEFAULT_PROVIDER_LOCATION_ID =
+  process.env.ONDC_DEFAULT_LOCATION_ID?.trim() || "L1";
+
 // Assemble the ONDC init `order` from validated inputs. Kept separate from the
 // handler so the wire-shape construction is unit-testable and the request flow
 // reads top-to-bottom. Assumes inputs are already validated. Mirrors select's
@@ -356,12 +364,13 @@ function buildInitMessage(input: {
   deliveryGps?: string;
   deliveryAreaCode?: string;
 }): OndcInitMessage {
-  // Collect the distinct provider location ids referenced by the items so the
-  // order's provider.locations mirrors them (ONDC expects the provider's serving
-  // locations alongside the items that ship from them). Same as select.
-  const locationIds = [
-    ...new Set(input.items.map((it) => it.locationId).filter((id): id is string => Boolean(id))),
-  ];
+  // Resolve every item's serving location (falling back to the default) so the
+  // order's provider.locations and each item.location_id are ALWAYS present.
+  // ONDC requires the provider's serving locations alongside the items; omitting
+  // either NACKs ORDER_PROVIDER_LOCATIONS_ID. Same as select.
+  const locationIdFor = (it: InitItem): string =>
+    it.locationId ?? DEFAULT_PROVIDER_LOCATION_ID;
+  const locationIds = [...new Set(input.items.map(locationIdFor))];
 
   // Compose the billing address sub-object only from the parts we have, so we
   // never emit an empty `address` object when the caller gave neither field.
@@ -396,14 +405,12 @@ function buildInitMessage(input: {
   const order: OndcInitOrder = {
     provider: {
       id: input.providerId,
-      ...(locationIds.length
-        ? { locations: locationIds.map((id) => ({ id })) }
-        : {}),
+      locations: locationIds.map((id) => ({ id })),
     },
     items: input.items.map((it) => ({
       id: it.id,
       quantity: { count: it.quantity },
-      ...(it.locationId ? { location_id: it.locationId } : {}),
+      location_id: locationIdFor(it),
       fulfillment_id: fulfillmentId,
       // Commercial Model (00A): forward the selected np_fees option tag when the
       // caller threads it from the on_select/on_init quote.

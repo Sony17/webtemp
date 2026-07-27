@@ -180,6 +180,16 @@ function validateItems(
   return { ok: true, items };
 }
 
+// Fallback serving-location id used when the caller omits items[].locationId.
+// ONDC RET10 makes order.provider.locations[].id (and each item's location_id)
+// mandatory — a select without them NACKs ORDER_PROVIDER_LOCATIONS_ID and the
+// workbench step never goes green. Callers SHOULD pin the real location per
+// item; this default keeps a single-location test provider (P1/L1) valid even
+// when a harness drops the field. Override via ONDC_DEFAULT_LOCATION_ID; a
+// multi-location provider must send explicit locationIds rather than rely on it.
+const DEFAULT_PROVIDER_LOCATION_ID =
+  process.env.ONDC_DEFAULT_LOCATION_ID?.trim() || "L1";
+
 // Assemble the ONDC select `order` from validated inputs. Kept separate from the
 // handler so the wire-shape construction is unit-testable and the request flow
 // reads top-to-bottom. Assumes inputs are already validated. Mirrors search's
@@ -192,12 +202,13 @@ function buildSelectMessage(input: {
   deliveryGps?: string;
   deliveryAreaCode?: string;
 }): OndcSelectMessage {
-  // Collect the distinct provider location ids referenced by the chosen items
-  // so the order's provider.locations mirrors them (ONDC expects the provider's
-  // serving locations alongside the items that ship from them).
-  const locationIds = [
-    ...new Set(input.items.map((it) => it.locationId).filter((id): id is string => Boolean(id))),
-  ];
+  // Resolve every item's serving location (falling back to the default) so the
+  // order's provider.locations and each item.location_id are ALWAYS present —
+  // ONDC requires the provider's serving locations alongside the items that ship
+  // from them, and omitting either NACKs ORDER_PROVIDER_LOCATIONS_ID.
+  const locationIdFor = (it: SelectItem): string =>
+    it.locationId ?? DEFAULT_PROVIDER_LOCATION_ID;
+  const locationIds = [...new Set(input.items.map(locationIdFor))];
 
   // Default to "F1", but allow the caller to pin a specific fulfillment id — some
   // seller flows (e.g. Buyer-Delivery) expect a fixed fulfillment id and reject
@@ -207,14 +218,12 @@ function buildSelectMessage(input: {
   const order: OndcSelectOrder = {
     provider: {
       id: input.providerId,
-      ...(locationIds.length
-        ? { locations: locationIds.map((id) => ({ id })) }
-        : {}),
+      locations: locationIds.map((id) => ({ id })),
     },
     items: input.items.map((it) => ({
       id: it.id,
       quantity: { count: it.quantity },
-      ...(it.locationId ? { location_id: it.locationId } : {}),
+      location_id: locationIdFor(it),
       // No item-level fulfillment_id at select (QA #2): the fulfillment is
       // declared once under order.fulfillments[] below. Item tags forwarded when
       // present (commercial model).
