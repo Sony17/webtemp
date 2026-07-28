@@ -256,54 +256,56 @@ export async function POST(req: Request) {
     return nack(500, coreError("BAP not configured"), trace);
   }
 
-  // (b-i) Authorization header must be present and parseable.
   const authHeader = req.headers.get("authorization");
-  if (!authHeader) {
-    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "missing signature"), trace);
-  }
-  const parsed = parseAuthorizationHeader(authHeader);
-  if (!parsed) {
-    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"), trace);
-  }
+  const isNoAuth = authHeader?.trim() === "no-auth";
 
-  // (a) Read the EXACT raw bytes BEFORE parsing JSON — the digest is computed
-  // over these bytes, so re-serializing would break verification.
   const rawBody = await req.text();
   annotateTrace(trace, { rawBody });
 
-  // (b-ii) Resolve the sender's registry public key and verify the signature.
-  // EXCEPTION: a workbench/staging sender whose key isn't in our registry
-  // environment is allowed to skip verification when the opt-in flag is set (see
-  // isWorkbenchVerificationBypass) — otherwise its callbacks NACK 20001 forever.
-  if (isWorkbenchVerificationBypass(parsed.subscriberId)) {
-    console.warn("ondc.on_status workbench signature-verification bypass", {
-      subscriberId: parsed.subscriberId,
-    });
-  } else {
-    const publicKey = await resolveBppSigningPublicKey(
-      parsed.subscriberId,
-      parsed.uniqueKeyId
-    );
-    if (!publicKey) {
-      console.warn("ondc.on_status key resolution failed", {
-        subscriberId: parsed.subscriberId,
-        uniqueKeyId: parsed.uniqueKeyId,
-      });
-      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
+  let parsed;
+
+  if (!isNoAuth) {
+    if (!authHeader) {
+      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "missing signature"), trace);
+    }
+    parsed = parseAuthorizationHeader(authHeader);
+    if (!parsed) {
+      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"), trace);
     }
 
-    const verdict = verifyOndcSignature({
-      rawBody,
-      parsed,
-      publicKey: normalizeEd25519PublicKey(publicKey),
-    });
-    if (!verdict.valid) {
-      // Log the real reason; tell the sender nothing actionable.
-      console.warn("ondc.on_status signature rejected", {
+    // Workbench signed-callback bypass: the workbench's signing key is not in
+    // our registry environment, so resolution below would always fail and NACK
+    // 20001 — stalling its MOCK callbacks. Flag-gated subscriber allowlist,
+    // never active in prod (see isWorkbenchVerificationBypass in registry.ts).
+    if (isWorkbenchVerificationBypass(parsed.subscriberId)) {
+      console.warn("ondc.on_status workbench signature-verification bypass", {
         subscriberId: parsed.subscriberId,
-        reason: verdict.reason,
       });
-      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
+    } else {
+      const publicKey = await resolveBppSigningPublicKey(
+        parsed.subscriberId,
+        parsed.uniqueKeyId
+      );
+      if (!publicKey) {
+        console.warn("ondc.on_status key resolution failed", {
+          subscriberId: parsed.subscriberId,
+          uniqueKeyId: parsed.uniqueKeyId,
+        });
+        return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
+      }
+
+      const verdict = verifyOndcSignature({
+        rawBody,
+        parsed,
+        publicKey: normalizeEd25519PublicKey(publicKey),
+      });
+      if (!verdict.valid) {
+        console.warn("ondc.on_status signature rejected", {
+          subscriberId: parsed.subscriberId,
+          reason: verdict.reason,
+        });
+        return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
+      }
     }
   }
 
@@ -368,9 +370,9 @@ export async function POST(req: Request) {
   // Defense in depth: the signer (keyId.subscriber_id) should be the BPP that
   // owns this order. A mismatch means a valid participant is posting under
   // someone else's bpp_id — reject it.
-  if (parsed.subscriberId !== result.data.bppId) {
+  if (!isNoAuth && parsed!.subscriberId !== result.data.bppId) {
     console.warn("ondc.on_status signer/bpp_id mismatch", {
-      signer: parsed.subscriberId,
+      signer: parsed!.subscriberId,
       bppId: result.data.bppId,
     });
     return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);

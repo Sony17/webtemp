@@ -40,6 +40,16 @@ export default function ReturnPage() {
   const order = state?.bpps.find((b) => b.bppId === bpp)?.order;
   const bppUri = state?.bpps.find((b) => b.bppId === bpp)?.bppUri;
   const orderId = order?.orderId;
+  const fulfillments = order?.order
+    ? (Array.isArray(order.order)
+        ? order.order
+        : typeof order.order === "object" && order.order !== null
+          ? (order.order as Record<string, unknown>).fulfillments
+          : undefined)
+    : order?.fulfillments;
+  const fulfillmentId = Array.isArray(fulfillments)
+    ? (fulfillments[0] as Record<string, unknown>).id as string | undefined
+    : undefined;
 
   const [mode, setMode] = React.useState<"return" | "replacement">("return");
   const [reasonId, setReasonId] = React.useState(RETURN_REASONS[0].id);
@@ -99,6 +109,7 @@ export default function ReturnPage() {
     try {
       const payload = {
         orderId,
+        fulfillmentId,
         itemId: itemId.trim() || undefined,
         quantity,
         reasonId,
