@@ -39,6 +39,7 @@ import {
   type RefType,
   actorIds as buildActorIds,
   buildActors,
+  ensureInterfacingNpPerson,
   buildInterfacingNpGro,
   buildRefs,
   buildActionRow,
@@ -449,7 +450,8 @@ export async function POST(req: Request) {
 
   // Reuse a persisted actor set (so identity stays stable across the lifecycle)
   // only when it already has the full set; otherwise build the three actors.
-  const actors: IssueActor[] =
+  const interfacingPersonName = str(body.interfacingPersonName) ?? personName;
+  const rawActors: IssueActor[] =
     isV2Snap &&
     Array.isArray(v2Snap!.actors) &&
     (v2Snap!.actors as IssueActor[]).length >= 3
@@ -458,8 +460,23 @@ export async function POST(req: Request) {
           bapId: config.bapId,
           bppId,
           consumer: { name: personName, phone, email },
-          interfacingPersonName: str(body.interfacingPersonName) ?? personName,
+          interfacingPersonName,
         });
+
+  // QA (iter 7, both IGM flows): "interfacing NP person details missing in
+  // actors section." The reused actor set above is the seller's on_issue
+  // snapshot (persisted verbatim in on_issue), and the seller can echo our
+  // INTERFACING_NP actor WITHOUT `person` (it is optional on the wire) — so a
+  // follow-up (RESOLUTION_ACCEPT / CLOSE / …) would resend it person-less. Only
+  // OPEN, which builds actors fresh, carried person, which is why local testing
+  // looked fine. Re-assert full org/person/contact on OUR INTERFACING_NP actor
+  // on every call so the interfacing NP's person is always present.
+  const actors: IssueActor[] = ensureInterfacingNpPerson(rawActors, {
+    bapId: config.bapId,
+    personName: interfacingPersonName,
+    phone,
+    email,
+  });
 
   // QA #5: once escalated to grievance/dispute, surface the complainant NP's GRO
   // as an INTERFACING_NP_GRO actor. Append it only when it isn't already present

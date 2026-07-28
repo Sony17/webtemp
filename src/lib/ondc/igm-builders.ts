@@ -303,6 +303,38 @@ export function buildActors(params: {
   ];
 }
 
+// QA (iter 7, both IGM flows): "interfacing NP person details missing in actors
+// section." Follow-up issue calls (RESOLUTION_ACCEPT / CLOSE / …) reuse the
+// actor set persisted from the seller's on_issue snapshot, and the seller can
+// echo our INTERFACING_NP actor WITHOUT `person` (it is optional on the wire).
+// Only OPEN — which builds actors fresh via buildActors — carried person, which
+// is why local single-shot testing looked fine. This re-asserts full
+// org/person/contact on OUR INTERFACING_NP actor, preserving any existing
+// person name, so the interfacing NP's person is present on every issue call.
+// Other actor types (CONSUMER, COUNTERPARTY_NP, GRO) pass through untouched.
+export function ensureInterfacingNpPerson(
+  actors: IssueActor[],
+  fill: { bapId: string; personName: string; phone: string; email?: string }
+): IssueActor[] {
+  // `||` (not `??`) so an empty string the seller echoed is treated as absent —
+  // an empty person.name is exactly the "person details missing" failure.
+  return actors.map((a) =>
+    a.type === "INTERFACING_NP"
+      ? {
+          ...a,
+          info: {
+            org: { name: fill.bapId },
+            person: { name: a.info?.person?.name || fill.personName },
+            contact: {
+              phone: a.info?.contact?.phone || fill.phone,
+              email: a.info?.contact?.email || fill.email || "",
+            },
+          },
+        }
+      : a
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Refs (QA #2 — item quantity)
 // ---------------------------------------------------------------------------
