@@ -149,7 +149,7 @@ function str(value: unknown): string | undefined {
 // Assemble the ONDC search `intent` from validated inputs. Kept separate from
 // the handler so the wire-shape construction is unit-testable and the request
 // flow reads top-to-bottom. Assumes inputs are already validated.
-function buildSearchMessage(input: {
+export function buildSearchMessage(input: {
   query?: string;
   category?: string;
   deliveryGps?: string;
@@ -211,8 +211,17 @@ function buildSearchMessage(input: {
       // refresh" — pull example.)
       // end_time is REQUIRED per contract; default to now when not provided.
       const endTime = input.incrementalEnd ?? new Date().toISOString();
+      // QA (Discovery incremental PULL, iter 7 "keep time difference for same
+      // day"): start_time and end_time must fall on the SAME UTC calendar day
+      // with a real gap. Derive the default start from end_time's UTC date at
+      // 00:00:00Z. The shared `startTime` above uses LOCAL midnight, which
+      // toISOString() pushes onto the PREVIOUS UTC day for +ve-offset zones
+      // (e.g. IST 00:00 -> 18:30Z the prior day) — straddling two days, which
+      // the workbench flags.
+      const pullStart =
+        input.incrementalStart ?? `${endTime.slice(0, 10)}T00:00:00.000Z`;
       list = [
-        { code: "start_time", value: startTime },
+        { code: "start_time", value: pullStart },
         { code: "end_time", value: endTime },
       ];
     } else {
