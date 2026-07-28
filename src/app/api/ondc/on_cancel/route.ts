@@ -396,9 +396,9 @@ export async function POST(req: Request) {
   // owns this order. A mismatch means a valid participant is posting under
   // someone else's bpp_id — reject it. Holds for unsolicited seller cancels too:
   // the seller's BPP is still the signer.
-  if (!isNoAuth && parsed.subscriberId !== result.data.bppId) {
+  if (!isNoAuth && parsed!.subscriberId !== result.data.bppId) {
     console.warn("ondc.on_cancel signer/bpp_id mismatch", {
-      signer: parsed.subscriberId,
+      signer: parsed!.subscriberId,
       bppId: result.data.bppId,
     });
     return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);

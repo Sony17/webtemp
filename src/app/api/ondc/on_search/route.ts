@@ -411,7 +411,7 @@ export async function POST(req: Request) {
   const cached = lookupRejection(authHeader);
   if (cached && fastAckBypass) {
     console.log("ondc.on_search negative cache hit", {
-      subscriberId: parsed.subscriberId,
+      subscriberId: parsed!.subscriberId,
       httpStatus: cached.httpStatus,
       code: cached.error.code,
     });
@@ -627,7 +627,7 @@ export async function POST(req: Request) {
   if (!isNoAuth && parsed!.subscriberId !== result.data.bppId) {
     console.warn("ondc.on_search signer/bpp_id mismatch", {
       gate: 22, // DEBUG (temporary): signer subscriber_id ≠ context.bpp_id
-      signer: parsed.subscriberId,
+      signer: parsed!.subscriberId,
       bppId: result.data.bppId,
     });
     return nack(
