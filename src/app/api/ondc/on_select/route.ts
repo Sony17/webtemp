@@ -32,7 +32,10 @@
 // Mirrors the existing route conventions (NextResponse, runtime = "nodejs").
 import { NextResponse } from "next/server";
 import { isOndcConfigured } from "@/lib/ondc/config";
-import { resolveBppSigningPublicKey } from "@/lib/ondc/registry";
+import {
+  resolveBppSigningPublicKey,
+  isWorkbenchVerificationBypass,
+} from "@/lib/ondc/registry";
 import {
   parseAuthorizationHeader,
   normalizeEd25519PublicKey,
@@ -249,30 +252,39 @@ export async function POST(req: Request) {
   annotateTrace(trace, { rawBody });
 
   // (b-ii) Resolve the sender's registry public key and verify the signature.
-  const publicKey = await resolveBppSigningPublicKey(
-    parsed.subscriberId,
-    parsed.uniqueKeyId
-  );
-  if (!publicKey) {
-    console.warn("ondc.on_select key resolution failed", {
+  // EXCEPTION: a workbench/staging sender whose key isn't in our registry
+  // environment is allowed to skip verification when the opt-in flag is set (see
+  // isWorkbenchVerificationBypass) — otherwise its callbacks NACK 20001 forever.
+  if (isWorkbenchVerificationBypass(parsed.subscriberId)) {
+    console.warn("ondc.on_select workbench signature-verification bypass", {
       subscriberId: parsed.subscriberId,
-      uniqueKeyId: parsed.uniqueKeyId,
     });
-    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
-  }
+  } else {
+    const publicKey = await resolveBppSigningPublicKey(
+      parsed.subscriberId,
+      parsed.uniqueKeyId
+    );
+    if (!publicKey) {
+      console.warn("ondc.on_select key resolution failed", {
+        subscriberId: parsed.subscriberId,
+        uniqueKeyId: parsed.uniqueKeyId,
+      });
+      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
+    }
 
-  const verdict = verifyOndcSignature({
-    rawBody,
-    parsed,
-    publicKey: normalizeEd25519PublicKey(publicKey),
-  });
-  if (!verdict.valid) {
-    // Log the real reason; tell the sender nothing actionable.
-    console.warn("ondc.on_select signature rejected", {
-      subscriberId: parsed.subscriberId,
-      reason: verdict.reason,
+    const verdict = verifyOndcSignature({
+      rawBody,
+      parsed,
+      publicKey: normalizeEd25519PublicKey(publicKey),
     });
-    return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
+    if (!verdict.valid) {
+      // Log the real reason; tell the sender nothing actionable.
+      console.warn("ondc.on_select signature rejected", {
+        subscriberId: parsed.subscriberId,
+        reason: verdict.reason,
+      });
+      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
+    }
   }
 
   // (c) Now that the body is trusted, parse it as JSON.

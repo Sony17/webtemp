@@ -27,6 +27,27 @@
 import "server-only";
 import { resolveBppSigningKey } from "@/lib/ondc/registry-client";
 
+// Workbench/staging counterparties (the ONDC workbench's mock seller,
+// subscriber `staging-automation.ondc.org`) sign their callbacks with a key
+// that is NOT registered in our configured registry environment (preprod), so
+// resolveBppSigningPublicKey can never resolve it and inbound verification would
+// always NACK 20001 — stalling every workbench test flow at its first MOCK
+// callback. When ONDC_ALLOW_WORKBENCH_BAP_MISMATCH=1 (the same opt-in that
+// relaxes the on_search bap_id echo check) AND we are NOT in prod, allow those
+// specific senders to skip signature verification. Scope is deliberately narrow:
+// a fixed subscriber allowlist, gated by the flag, and never active in prod.
+const WORKBENCH_SUBSCRIBER_IDS = new Set<string>(["staging-automation.ondc.org"]);
+
+export function isWorkbenchVerificationBypass(
+  subscriberId: string | undefined
+): boolean {
+  if (process.env.ONDC_ALLOW_WORKBENCH_BAP_MISMATCH !== "1") return false;
+  if ((process.env.ONDC_ENV ?? "staging").trim().toLowerCase() === "prod") {
+    return false;
+  }
+  return !!subscriberId && WORKBENCH_SUBSCRIBER_IDS.has(subscriberId);
+}
+
 // Resolve the SENDER's base64 Ed25519 signing public key from the ONDC registry,
 // or null when it cannot be resolved / does not pass hardening checks. A null
 // return drives a NACK 401 at the call site — the callback route should NEVER
