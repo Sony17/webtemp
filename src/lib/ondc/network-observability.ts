@@ -134,7 +134,11 @@ export function isObservabilityEnabled(): boolean {
 // are caught wherever they nest. This set is deliberately conservative and is
 // meant to be reviewed against the current Open Data Framework; extend it there.
 const PERSONAL_LEAF_KEYS = new Set<string>([
-  "name",
+  // NOTE: "name" is intentionally NOT here. A bare `name` is usually a
+  // descriptor (provider / item) name, which the Open Data Framework needs for
+  // its Seller-Growth / SKU-Growth metrics — redacting it everywhere would
+  // corrupt the log. Person names are redacted contextually, keyed on their
+  // parent object; see PERSON_NAME_PARENTS + scrubPersonalData below.
   "email",
   "phone",
   "phone_number",
@@ -158,6 +162,18 @@ const PERSONAL_LEAF_KEYS = new Set<string>([
   "bank_account_number",
 ]);
 
+// `name` is Personal Data only inside a person / address object. §5b of the NO
+// notification names "names of persons" and "building name" as PD, while a
+// provider / item `descriptor.name` is not. So a `name` leaf is redacted only
+// when its immediate parent key is one of these; anywhere else it passes through.
+const PERSON_NAME_PARENTS = new Set<string>([
+  "billing",
+  "person",
+  "contact",
+  "customer",
+  "address", // address.name carries the building name, which §5b treats as PD
+]);
+
 const REDACTED = "[REDACTED]";
 
 // gps is masked (not fully redacted): the collector may need coarse geography,
@@ -175,16 +191,25 @@ function maskGps(value: unknown): unknown {
 }
 
 // Recursively copy `value`, redacting personal leaves. Pure — never mutates the
-// input. Non-objects pass through untouched.
-export function scrubPersonalData(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(scrubPersonalData);
+// input. Non-objects pass through untouched. `parentKey` is the key that held
+// `value`; it lets a `name` leaf be judged in context — a person name (redact)
+// vs a descriptor name (keep). See PERSON_NAME_PARENTS.
+export function scrubPersonalData(value: unknown, parentKey?: string): unknown {
+  // Array elements inherit the array's own parent key, so items[].descriptor
+  // and fulfillments[].person are judged by "items"/"fulfillments" as expected.
+  if (Array.isArray(value))
+    return value.map((v) => scrubPersonalData(v, parentKey));
   if (value !== null && typeof value === "object") {
     const out: Record<string, unknown> = {};
     for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
       const lower = key.toLowerCase();
       if (lower === "gps") out[key] = maskGps(v);
       else if (PERSONAL_LEAF_KEYS.has(lower)) out[key] = REDACTED;
-      else out[key] = scrubPersonalData(v);
+      else if (lower === "name")
+        out[key] = PERSON_NAME_PARENTS.has((parentKey ?? "").toLowerCase())
+          ? REDACTED
+          : scrubPersonalData(v, lower);
+      else out[key] = scrubPersonalData(v, lower);
     }
     return out;
   }

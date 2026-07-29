@@ -18,6 +18,7 @@
 import { buildContext } from "@/lib/ondc/context";
 import { type OndcError } from "@/lib/ondc/client";
 import { signRequest } from "@/lib/ondc/auth";
+import { forwardOutboundExchangeLog } from "@/lib/ondc/network-observability";
 
 export type PostCatalogRejectionParams = {
   // Identifies the SNP we're calling back. Echoed into context.bpp_id /
@@ -86,6 +87,11 @@ export async function postCatalogRejection(
   const { bppId, bppUri, transactionId, city, error } = params;
   const url = rejectionUrl(bppUri);
 
+  // Hoisted so the catch path can still forward the request to Network
+  // Observability when the POST itself throws (transport failure).
+  let rawBody = "";
+  let messageId: string | undefined;
+
   try {
     const context = buildContext({
       action: "catalog_rejection",
@@ -96,6 +102,7 @@ export async function postCatalogRejection(
       // city only when we have one — buildContext falls back to config city.
       ...(city ? { city } : {}),
     });
+    messageId = context.message_id;
 
     // Per the RET 1.2.5 catalog_rejection schema (log-validation-utility
     // schema/Retail_1.2.5/CatalogRejection/catalogRejection.ts) the body is
@@ -115,7 +122,7 @@ export async function postCatalogRejection(
         message: error.message ?? "catalog rejected",
       },
     ];
-    const rawBody = JSON.stringify({ context, errors });
+    rawBody = JSON.stringify({ context, errors });
     const signed = signRequest(rawBody);
 
     const remote = await fetch(url, {
@@ -141,6 +148,25 @@ export async function postCatalogRejection(
       remoteHttpStatus: remote.status,
       remoteBody: remoteText.slice(0, 500),
     });
+
+    // catalog_rejection is an Annexure-1 log but is posted here with a bespoke
+    // body (context + errors), so it bypasses sendOndcRequest's NO seam. Forward
+    // it explicitly. No-op unless NO is configured; never throws.
+    let responseBody: unknown = remoteText;
+    try {
+      responseBody = JSON.parse(remoteText);
+    } catch {
+      // Keep the raw text — a non-JSON SNP reply is itself a useful signal.
+    }
+    forwardOutboundExchangeLog({
+      action: "catalog_rejection",
+      url,
+      requestBody: rawBody,
+      transactionId,
+      messageId,
+      responseBody,
+      httpStatus: remote.status,
+    });
   } catch (err) {
     const e = err instanceof Error ? err : null;
     console.error("ondc.catalog_rejection post failed", {
@@ -149,6 +175,16 @@ export async function postCatalogRejection(
       bppId,
       errorCode: error.code,
       message: e?.message ?? String(err),
+    });
+
+    // A failed exchange is itself an observability signal — forward what we have.
+    forwardOutboundExchangeLog({
+      action: "catalog_rejection",
+      url,
+      requestBody: rawBody,
+      transactionId,
+      messageId,
+      responseBody: { error: e?.message ?? String(err) },
     });
   }
 }

@@ -67,12 +67,27 @@ describe("scrubPersonalData", () => {
   });
 
   it("is case-insensitive on key names", () => {
-    const scrubbed = scrubPersonalData({ Name: "Bob", PHONE: "12345" }) as Record<
-      string,
-      string
-    >;
-    expect(scrubbed.Name).toBe("[REDACTED]");
-    expect(scrubbed.PHONE).toBe("[REDACTED]");
+    const scrubbed = scrubPersonalData({
+      billing: { Name: "Bob", PHONE: "12345" },
+    }) as { billing: Record<string, string> };
+    expect(scrubbed.billing.Name).toBe("[REDACTED]");
+    expect(scrubbed.billing.PHONE).toBe("[REDACTED]");
+  });
+
+  it("redacts person names but keeps provider/item descriptor names", () => {
+    const payload = {
+      provider: { id: "P1", descriptor: { name: "Sri Stores" } },
+      items: [{ id: "I1", descriptor: { name: "Aashirvaad Atta 5kg" } }],
+      billing: { name: "Asha Rao" },
+      fulfillments: [{ end: { person: { name: "Asha Rao" } } }],
+    };
+    const s = scrubPersonalData(payload) as typeof payload;
+    // Descriptor names ONDC needs for Seller/SKU-growth metrics are preserved…
+    expect(s.provider.descriptor.name).toBe("Sri Stores");
+    expect(s.items[0].descriptor.name).toBe("Aashirvaad Atta 5kg");
+    // …while person names (billing, fulfillment person) are still removed.
+    expect(s.billing.name).toBe("[REDACTED]");
+    expect(s.fulfillments[0].end.person.name).toBe("[REDACTED]");
   });
 
   it("does not mutate its input", () => {
