@@ -19,6 +19,7 @@
 import "server-only";
 import { signRequest } from "@/lib/ondc/auth";
 import type { OndcAction, OndcContext } from "@/lib/ondc/context";
+import { pushTxnLog } from "@/lib/ondc/network-observability";
 
 // A transport-level failure: timeout, network error, a non-JSON response, or a
 // response we can't read an ACK/NACK out of. Mirrors the named-error pattern in
@@ -355,6 +356,8 @@ export async function sendOndcRequest<TMessage = unknown>(
       })
     );
 
+    pushTxnLog(action, JSON.parse(rawBody));
+
     return response;
   } catch (err) {
     // Normalize everything thrown here into an OndcClientError so callers have
@@ -386,6 +389,11 @@ export async function sendOndcRequest<TMessage = unknown>(
         error: clientError,
       })
     );
+
+    pushTxnLog(action + "_error", {
+      error: { type: "TRANSPORT", message: clientError.message },
+      request: JSON.parse(rawBody),
+    });
 
     throw clientError;
   } finally {

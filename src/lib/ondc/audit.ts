@@ -15,6 +15,7 @@ import "server-only";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { head, put } from "@vercel/blob";
+import { pushTxnLog } from "@/lib/ondc/network-observability";
 
 // One inbound callback event. Fields are populated incrementally by the route:
 //   beginAuditTrace seeds action + requestHeaders + startedAt
@@ -247,6 +248,18 @@ export function finalizeAuditTrace(
         action: trace.action,
         msg: err instanceof Error ? err.message : String(err),
       });
+    }
+    try {
+      if (trace.rawBody) {
+        const payload = JSON.parse(trace.rawBody);
+        payload._response = {
+          status: response.status,
+          body: response.body,
+        };
+        pushTxnLog(trace.action, payload);
+      }
+    } catch {
+      // Best-effort — NO push must never crash the ACK path.
     }
   })();
 }
