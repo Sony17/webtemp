@@ -284,6 +284,12 @@ export async function sendOndcRequest<TMessage = unknown>(
   }
 
   const startedAt = Date.now();
+
+  // Push the outgoing request payload to Network Observability — always,
+  // regardless of outcome. This happens after signing succeeds so we know
+  // the request was valid at the transport level.
+  pushTxnLog(action, JSON.parse(rawBody));
+
   try {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -356,7 +362,7 @@ export async function sendOndcRequest<TMessage = unknown>(
       })
     );
 
-    pushTxnLog(action, JSON.parse(rawBody));
+    pushTxnLog(action + "_response", body);
 
     return response;
   } catch (err) {
@@ -390,9 +396,8 @@ export async function sendOndcRequest<TMessage = unknown>(
       })
     );
 
-    pushTxnLog(action + "_error", {
+    pushTxnLog(action + "_response", {
       error: { type: "TRANSPORT", message: clientError.message },
-      request: JSON.parse(rawBody),
     });
 
     throw clientError;

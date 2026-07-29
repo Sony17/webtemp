@@ -20,6 +20,11 @@
 // staging mock.
 import { NextResponse } from "next/server";
 import { buildAck } from "@/lib/ondc/responses";
+import {
+  beginAuditTrace,
+  annotateTrace,
+  type AuditTrace,
+} from "@/lib/ondc/audit";
 import { saveIssue, getIssue, type IssueActionEntry } from "@/lib/ondc/store";
 import { sendBuyerEmail } from "@/lib/email/send";
 import { issueUpdateEmail } from "@/lib/email/templates";
@@ -156,7 +161,12 @@ function newRespondentActions(
 }
 
 export async function POST(req: Request) {
+  const trace = beginAuditTrace({
+    action: "on_issue",
+    requestHeaders: Object.fromEntries(req.headers),
+  });
   const rawBody = await req.text();
+  annotateTrace(trace, { rawBody });
   let payload: OnIssueCallback | null = null;
   try {
     payload = rawBody ? (JSON.parse(rawBody) as OnIssueCallback) : null;
@@ -167,7 +177,7 @@ export async function POST(req: Request) {
       bodyLength: rawBody.length,
       bodyPreview: rawBody.slice(0, 200),
     });
-    return ack();
+    return ack(undefined, trace);
   }
 
   const ctx = payload?.context;
@@ -178,6 +188,7 @@ export async function POST(req: Request) {
   const bppId = str(ctx?.bpp_id);
   const bppUri = str(ctx?.bpp_uri) ?? "";
   const issueId = str(issue?.id);
+  annotateTrace(trace, { transactionId, messageId, bppId });
   const _incomingAction = ctx?.action;
   const _respActions = issue?.issue_actions?.respondent_actions;
   const _lastResp = Array.isArray(_respActions) && _respActions.length > 0
@@ -204,7 +215,7 @@ export async function POST(req: Request) {
       bppId,
       issueId,
     });
-    return ack(ctx);
+    return ack(ctx, trace);
   }
 
   // Find the existing record: used for preserving values the BPP's callback
@@ -296,12 +307,12 @@ export async function POST(req: Request) {
   });
   void sendBuyerEmail(transactionId, bppId, subject, html);
 
-  return ack(ctx);
+  return ack(ctx, trace);
 }
 
 // Echoes the inbound `context` (when known) per ONDC's response contract — see
 // responses.ts. Completes the context-echo started in Commit 1 for the issue
 // callback. `context` is omitted on the pre-parse (invalid-JSON) ACK.
-function ack(context?: unknown): NextResponse {
-  return buildAck({ context });
+function ack(context?: unknown, trace?: AuditTrace): NextResponse {
+  return buildAck({ context, trace });
 }

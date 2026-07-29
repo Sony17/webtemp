@@ -251,13 +251,9 @@ export function finalizeAuditTrace(
     }
     try {
       if (trace.rawBody) {
-        const payload = JSON.parse(trace.rawBody);
-        payload._response = {
-          status: response.status,
-          body: response.body,
-        };
-        pushTxnLog(trace.action, payload);
+        pushTxnLog(trace.action, JSON.parse(trace.rawBody));
       }
+      pushTxnLog(trace.action + "_response", response.body);
     } catch {
       // Best-effort — NO push must never crash the ACK path.
     }
