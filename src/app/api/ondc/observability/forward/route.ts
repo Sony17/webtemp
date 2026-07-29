@@ -53,10 +53,18 @@ export async function GET() {
       environment: cfg?.environment ?? null,
       subscriberId: cfg?.subscriberId ?? null,
       endpoint: {
-        configured: !!process.env.ONDC_OBSERVABILITY_URL?.trim(),
+        // Check both our name and ONDC's own ONDC_NO_ENDPOINT alias — the
+        // config resolver accepts either, so the display must too.
+        configured: !!(
+          process.env.ONDC_OBSERVABILITY_URL?.trim() ||
+          process.env.ONDC_NO_ENDPOINT?.trim()
+        ),
         host,
       },
-      tokenConfigured: !!process.env.ONDC_OBSERVABILITY_TOKEN?.trim(),
+      tokenConfigured: !!(
+        process.env.ONDC_OBSERVABILITY_TOKEN?.trim() ||
+        process.env.ONDC_NO_TOKEN?.trim()
+      ),
       killSwitch: process.env.ONDC_OBSERVABILITY_ENABLED?.trim() === "0",
       stats: getObservabilityStats(),
     },
