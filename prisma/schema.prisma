@@ -183,3 +183,48 @@ model Payment {
   @@index([status])
   @@map("ondc_payment")
 }
+
+// Tocxi Logistics — shipment record synced from Tocxi's delivery network.
+// One row per shipment created via the Tocxi Partner API. Status is the current
+// life-cycle state; webhookPayload holds the last webhook body for replay audit.
+model TocxiShipment {
+  id               String   @id @default(cuid())
+  shipmentId       String   @unique
+  partnerReference String?
+  status           String   @default("PENDING")
+  estimatedPrice   Float?
+  trackingUrl      String?
+  awbNo            String?
+  pickupContactName  String?
+  pickupContactPhone String?
+  pickupAddressLine  String?
+  pickupPincode      String?
+  pickupLatitude     Float?
+  pickupLongitude    Float?
+  dropContactName  String?
+  dropContactPhone String?
+  dropAddressLine  String?
+  dropPincode      String?
+  dropLatitude     Float?
+  dropLongitude    Float?
+  packageDescription String?
+  parcelSize       String?
+  weightKg         Float?
+  declaredValue    Float?
+  cod              Boolean  @default(false)
+  codAmount        Float?
+  estimatedDistanceKm  Float?
+  estimatedDurationMin Int?
+  codFee           Float?
+  totalPrice       Float?
+  lastWebhookEvent String?
+  lastWebhookPayload Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  cancelledAt      DateTime?
+
+  @@index([status])
+  @@index([partnerReference])
+  @@index([createdAt])
+  @@map("tocxi_shipment")
+}
