@@ -310,16 +310,24 @@ function buildOnIssue(opts: {
 // Fire one on_issue POST. Best-effort: errors only log, don't throw — the
 // stub is meant to be observed via dev-server console.
 async function fireOnIssue(target: string, body: unknown): Promise<void> {
+  const action = ((body as any)?.context?.action) ?? "unknown";
+  const issueId = ((body as any)?.message?.issue?.id) ?? "unknown";
+  const respondentAction = ((body as any)?.message?.issue?.issue_actions?.respondent_actions?.slice?.(-1)?.[0]?.respondent_action) ?? "unknown";
+  console.log(`[fireOnIssue] START action=${action} issueId=${issueId} respondent=${respondentAction} target=${target}`);
   try {
+    const jsonStr = JSON.stringify(body);
+    console.log(`[fireOnIssue] FETCH ${target} bodyLength=${jsonStr.length}`);
+    const start = Date.now();
     const res = await fetch(target, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: jsonStr,
     });
+    const elapsed = Date.now() - start;
     const text = await res.text();
-    console.log("igm-stub on_issue ->", target, res.status, text.slice(0, 200));
+    console.log(`[fireOnIssue] DONE target=${target} status=${res.status} elapsed=${elapsed}ms response=${text.slice(0, 300)}`);
   } catch (err) {
-    console.error("igm-stub on_issue dispatch failed", target, err);
+    console.error(`[fireOnIssue] ERROR target=${target}`, err);
   }
 }
 
@@ -351,6 +359,14 @@ export async function POST(req: Request) {
 
   const complainantAction = latestComplainantAction(issue);
   const sequence = plannedRespondentSequence(complainantAction);
+  console.log("=== IGM-STUB DEBUG ===");
+  console.log("complainantAction:", complainantAction);
+  console.log("issue keys:", Object.keys(issue));
+  console.log("issue_actions:", JSON.stringify(issue.issue_actions));
+  console.log("complainant_actions:", JSON.stringify(issue.issue_actions?.complainant_actions));
+  console.log("sequence:", sequence.map(s => `${s.action}@${s.delayMs}ms`));
+  console.log("target:", resolveCallbackTarget(ctx));
+  console.log("======================");
 
   // Pull or seed stub state for this issue.
   const state = stubState.get(issue.id) ?? {
@@ -371,8 +387,10 @@ export async function POST(req: Request) {
   const target = resolveCallbackTarget(ctx);
   const priorComplainantActions = issue.issue_actions?.complainant_actions ?? [];
 
+  console.log("=== IGM-STUB SCHEDULING ===");
   for (const step of sequence) {
     const stepRespondentSnapshot = [...priorRespondentActions];
+    console.log(`Scheduling ${step.action} in ${step.delayMs}ms (at ${new Date(Date.now() + step.delayMs).toISOString()})`);
     // Mutate the rolling snapshot so the NEXT scheduled step sees this one
     // in its prior list. (Captured at schedule time, not at fire time.)
     priorRespondentActions.push({
@@ -381,7 +399,10 @@ export async function POST(req: Request) {
       updated_at: nowIso(),
     });
 
+    const stepAction = step.action;
+    const stepDelay = step.delayMs;
     setTimeout(() => {
+      console.log(`=== IGM-STUB TIMER FIRED: ${stepAction} ===`);
       const body = buildOnIssue({
         incomingCtx: ctx,
         incomingIssue: issue,
@@ -389,12 +410,16 @@ export async function POST(req: Request) {
         priorComplainantActions,
         priorRespondentActions: stepRespondentSnapshot,
       });
-      fireOnIssue(target, body);
-      state.lastRespondentAction = step.action;
-      state.history.push({ action: step.action, at: nowIso() });
+      console.log(`POST /api/ondc/on_issue (${stepAction}) to ${target}`);
+      fireOnIssue(target, body)
+        .then(() => console.log(`=== IGM-STUB ${stepAction} DONE ===`))
+        .catch((e) => console.error(`=== IGM-STUB ${stepAction} FAILED ===`, e));
+      state.lastRespondentAction = stepAction;
+      state.history.push({ action: stepAction, at: nowIso() });
       stubState.set(issue.id!, state);
-    }, step.delayMs);
+    }, stepDelay);
   }
+  console.log("=== IGM-STUB SCHEDULING DONE ===");
 
   stubState.set(issue.id, state);
 

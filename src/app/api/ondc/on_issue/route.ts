@@ -178,6 +178,22 @@ export async function POST(req: Request) {
   const bppId = str(ctx?.bpp_id);
   const bppUri = str(ctx?.bpp_uri) ?? "";
   const issueId = str(issue?.id);
+  const _incomingAction = ctx?.action;
+  const _respActions = issue?.issue_actions?.respondent_actions;
+  const _lastResp = Array.isArray(_respActions) && _respActions.length > 0
+    ? _respActions[_respActions.length - 1]
+    : null;
+  console.log("=== ON_ISSUE INCOMING ===", {
+    action: _incomingAction,
+    transactionId,
+    issueId,
+    bppId,
+    status: issue?.status,
+    respondentCount: Array.isArray(_respActions) ? _respActions.length : 0,
+    lastRespondentAction: _lastResp ? (_lastResp as any)?.respondent_action ?? "?" : "none",
+    bodyLength: rawBody.length,
+    timestamp: new Date().toISOString(),
+  });
 
   // Without these we can't index the persistence record, but we still ACK so
   // the network keeps moving. Whatever the BPP sent is logged for debugging.
