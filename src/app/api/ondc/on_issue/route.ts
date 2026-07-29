@@ -191,10 +191,18 @@ export async function POST(req: Request) {
     return ack(ctx);
   }
 
-  // Pull whatever the BPP is reporting now.
+  // Find the existing record: used for preserving values the BPP's callback
+  // omits and for deduplicating respondent actions.
+  const existing = await getIssue(transactionId, issueId);
+
+  // Pull whatever the BPP is reporting now.  If a field is absent in the
+  // callback, fall back to the previously-stored value so that subsequent
+  // events never overwrite earlier data with undefined.
   const status = str(issue?.status) ?? "PROCESSING";
-  const category = str(issue?.category);
-  const subCategory = str(issue?.sub_category);
+  const category =
+    str(issue?.category) ?? existing?.category;
+  const subCategory =
+    str(issue?.sub_category) ?? existing?.subCategory;
   const orderId = str(issue?.order_details?.id);
   const resolution = issue?.resolution;
   // IGM 2.0: the BPP sends resolution_provider to carry GRO info and the
@@ -213,8 +221,6 @@ export async function POST(req: Request) {
     ? (issue!.resolver_ids as string[])
     : undefined;
 
-  // Find the existing record to know which respondent actions are new.
-  const existing = await getIssue(transactionId, issueId);
   const respondentActions = newRespondentActions(issue, existing?.actions ?? []);
 
   try {
