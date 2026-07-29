@@ -23,6 +23,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import type { OndcError } from "@/lib/ondc/client";
 import { finalizeAuditTrace, type AuditTrace } from "@/lib/ondc/audit";
+import { forwardInboundCallbackLog } from "@/lib/ondc/network-observability";
 
 // The callback response body. `context` is `unknown` because we echo whatever the
 // (already signature-verified) sender sent, without re-shaping it. `extra` lets a
@@ -46,7 +47,12 @@ export function buildAck(opts?: {
     message: { ack: { status: "ACK" } },
     ...(opts?.extra ?? {}),
   };
-  if (opts?.trace) finalizeAuditTrace(opts.trace, { status: 200, body });
+  if (opts?.trace) {
+    finalizeAuditTrace(opts.trace, { status: 200, body });
+    // Forward this inbound callback to ONDC Network Observability (no-op unless
+    // NO is configured). Same seam, same fire-and-forget contract as audit.
+    forwardInboundCallbackLog(opts.trace, { status: 200, body });
+  }
   return NextResponse.json(body, { status: 200 });
 }
 
@@ -65,6 +71,9 @@ export function buildNack(opts: {
     error: opts.error,
     ...(opts.extra ?? {}),
   };
-  if (opts.trace) finalizeAuditTrace(opts.trace, { status: opts.httpStatus, body });
+  if (opts.trace) {
+    finalizeAuditTrace(opts.trace, { status: opts.httpStatus, body });
+    forwardInboundCallbackLog(opts.trace, { status: opts.httpStatus, body });
+  }
   return NextResponse.json(body, { status: opts.httpStatus });
 }

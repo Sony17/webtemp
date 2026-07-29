@@ -19,6 +19,7 @@
 import "server-only";
 import { signRequest } from "@/lib/ondc/auth";
 import type { OndcAction, OndcContext } from "@/lib/ondc/context";
+import { forwardOutboundExchangeLog } from "@/lib/ondc/network-observability";
 
 // A transport-level failure: timeout, network error, a non-JSON response, or a
 // response we can't read an ACK/NACK out of. Mirrors the named-error pattern in
@@ -355,6 +356,18 @@ export async function sendOndcRequest<TMessage = unknown>(
       })
     );
 
+    // Forward this outbound exchange to ONDC Network Observability (no-op unless
+    // NO is configured). Fire-and-forget — never delays or fails the caller.
+    forwardOutboundExchangeLog({
+      action,
+      url,
+      requestBody: rawBody,
+      transactionId,
+      messageId,
+      responseBody: parsed,
+      httpStatus: res.status,
+    });
+
     return response;
   } catch (err) {
     // Normalize everything thrown here into an OndcClientError so callers have
@@ -386,6 +399,18 @@ export async function sendOndcRequest<TMessage = unknown>(
         error: clientError,
       })
     );
+
+    // A failed exchange is itself an observability signal — forward whatever we
+    // captured (body/status when a response was read; the error otherwise).
+    forwardOutboundExchangeLog({
+      action,
+      url,
+      requestBody: rawBody,
+      transactionId,
+      messageId,
+      responseBody: clientError.responseBody ?? { error: clientError.message },
+      httpStatus: clientError.httpStatus,
+    });
 
     throw clientError;
   } finally {

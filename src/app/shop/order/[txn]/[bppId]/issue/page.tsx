@@ -93,6 +93,7 @@ export default function IssuePage() {
   const [phone, setPhone] = React.useState(address?.phone ?? "");
   const [images, setImages] = React.useState<{ url: string; size_type?: string }[]>([]);
   const [followUpImages, setFollowUpImages] = React.useState<{ url: string; size_type?: string }[]>([]);
+  const [additionalInfo, setAdditionalInfo] = React.useState("");
   const [busy, setBusy] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -173,7 +174,7 @@ export default function IssuePage() {
   };
 
   const followUp = async (
-    action: "ESCALATE" | "RESOLUTION_ACCEPT" | "RESOLUTION_REJECT" | "CLOSE"
+    action: "INFO_PROVIDED" | "ESCALATE" | "RESOLUTION_ACCEPT" | "RESOLUTION_REJECT" | "CLOSE"
   ) => {
     if (!issue || !bppUri) return;
     setBusy(action);
@@ -186,9 +187,11 @@ export default function IssuePage() {
         bppUri,
         issueId: issue.issueId,
         complainantAction: action,
+        actionDesc: action === "INFO_PROVIDED" ? additionalInfo.trim() : undefined,
         images: followUpImages.length > 0 ? followUpImages : undefined,
       });
       setFollowUpImages([]);
+      setAdditionalInfo("");
       await pollUntil((s) => {
         const i = s.issues.find((x) => x.bppId === bpp);
         return !!i && (i.actions.length !== beforeCount || i.updatedAt !== beforeRev);
@@ -445,6 +448,30 @@ export default function IssuePage() {
                 </label>
               </div>
             </div>
+            {issue.status === "NEED_MORE_INFO" ? (
+              <>
+                <div className="space-y-2">
+                  <Label className="block text-xs text-muted-foreground">
+                    Additional Information Requested
+                  </Label>
+                  <Textarea
+                    value={additionalInfo}
+                    onChange={(e) => setAdditionalInfo(e.target.value)}
+                    placeholder="Provide the additional information requested by the seller..."
+                    disabled={busy != null}
+                  />
+                </div>
+                <Button
+                  className="w-full"
+                  disabled={busy != null || !additionalInfo.trim()}
+                  onClick={() => followUp("INFO_PROVIDED")}
+                >
+                  {busy === "INFO_PROVIDED"
+                    ? "Submitting…"
+                    : "Provide Information"}
+                </Button>
+              </>
+            ) : null}
             {resolutionProposed ? (
               <div className="grid grid-cols-2 gap-3">
                 <Button

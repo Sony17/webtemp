@@ -20,6 +20,11 @@
 // staging mock.
 import { NextResponse } from "next/server";
 import { buildAck } from "@/lib/ondc/responses";
+import {
+  beginAuditTrace,
+  annotateTrace,
+  type AuditTrace,
+} from "@/lib/ondc/audit";
 import { saveIssue, getIssue, type IssueActionEntry } from "@/lib/ondc/store";
 import { sendBuyerEmail } from "@/lib/email/send";
 import { issueUpdateEmail } from "@/lib/email/templates";
@@ -156,7 +161,12 @@ function newRespondentActions(
 }
 
 export async function POST(req: Request) {
+  const trace = beginAuditTrace({
+    action: "on_issue",
+    requestHeaders: Object.fromEntries(req.headers),
+  });
   const rawBody = await req.text();
+  annotateTrace(trace, { rawBody });
   let payload: OnIssueCallback | null = null;
   try {
     payload = rawBody ? (JSON.parse(rawBody) as OnIssueCallback) : null;
@@ -167,7 +177,7 @@ export async function POST(req: Request) {
       bodyLength: rawBody.length,
       bodyPreview: rawBody.slice(0, 200),
     });
-    return ack();
+    return ack(undefined, trace);
   }
 
   const ctx = payload?.context;
@@ -178,6 +188,23 @@ export async function POST(req: Request) {
   const bppId = str(ctx?.bpp_id);
   const bppUri = str(ctx?.bpp_uri) ?? "";
   const issueId = str(issue?.id);
+  annotateTrace(trace, { transactionId, messageId, bppId });
+  const _incomingAction = ctx?.action;
+  const _respActions = issue?.issue_actions?.respondent_actions;
+  const _lastResp = Array.isArray(_respActions) && _respActions.length > 0
+    ? _respActions[_respActions.length - 1]
+    : null;
+  console.log("=== ON_ISSUE INCOMING ===", {
+    action: _incomingAction,
+    transactionId,
+    issueId,
+    bppId,
+    status: issue?.status,
+    respondentCount: Array.isArray(_respActions) ? _respActions.length : 0,
+    lastRespondentAction: _lastResp ? (_lastResp as any)?.respondent_action ?? "?" : "none",
+    bodyLength: rawBody.length,
+    timestamp: new Date().toISOString(),
+  });
 
   // Without these we can't index the persistence record, but we still ACK so
   // the network keeps moving. Whatever the BPP sent is logged for debugging.
@@ -188,13 +215,21 @@ export async function POST(req: Request) {
       bppId,
       issueId,
     });
-    return ack(ctx);
+    return ack(ctx, trace);
   }
 
-  // Pull whatever the BPP is reporting now.
+  // Find the existing record: used for preserving values the BPP's callback
+  // omits and for deduplicating respondent actions.
+  const existing = await getIssue(transactionId, issueId);
+
+  // Pull whatever the BPP is reporting now.  If a field is absent in the
+  // callback, fall back to the previously-stored value so that subsequent
+  // events never overwrite earlier data with undefined.
   const status = str(issue?.status) ?? "PROCESSING";
-  const category = str(issue?.category);
-  const subCategory = str(issue?.sub_category);
+  const category =
+    str(issue?.category) ?? existing?.category;
+  const subCategory =
+    str(issue?.sub_category) ?? existing?.subCategory;
   const orderId = str(issue?.order_details?.id);
   const resolution = issue?.resolution;
   // IGM 2.0: the BPP sends resolution_provider to carry GRO info and the
@@ -213,8 +248,6 @@ export async function POST(req: Request) {
     ? (issue!.resolver_ids as string[])
     : undefined;
 
-  // Find the existing record to know which respondent actions are new.
-  const existing = await getIssue(transactionId, issueId);
   const respondentActions = newRespondentActions(issue, existing?.actions ?? []);
 
   try {
@@ -274,12 +307,12 @@ export async function POST(req: Request) {
   });
   void sendBuyerEmail(transactionId, bppId, subject, html);
 
-  return ack(ctx);
+  return ack(ctx, trace);
 }
 
 // Echoes the inbound `context` (when known) per ONDC's response contract — see
 // responses.ts. Completes the context-echo started in Commit 1 for the issue
 // callback. `context` is omitted on the pre-parse (invalid-JSON) ACK.
-function ack(context?: unknown): NextResponse {
-  return buildAck({ context });
+function ack(context?: unknown, trace?: AuditTrace): NextResponse {
+  return buildAck({ context, trace });
 }

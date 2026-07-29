@@ -1,0 +1,421 @@
+// ONDC Network Observability (NO) — transaction-log forwarding.
+//
+// ONDC's Network Observability & Open Data Framework requires every Network
+// Participant to forward a copy of its transaction logs (the API calls it sends
+// and the callbacks it receives, with Personal Data scrubbed) to an ONDC-run
+// log collector. This module is the single seam that does that forwarding.
+//
+// It plugs into the TWO points every ONDC exchange already funnels through:
+//   - inbound  on_* callbacks → forwardInboundCallbackLog(), called from
+//     responses.ts right where finalizeAuditTrace() already fires.
+//   - outbound BAP requests  → forwardOutboundExchangeLog(), called from
+//     client.ts right after a completed (or failed) exchange.
+// Neither call site changes behavior when NO is unconfigured — both are pure
+// no-ops until ONDC_OBSERVABILITY_URL + ONDC_OBSERVABILITY_TOKEN are set.
+//
+// Design mirrors audit.ts: fire-and-forget, never on the hot path, never able to
+// NACK a real callback. A submission failure is counted and logged, never thrown.
+//
+// ── Token & environment ────────────────────────────────────────────────────
+// The token authenticates THIS participant to the collector. It is generated
+// from the ONDC Network Observability portal and is PER-ENVIRONMENT: the token
+// you generate for pre-prod is NOT the one you use in prod (the prod token comes
+// from the registry "update participant info" step after you subscribe to prod).
+// Because the token is a per-deployment secret, it lives in ONE env var
+// (ONDC_OBSERVABILITY_TOKEN) whose VALUE differs per deployment — the pre-prod
+// deployment holds the pre-prod token, the prod deployment holds the prod token.
+//
+// ── Endpoint & payload schema ──────────────────────────────────────────────
+// The exact collector URL and the exact JSON envelope the collector expects are
+// defined in ONDC's (access-controlled) Network Observability spec, NOT in this
+// repo. Both are therefore CONFIGURABLE, not hardcoded: set the URL via
+// ONDC_OBSERVABILITY_URL, and adjust buildObservabilityPayload() below if the
+// collector wants a different shape. The default envelope is a self-describing
+// {context, request, response, metadata} object — verify it against the spec.
+//
+// Server-only (reads secrets via getOndcPublicContext + touches process.env).
+import "server-only";
+import type { AuditTrace } from "@/lib/ondc/audit";
+import { getOndcPublicContext } from "@/lib/ondc/config";
+
+// ---------------------------------------------------------------------------
+// Config — read lazily from env, resilient, feature-flagged OFF by default.
+// ---------------------------------------------------------------------------
+
+export type ObservabilityConfig = {
+  // Collector ingestion endpoint (per-environment; no safe default exists, so
+  // the operator MUST set it — the feature stays off until they do).
+  url: string;
+  // The generated NO token for THIS environment (secret).
+  token: string;
+  // Header the token rides in. Defaults to "Authorization". Some collectors use
+  // a bespoke header name — override via ONDC_OBSERVABILITY_AUTH_HEADER.
+  authHeader: string;
+  // Scheme prefix prepended to the token in the header value, e.g. "Bearer ".
+  // Set ONDC_OBSERVABILITY_AUTH_SCHEME="" to send the raw token with no prefix.
+  authScheme: string;
+  // Per-request timeout for the (fire-and-forget) submission.
+  timeoutMs: number;
+  // Non-secret identity/context stamped onto every forwarded log.
+  subscriberId: string;
+  environment: string;
+};
+
+function envTrim(name: string): string | undefined {
+  const v = process.env[name]?.trim();
+  return v ? v : undefined;
+}
+
+// Returns the config only when NO is fully enabled, else null (→ every forward
+// becomes a no-op). Enabled means: a URL and a token are both present, and the
+// operator has not flipped the ONDC_OBSERVABILITY_ENABLED="0" kill switch.
+//
+// Read fresh every call (not memoized) so the kill switch and token rotation
+// take effect without a restart, and so tests can flip env between cases. The
+// env reads are trivial; this is never in a tight loop.
+export function getObservabilityConfig(): ObservabilityConfig | null {
+  if (process.env.ONDC_OBSERVABILITY_ENABLED?.trim() === "0") return null;
+
+  const url = envTrim("ONDC_OBSERVABILITY_URL");
+  const token = envTrim("ONDC_OBSERVABILITY_TOKEN");
+  // Both are required — a URL with no token (or vice versa) is a half-configured
+  // state we treat as "off" rather than submitting unauthenticated logs.
+  if (!url || !token) return null;
+
+  // subscriber_id + environment are metadata for the payload. They come from the
+  // core ONDC config, which throws when ONDC isn't configured — but if ONDC
+  // isn't configured there are no transactions to forward, so treat that as off.
+  let subscriberId = "";
+  let environment = "";
+  try {
+    const ctx = getOndcPublicContext();
+    subscriberId = ctx.subscriberId;
+    environment = ctx.env;
+  } catch {
+    return null;
+  }
+
+  const timeoutRaw = Number.parseInt(
+    process.env.ONDC_OBSERVABILITY_TIMEOUT_MS ?? "",
+    10
+  );
+
+  return {
+    url,
+    token,
+    authHeader: envTrim("ONDC_OBSERVABILITY_AUTH_HEADER") ?? "Authorization",
+    // Default to the RFC-6750 Bearer scheme. An explicitly empty env value means
+    // "no prefix" (send the token verbatim); an unset value means the default.
+    authScheme:
+      process.env.ONDC_OBSERVABILITY_AUTH_SCHEME === undefined
+        ? "Bearer "
+        : process.env.ONDC_OBSERVABILITY_AUTH_SCHEME,
+    timeoutMs: Number.isFinite(timeoutRaw) && timeoutRaw > 0 ? timeoutRaw : 10_000,
+    subscriberId,
+    environment,
+  };
+}
+
+// True when NO forwarding is live. Cheap boolean for status surfaces.
+export function isObservabilityEnabled(): boolean {
+  return getObservabilityConfig() !== null;
+}
+
+// ---------------------------------------------------------------------------
+// Personal-data scrubbing (Open Data Framework).
+// ---------------------------------------------------------------------------
+//
+// The framework requires Personal Data be removed BEFORE a log leaves the
+// participant. We walk the payload and redact known personal fields in place,
+// preserving structure (so the log still validates) rather than deleting keys.
+//
+// Only LEAF fields carrying personal data are listed — container objects
+// (billing, contact, person, address) are traversed so their personal leaves
+// are caught wherever they nest. This set is deliberately conservative and is
+// meant to be reviewed against the current Open Data Framework; extend it there.
+const PERSONAL_LEAF_KEYS = new Set<string>([
+  "name",
+  "email",
+  "phone",
+  "phone_number",
+  "mobile",
+  "telephone",
+  // Precise address components (area_code / city / state are kept — they are
+  // coarse location, not identifying, and the collector keys on them).
+  "building",
+  "door",
+  "street",
+  "locality",
+  "ward",
+  "po_box",
+  // Financial / government identifiers.
+  "aadhaar",
+  "aadhar",
+  "pan",
+  "upi_id",
+  "vpa",
+  "account_number",
+  "bank_account_number",
+]);
+
+const REDACTED = "[REDACTED]";
+
+// gps is masked (not fully redacted): the collector may need coarse geography,
+// and a truncated coordinate de-identifies while staying schema-valid. ~2
+// decimals ≈ 1 km. Applied only to the "gps" key.
+function maskGps(value: unknown): unknown {
+  if (typeof value !== "string") return REDACTED;
+  const m = value.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+  if (!m) return REDACTED;
+  const trunc = (n: string) => {
+    const f = Number.parseFloat(n);
+    return Number.isFinite(f) ? f.toFixed(2) : n;
+  };
+  return `${trunc(m[1])},${trunc(m[2])}`;
+}
+
+// Recursively copy `value`, redacting personal leaves. Pure — never mutates the
+// input. Non-objects pass through untouched.
+export function scrubPersonalData(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(scrubPersonalData);
+  if (value !== null && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+      const lower = key.toLowerCase();
+      if (lower === "gps") out[key] = maskGps(v);
+      else if (PERSONAL_LEAF_KEYS.has(lower)) out[key] = REDACTED;
+      else out[key] = scrubPersonalData(v);
+    }
+    return out;
+  }
+  return value;
+}
+
+// ---------------------------------------------------------------------------
+// Payload envelope.
+// ---------------------------------------------------------------------------
+
+export type ObservabilityDirection = "inbound" | "outbound";
+
+// The normalized record a forward site hands us. requestBody is the EXACT bytes
+// on the wire (so parse is best-effort); responseBody is already an object.
+export type ObservabilityRecord = {
+  direction: ObservabilityDirection;
+  action: string;
+  transactionId?: string;
+  messageId?: string;
+  bppId?: string;
+  // Outbound only: the URL we POSTed to.
+  targetUrl?: string;
+  requestBody: string;
+  responseBody: unknown;
+  httpStatus?: number;
+  ackStatus?: "ACK" | "NACK";
+  recordedAt: string; // ISO-8601
+};
+
+function tryParseJson(raw: string): unknown {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    // Keep the raw string when it isn't JSON — a malformed body is itself a
+    // useful observability signal, and dropping it would hide it.
+    return raw;
+  }
+}
+
+// Build the JSON envelope submitted to the collector. This is the ONE place the
+// wire shape is defined — adjust it here if the ONDC NO spec expects a different
+// schema. request/response are scrubbed of Personal Data before inclusion.
+export function buildObservabilityPayload(
+  record: ObservabilityRecord,
+  cfg: Pick<ObservabilityConfig, "subscriberId" | "environment">
+): Record<string, unknown> {
+  return {
+    subscriber_id: cfg.subscriberId,
+    environment: cfg.environment,
+    direction: record.direction,
+    action: record.action,
+    transaction_id: record.transactionId,
+    message_id: record.messageId,
+    bpp_id: record.bppId,
+    recorded_at: record.recordedAt,
+    http_status: record.httpStatus,
+    ack_status: record.ackStatus,
+    ...(record.targetUrl ? { target_url: record.targetUrl } : {}),
+    request: scrubPersonalData(tryParseJson(record.requestBody)),
+    response: scrubPersonalData(record.responseBody),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Submission + stats.
+// ---------------------------------------------------------------------------
+
+export type ObservabilityStats = {
+  attempted: number;
+  succeeded: number;
+  failed: number;
+  lastSuccessAt?: string;
+  lastFailureAt?: string;
+  lastError?: string;
+};
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __ondcObservability__: ObservabilityStats | undefined;
+}
+
+function stats(): ObservabilityStats {
+  if (!globalThis.__ondcObservability__) {
+    globalThis.__ondcObservability__ = { attempted: 0, succeeded: 0, failed: 0 };
+  }
+  return globalThis.__ondcObservability__;
+}
+
+// Read-only snapshot for the status endpoint.
+export function getObservabilityStats(): ObservabilityStats {
+  return { ...stats() };
+}
+
+const MAX_ATTEMPTS = 3;
+
+// POST one payload to the collector, with a bounded timeout and a couple of
+// retries on transport/5xx failure. Resolves true on success; on final failure
+// it records + logs and resolves false (never throws — a NO failure must never
+// disrupt a real ONDC exchange).
+async function submit(
+  cfg: ObservabilityConfig,
+  payload: Record<string, unknown>
+): Promise<boolean> {
+  const s = stats();
+  s.attempted += 1;
+  const body = JSON.stringify(payload);
+
+  let lastErr = "";
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), cfg.timeoutMs);
+    try {
+      const res = await fetch(cfg.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          [cfg.authHeader]: `${cfg.authScheme}${cfg.token}`,
+        },
+        body,
+        signal: controller.signal,
+      });
+      if (res.ok) {
+        s.succeeded += 1;
+        s.lastSuccessAt = new Date().toISOString();
+        return true;
+      }
+      // 4xx won't fix itself on retry (bad token / bad schema) — stop early.
+      lastErr = `HTTP ${res.status}`;
+      if (res.status < 500) break;
+    } catch (err) {
+      lastErr = err instanceof Error ? err.message : String(err);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  s.failed += 1;
+  s.lastFailureAt = new Date().toISOString();
+  s.lastError = lastErr;
+  console.warn("ondc.observability submit failed", {
+    action: payload.action,
+    transactionId: payload.transaction_id,
+    error: lastErr,
+  });
+  return false;
+}
+
+// Core entry point: forward one record, if NO is enabled. Returns immediately;
+// the network call runs detached. Safe to call unconditionally from hot paths.
+export function forwardObservabilityLog(record: ObservabilityRecord): void {
+  const cfg = getObservabilityConfig();
+  if (!cfg) return;
+  const payload = buildObservabilityPayload(record, cfg);
+  void submit(cfg, payload);
+}
+
+// Awaitable single-record submission for manual / batch flows (the /forward POST
+// replay). Unlike forwardObservabilityLog (fire-and-forget), this resolves once
+// the collector has responded, so a batch caller can report real success/failure
+// AND the submission isn't cut short when a serverless request returns.
+export async function submitObservabilityLogNow(
+  record: ObservabilityRecord
+): Promise<{ ok: boolean; skipped?: boolean; error?: string }> {
+  const cfg = getObservabilityConfig();
+  if (!cfg) return { ok: false, skipped: true, error: "not configured" };
+  const payload = buildObservabilityPayload(record, cfg);
+  const ok = await submit(cfg, payload);
+  return ok ? { ok: true } : { ok: false, error: stats().lastError };
+}
+
+// ---------------------------------------------------------------------------
+// Call-site adapters — keep the forwarding logic out of responses.ts/client.ts.
+// ---------------------------------------------------------------------------
+
+// Lift the ACK/NACK status off a response envelope for the metadata fields.
+function ackStatusOf(body: unknown): "ACK" | "NACK" | undefined {
+  const s = (body as { message?: { ack?: { status?: unknown } } } | null)
+    ?.message?.ack?.status;
+  return s === "ACK" || s === "NACK" ? s : undefined;
+}
+
+// Inbound: called from responses.ts alongside finalizeAuditTrace. We forward
+// only FULLY-EXTRACTED callbacks — those carry both a transaction_id and a
+// message_id (annotated after signature + structural validation). This filter
+// naturally skips the pre-verification fast-ACK event and pre-parse error NACKs,
+// so a single callback is forwarded exactly once (the verified pass).
+export function forwardInboundCallbackLog(
+  trace: AuditTrace,
+  response: { status: number; body: unknown }
+): void {
+  if (!getObservabilityConfig()) return; // cheap early-out before any work
+  if (!trace.transactionId || !trace.messageId) return;
+
+  forwardObservabilityLog({
+    direction: "inbound",
+    action: trace.action,
+    transactionId: trace.transactionId,
+    messageId: trace.messageId,
+    bppId: trace.bppId,
+    requestBody: trace.rawBody,
+    responseBody: response.body,
+    httpStatus: response.status,
+    ackStatus: ackStatusOf(response.body),
+    recordedAt: new Date().toISOString(),
+  });
+}
+
+// Outbound: called from client.ts after a completed exchange (ACK or NACK) OR a
+// transport failure (responseBody carries whatever we managed to read).
+export function forwardOutboundExchangeLog(args: {
+  action: string;
+  url: string;
+  requestBody: string;
+  transactionId?: string;
+  messageId?: string;
+  responseBody: unknown;
+  httpStatus?: number;
+}): void {
+  if (!getObservabilityConfig()) return;
+
+  forwardObservabilityLog({
+    direction: "outbound",
+    action: args.action,
+    transactionId: args.transactionId,
+    messageId: args.messageId,
+    targetUrl: args.url,
+    requestBody: args.requestBody,
+    responseBody: args.responseBody,
+    httpStatus: args.httpStatus,
+    ackStatus: ackStatusOf(args.responseBody),
+    recordedAt: new Date().toISOString(),
+  });
+}
