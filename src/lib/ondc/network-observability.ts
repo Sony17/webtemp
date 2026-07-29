@@ -257,6 +257,10 @@ function tryParseJson(raw: string): unknown {
   }
 }
 
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
 // One event as the ONDC log collector expects it:
 //   POST /v1/api/push-txn-logs  { type: "<action>", data: <scrubbed payload> }
 // `type` is the ONDC action; `data` is the RAW ONDC payload (context + message
@@ -272,16 +276,28 @@ export type ObservabilityEvent = { type: string; data: unknown };
 export function buildObservabilityEvents(
   record: ObservabilityRecord
 ): ObservabilityEvent[] {
+  const requestData = scrubPersonalData(tryParseJson(record.requestBody));
   const events: ObservabilityEvent[] = [
-    {
-      type: record.action,
-      data: scrubPersonalData(tryParseJson(record.requestBody)),
-    },
+    { type: record.action, data: requestData },
   ];
+
   if (record.responseBody !== undefined && record.responseBody !== null) {
+    // The NO schema requires data.context (with the BASE action, not
+    // "<action>_response") on the response event too — but ONDC ACK/NACK bodies
+    // carry no context. So lift the request's context and pair it with the
+    // response's message (+ error on a NACK), matching the "<action>_response"
+    // examples in the NO spec.
+    const reqContext = isRecord(requestData) ? requestData.context : undefined;
+    const resp = scrubPersonalData(record.responseBody);
+    const respObj = isRecord(resp) ? resp : {};
     events.push({
       type: `${record.action}_response`,
-      data: scrubPersonalData(record.responseBody),
+      data: {
+        ...(reqContext !== undefined ? { context: reqContext } : {}),
+        message:
+          respObj.message ?? { ack: { status: respObj.error ? "NACK" : "ACK" } },
+        ...(respObj.error !== undefined ? { error: respObj.error } : {}),
+      },
     });
   }
   return events;

@@ -139,8 +139,27 @@ describe("buildObservabilityEvents", () => {
     expect(reqData.message.order.billing.name).toBe("[REDACTED]");
     expect(reqData.message.order.billing.phone).toBe("[REDACTED]");
 
-    // The response event's data is the ACK/NACK envelope as-is.
-    expect(events[1].data).toEqual({ message: { ack: { status: "ACK" } } });
+    // The response event's data carries the SAME context as the request (with
+    // the base action, per the NO schema) plus the ACK/NACK envelope.
+    expect(events[1].data).toEqual({
+      context: { action: "on_confirm", transaction_id: "txn-1" },
+      message: { ack: { status: "ACK" } },
+    });
+  });
+
+  it("carries an error onto the response event on a NACK", () => {
+    const events = buildObservabilityEvents({
+      ...record,
+      responseBody: {
+        message: { ack: { status: "NACK" } },
+        error: { type: "DOMAIN-ERROR", code: "30009" },
+      },
+    });
+    expect(events[1].data).toEqual({
+      context: { action: "on_confirm", transaction_id: "txn-1" },
+      message: { ack: { status: "NACK" } },
+      error: { type: "DOMAIN-ERROR", code: "30009" },
+    });
   });
 
   it("omits the response event when no response body was captured", () => {
