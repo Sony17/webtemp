@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   verifyWebhookSignature,
   parseWebhookPayload,
-  isTerminalStatus,
+  isStatusTransitionAllowed,
 } from "@/lib/tocxi/webhooks";
 import { updateShipmentStatus, getShipmentByShipmentId } from "@/lib/tocxi/db";
 import { getShipment } from "@/lib/tocxi/service";
@@ -39,10 +39,8 @@ export async function POST(request: NextRequest) {
     }
 
     const existing = await getShipmentByShipmentId(payload.shipmentId);
-    if (existing) {
-      if (isTerminalStatus(payload.status) && isTerminalStatus(existing.status as Parameters<typeof isTerminalStatus>[0])) {
-        return NextResponse.json({ status: "ignored_duplicate" });
-      }
+    if (existing && !isStatusTransitionAllowed(existing.status, payload.status)) {
+      return NextResponse.json({ status: "ignored - out of order" });
     }
 
     await updateShipmentStatus(payload.shipmentId, payload.status, payload);

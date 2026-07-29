@@ -15,12 +15,20 @@ export async function verifyWebhookSignature(
   signatureHeader: string | null
 ): Promise<boolean> {
   if (!signatureHeader) return false;
-  const { createHmac } = await import("node:crypto");
+  const { createHmac, timingSafeEqual } = await import("node:crypto");
   const secret = getWebhookSecret();
   const expected = createHmac("sha256", secret)
     .update(rawBody)
-    .digest("hex");
-  return expected === signatureHeader;
+    .digest();
+
+  const sigBuf = Buffer.from(signatureHeader, "hex");
+
+  if (expected.length !== sigBuf.length) {
+    timingSafeEqual(expected, expected);
+    return false;
+  }
+
+  return timingSafeEqual(expected, sigBuf);
 }
 
 export function parseWebhookPayload(body: unknown): WebhookPayload | null {
@@ -47,4 +55,32 @@ function isValidStatus(v: unknown): v is TocxiShipmentStatus {
 
 export function isTerminalStatus(status: TocxiShipmentStatus): boolean {
   return status === "DELIVERED" || status === "FAILED" || status === "CANCELLED";
+}
+
+const STATUS_ORDER: Record<string, number> = {
+  PENDING: 0,
+  CONFIRMED: 1,
+  PICKED_UP: 2,
+  IN_TRANSIT: 3,
+  OUT_FOR_DELIVERY: 4,
+  DELIVERED: 5,
+  FAILED: 6,
+  CANCELLED: 6,
+};
+
+export function isStatusTransitionAllowed(
+  current: string,
+  incoming: string
+): boolean {
+  const c = current.toUpperCase();
+  const i = incoming.toUpperCase();
+
+  if (isTerminalStatus(c as TocxiShipmentStatus)) return false;
+  if (i === "CANCELLED" || i === "FAILED") return true;
+
+  const ci = STATUS_ORDER[c];
+  const ii = STATUS_ORDER[i];
+
+  if (ci === undefined || ii === undefined) return false;
+  return ii > ci;
 }

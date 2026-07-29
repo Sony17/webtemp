@@ -43,7 +43,7 @@ export type ServiceabilityQuoteResponse = {
 };
 
 export type CreateShipmentRequest = {
-  partnerReference?: string;
+  partnerReference: string;
   pickup: TocxiLocation;
   drop: TocxiLocation;
   packageDescription?: string;

@@ -35,6 +35,10 @@ export function validateCreateShipment(
 ): ValidationResult {
   const errors: string[] = [];
 
+  if (!req.partnerReference || typeof req.partnerReference !== "string" || req.partnerReference.trim().length === 0) {
+    errors.push("partnerReference is required");
+  }
+
   if (!req.pickup) errors.push("pickup is required");
   else {
     if (!req.pickup.contactName?.trim()) errors.push("pickup.contactName is required");

@@ -43,7 +43,7 @@ export default function CreateShipmentPage() {
 
     try {
       const body = {
-        partnerReference: form.partnerReference || undefined,
+        partnerReference: form.partnerReference,
         pickup: {
           contactName: form.pickupContactName,
           contactPhone: form.pickupContactPhone,
@@ -146,9 +146,10 @@ export default function CreateShipmentPage() {
           </CardHeader>
           <CardContent>
             <div>
-              <Label htmlFor="partnerReference">Partner Reference (optional)</Label>
+              <Label htmlFor="partnerReference">Partner Reference *</Label>
               <Input
                 id="partnerReference"
+                required
                 placeholder="e.g. order-88213"
                 value={form.partnerReference}
                 onChange={(e) => update("partnerReference", e.target.value)}

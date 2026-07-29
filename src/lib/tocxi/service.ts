@@ -67,7 +67,7 @@ export function createShipment(
   return getClient().post<CreateShipmentResponse>(
     "/api/v1/partner/shipments",
     req,
-    req.partnerReference || undefined,
+    req.partnerReference,
     signal
   );
 }
