@@ -6,7 +6,7 @@
 import { describe, it, expect } from "vitest";
 import {
   scrubPersonalData,
-  buildObservabilityPayload,
+  buildObservabilityEvents,
   type ObservabilityRecord,
 } from "./network-observability";
 
@@ -106,9 +106,7 @@ describe("scrubPersonalData", () => {
   });
 });
 
-describe("buildObservabilityPayload", () => {
-  const cfg = { subscriberId: "buyer.example.co.in", environment: "preprod" };
-
+describe("buildObservabilityEvents", () => {
   const record: ObservabilityRecord = {
     direction: "inbound",
     action: "on_confirm",
@@ -125,46 +123,38 @@ describe("buildObservabilityPayload", () => {
     recordedAt: "2026-07-29T00:00:00.000Z",
   };
 
-  it("stamps identity/metadata and scrubs the parsed request body", () => {
-    const payload = buildObservabilityPayload(record, cfg) as Record<
-      string,
-      unknown
-    >;
+  it("emits a {type,data} request event plus a <action>_response event", () => {
+    const events = buildObservabilityEvents(record);
+    expect(events).toHaveLength(2);
+    expect(events[0].type).toBe("on_confirm");
+    expect(events[1].type).toBe("on_confirm_response");
 
-    expect(payload.subscriber_id).toBe("buyer.example.co.in");
-    expect(payload.environment).toBe("preprod");
-    expect(payload.direction).toBe("inbound");
-    expect(payload.action).toBe("on_confirm");
-    expect(payload.transaction_id).toBe("txn-1");
-    expect(payload.message_id).toBe("msg-1");
-    expect(payload.bpp_id).toBe("seller.example.com");
-    expect(payload.http_status).toBe(200);
-    expect(payload.ack_status).toBe("ACK");
-
-    // The request is parsed and scrubbed.
-    const req = payload.request as {
+    // The request event's data is the RAW ONDC payload (context + message),
+    // scrubbed — not wrapped in any envelope.
+    const reqData = events[0].data as {
+      context: { transaction_id: string };
       message: { order: { billing: { name: string; phone: string } } };
     };
-    expect(req.message.order.billing.name).toBe("[REDACTED]");
-    expect(req.message.order.billing.phone).toBe("[REDACTED]");
+    expect(reqData.context.transaction_id).toBe("txn-1");
+    expect(reqData.message.order.billing.name).toBe("[REDACTED]");
+    expect(reqData.message.order.billing.phone).toBe("[REDACTED]");
+
+    // The response event's data is the ACK/NACK envelope as-is.
+    expect(events[1].data).toEqual({ message: { ack: { status: "ACK" } } });
   });
 
-  it("includes target_url only for outbound records", () => {
-    const inbound = buildObservabilityPayload(record, cfg);
-    expect("target_url" in inbound).toBe(false);
-
-    const outbound = buildObservabilityPayload(
-      { ...record, direction: "outbound", targetUrl: "https://seller/confirm" },
-      cfg
-    );
-    expect(outbound.target_url).toBe("https://seller/confirm");
+  it("omits the response event when no response body was captured", () => {
+    const events = buildObservabilityEvents({ ...record, responseBody: null });
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe("on_confirm");
   });
 
-  it("keeps a non-JSON request body as a raw string", () => {
-    const payload = buildObservabilityPayload(
-      { ...record, requestBody: "<<not json>>" },
-      cfg
-    );
-    expect(payload.request).toBe("<<not json>>");
+  it("keeps a non-JSON request body as raw string data", () => {
+    const events = buildObservabilityEvents({
+      ...record,
+      requestBody: "<<not json>>",
+      responseBody: null,
+    });
+    expect(events[0].data).toBe("<<not json>>");
   });
 });

@@ -26,12 +26,15 @@
 // deployment holds the pre-prod token, the prod deployment holds the prod token.
 //
 // ── Endpoint & payload schema ──────────────────────────────────────────────
-// The exact collector URL and the exact JSON envelope the collector expects are
-// defined in ONDC's (access-controlled) Network Observability spec, NOT in this
-// repo. Both are therefore CONFIGURABLE, not hardcoded: set the URL via
-// ONDC_OBSERVABILITY_URL, and adjust buildObservabilityPayload() below if the
-// collector wants a different shape. The default envelope is a self-describing
-// {context, request, response, metadata} object — verify it against the spec.
+// The collector is ONDC's analytics ingest (pre-prod):
+//   POST https://analytics-api-pre-prod.aws.ondc.org/v1/api/push-txn-logs
+//   Authorization: Bearer <NO token>
+//   body: { type: "<action>", data: <PII-scrubbed raw ONDC payload> }
+// Each API Call yields TWO events — "<action>" (the request) and
+// "<action>_response" (the synchronous ACK/NACK) — per §3 of the NO
+// notification. URL + token are CONFIGURABLE via ONDC_OBSERVABILITY_URL/TOKEN
+// (or ONDC's own ONDC_NO_ENDPOINT / ONDC_NO_TOKEN aliases); the wire shape lives
+// in buildObservabilityEvents() below.
 //
 // Server-only (reads secrets via getOndcPublicContext + touches process.env).
 import "server-only";
@@ -76,8 +79,12 @@ function envTrim(name: string): string | undefined {
 export function getObservabilityConfig(): ObservabilityConfig | null {
   if (process.env.ONDC_OBSERVABILITY_ENABLED?.trim() === "0") return null;
 
-  const url = envTrim("ONDC_OBSERVABILITY_URL");
-  const token = envTrim("ONDC_OBSERVABILITY_TOKEN");
+  // Accept ONDC's own env names (ONDC_NO_ENDPOINT / ONDC_NO_TOKEN — the names
+  // the NO portal documents) as aliases, falling back to our OBSERVABILITY_*.
+  const url =
+    envTrim("ONDC_OBSERVABILITY_URL") ?? envTrim("ONDC_NO_ENDPOINT");
+  const token =
+    envTrim("ONDC_OBSERVABILITY_TOKEN") ?? envTrim("ONDC_NO_TOKEN");
   // Both are required — a URL with no token (or vice versa) is a half-configured
   // state we treat as "off" rather than submitting unauthenticated logs.
   if (!url || !token) return null;
@@ -250,28 +257,34 @@ function tryParseJson(raw: string): unknown {
   }
 }
 
-// Build the JSON envelope submitted to the collector. This is the ONE place the
-// wire shape is defined — adjust it here if the ONDC NO spec expects a different
-// schema. request/response are scrubbed of Personal Data before inclusion.
-export function buildObservabilityPayload(
-  record: ObservabilityRecord,
-  cfg: Pick<ObservabilityConfig, "subscriberId" | "environment">
-): Record<string, unknown> {
-  return {
-    subscriber_id: cfg.subscriberId,
-    environment: cfg.environment,
-    direction: record.direction,
-    action: record.action,
-    transaction_id: record.transactionId,
-    message_id: record.messageId,
-    bpp_id: record.bppId,
-    recorded_at: record.recordedAt,
-    http_status: record.httpStatus,
-    ack_status: record.ackStatus,
-    ...(record.targetUrl ? { target_url: record.targetUrl } : {}),
-    request: scrubPersonalData(tryParseJson(record.requestBody)),
-    response: scrubPersonalData(record.responseBody),
-  };
+// One event as the ONDC log collector expects it:
+//   POST /v1/api/push-txn-logs  { type: "<action>", data: <scrubbed payload> }
+// `type` is the ONDC action; `data` is the RAW ONDC payload (context + message
+// for a request; the ACK/NACK envelope for a response), with Personal Data
+// scrubbed. ONDC identifies the participant from the Bearer token, so no
+// subscriber_id / metadata rides on the wire — it lives inside `data.context`.
+export type ObservabilityEvent = { type: string; data: unknown };
+
+// An ONDC "API Call" is the request AND its synchronous response (§3 of the NO
+// notification), submitted as two events: "<action>" and "<action>_response".
+// The response event is omitted when nothing was captured (e.g. a transport
+// failure that never produced a body).
+export function buildObservabilityEvents(
+  record: ObservabilityRecord
+): ObservabilityEvent[] {
+  const events: ObservabilityEvent[] = [
+    {
+      type: record.action,
+      data: scrubPersonalData(tryParseJson(record.requestBody)),
+    },
+  ];
+  if (record.responseBody !== undefined && record.responseBody !== null) {
+    events.push({
+      type: `${record.action}_response`,
+      data: scrubPersonalData(record.responseBody),
+    });
+  }
+  return events;
 }
 
 // ---------------------------------------------------------------------------
@@ -312,7 +325,7 @@ const MAX_ATTEMPTS = 3;
 // disrupt a real ONDC exchange).
 async function submit(
   cfg: ObservabilityConfig,
-  payload: Record<string, unknown>
+  payload: ObservabilityEvent
 ): Promise<boolean> {
   const s = stats();
   s.attempted += 1;
@@ -351,8 +364,7 @@ async function submit(
   s.lastFailureAt = new Date().toISOString();
   s.lastError = lastErr;
   console.warn("ondc.observability submit failed", {
-    action: payload.action,
-    transactionId: payload.transaction_id,
+    type: payload.type,
     error: lastErr,
   });
   return false;
@@ -363,8 +375,10 @@ async function submit(
 export function forwardObservabilityLog(record: ObservabilityRecord): void {
   const cfg = getObservabilityConfig();
   if (!cfg) return;
-  const payload = buildObservabilityPayload(record, cfg);
-  void submit(cfg, payload);
+  // One API Call → a request event and (usually) a response event.
+  for (const event of buildObservabilityEvents(record)) {
+    void submit(cfg, event);
+  }
 }
 
 // Awaitable single-record submission for manual / batch flows (the /forward POST
@@ -376,8 +390,10 @@ export async function submitObservabilityLogNow(
 ): Promise<{ ok: boolean; skipped?: boolean; error?: string }> {
   const cfg = getObservabilityConfig();
   if (!cfg) return { ok: false, skipped: true, error: "not configured" };
-  const payload = buildObservabilityPayload(record, cfg);
-  const ok = await submit(cfg, payload);
+  let ok = true;
+  for (const event of buildObservabilityEvents(record)) {
+    ok = (await submit(cfg, event)) && ok;
+  }
   return ok ? { ok: true } : { ok: false, error: stats().lastError };
 }
 
