@@ -38,6 +38,7 @@
 //
 // Server-only (reads secrets via getOndcPublicContext + touches process.env).
 import "server-only";
+import { after } from "next/server";
 import type { AuditTrace } from "@/lib/ondc/audit";
 import { getOndcPublicContext } from "@/lib/ondc/config";
 
@@ -393,6 +394,20 @@ export function forwardObservabilityLog(record: ObservabilityRecord): void {
   if (!cfg) return;
   // One API Call → a request event and (usually) a response event.
   for (const event of buildObservabilityEvents(record)) {
+    scheduleSubmit(cfg, event);
+  }
+}
+
+// On serverless (Vercel) a bare detached promise is frozen the moment the route
+// handler returns its response, so a fire-and-forget POST never completes (we saw
+// attempted++ but succeeded stay 0). `after()` runs the submit AFTER the response
+// is sent but keeps the function alive (via waitUntil) until it resolves — so the
+// log is actually delivered, without adding latency to the ONDC ACK. Outside a
+// request scope (e.g. a script/build) `after()` throws; fall back to detached.
+function scheduleSubmit(cfg: ObservabilityConfig, event: ObservabilityEvent): void {
+  try {
+    after(() => submit(cfg, event));
+  } catch {
     void submit(cfg, event);
   }
 }
