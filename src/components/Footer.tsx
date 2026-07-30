@@ -36,6 +36,7 @@ export default function Footer() {
             <Link href="/privacy" className="hover:text-zinc-700">Privacy</Link>
             <Link href="/terms" className="hover:text-zinc-700">Terms</Link>
             <Link href="/cookies" className="hover:text-zinc-700">Cookies</Link>
+            <Link href="/legal/static-terms" className="hover:text-zinc-700">ONDC Terms</Link>
             <a href="tel:+918130296940" className="hover:text-zinc-700">+91 81302 96940</a>
           </div>
           <div>© {new Date().getFullYear()} Open Idea EcoSyz. All rights reserved.</div>
