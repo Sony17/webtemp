@@ -321,3 +321,51 @@ export function paymentStatus(transactionId: string): Promise<{
     `/api/payments/status?transactionId=${encodeURIComponent(transactionId)}`
   );
 }
+
+/* -- Logistics (Tocxi) ------------------------------------------------------ */
+
+export type LogisticsQuoteRequest = {
+  pickupLatitude: number;
+  pickupLongitude: number;
+  dropLatitude: number;
+  dropLongitude: number;
+  parcelSize: string;
+  weightKg: number;
+  cod: boolean;
+  codAmount: number;
+};
+
+export type LogisticsQuoteResponse = {
+  serviceable: boolean;
+  totalPrice: number;
+  codFee: number;
+  estimatedDistanceKm: number;
+  estimatedDurationMin: number;
+  currency: string;
+};
+
+export function logisticsQuote(
+  req: LogisticsQuoteRequest
+): Promise<LogisticsQuoteResponse> {
+  return postJSON<LogisticsQuoteResponse>("/api/tocxi/quote", req);
+}
+
+export type ShipmentTrackingInfo = {
+  shipmentId: string;
+  status: string;
+  trackingUrl: string | null;
+  awbNo: string | null;
+  estimatedPrice: number | null;
+  estimatedDistanceKm: number | null;
+  estimatedDurationMin: number | null;
+  updatedAt: number;
+  cancelledAt: number | null;
+};
+
+export function orderLogistics(
+  transactionId: string
+): Promise<{ shipment: ShipmentTrackingInfo | null }> {
+  return getJSON(
+    `/api/shop/order/${encodeURIComponent(transactionId)}/logistics`
+  );
+}

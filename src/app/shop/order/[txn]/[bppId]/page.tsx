@@ -39,6 +39,7 @@ import {
   type BppState,
 } from "@/lib/shop/types";
 import * as api from "@/lib/shop/api";
+import type { ShipmentTrackingInfo } from "@/lib/shop/api";
 import { formatINR } from "@/lib/shop/cn";
 
 const CANCEL_REASONS = [
@@ -73,6 +74,7 @@ export default function OrderPage() {
   const [busy, setBusy] = React.useState<string | null>(null);
   const [cancelReason, setCancelReason] = React.useState(CANCEL_REASONS[0].id);
   const [showCancel, setShowCancel] = React.useState(false);
+  const [logisticsShipment, setLogisticsShipment] = React.useState<ShipmentTrackingInfo | null>(null);
 
   const bpp: BppState | undefined = state?.bpps.find((b) => b.bppId === bppId);
   const order = bpp?.order ?? null;
@@ -86,6 +88,10 @@ export default function OrderPage() {
 
   React.useEffect(() => {
     api.paymentInstructions(txn).then(setPay).catch(() => setPay(null));
+    api
+      .orderLogistics(txn)
+      .then((r) => setLogisticsShipment(r.shipment))
+      .catch(() => setLogisticsShipment(null));
   }, [txn]);
 
   const act = async (key: string, fn: () => Promise<unknown>) => {
@@ -327,6 +333,37 @@ export default function OrderPage() {
               ))}
             </div>
           ) : null}
+        </Card>
+      ) : null}
+
+      {/* Tocxi logistics tracking — reads from our own store */}
+      {logisticsShipment ? (
+        <Card className="p-4">
+          <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
+            <Truck className="h-4 w-4" /> Shipment tracking
+          </h2>
+          <div className="space-y-1.5 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Status</span>
+              <Badge variant="secondary">{logisticsShipment.status}</Badge>
+            </div>
+            {logisticsShipment.awbNo ? (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">AWB</span>
+                <span className="font-mono text-xs">{logisticsShipment.awbNo}</span>
+              </div>
+            ) : null}
+            {logisticsShipment.trackingUrl ? (
+              <a
+                href={logisticsShipment.trackingUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 block text-xs text-primary hover:underline"
+              >
+                Track with courier →
+              </a>
+            ) : null}
+          </div>
         </Card>
       ) : null}
 
