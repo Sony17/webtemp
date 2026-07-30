@@ -71,7 +71,15 @@ export async function getShipmentByShipmentId(
   }) as unknown as TocxiShipmentRow | null;
 }
 
-export async function listShipmentsFromDb(options: {
+export async function getShipmentByPartnerReference(
+  partnerReference: string
+): Promise<TocxiShipmentRow | null> {
+  return getDb().tocxiShipment.findFirst({
+    where: { partnerReference },
+  }) as unknown as TocxiShipmentRow | null;
+}
+
+export async function listShipments(options: {
   page?: number;
   size?: number;
   status?: string;
