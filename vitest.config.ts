@@ -17,10 +17,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    // Only ONDC unit tests for now. The orphaned payment.test.ts imports a
-    // non-existent ./payment module (pre-existing); exclude it until that
-    // module lands so the suite is green.
-    include: ["src/lib/ondc/**/*.test.ts"],
+    include: ["src/lib/ondc/**/*.test.ts", "src/lib/tocxi/**/*.test.ts"],
     exclude: ["src/lib/ondc/payment.test.ts", "node_modules/**"],
   },
 });
