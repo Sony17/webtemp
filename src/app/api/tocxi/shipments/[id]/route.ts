@@ -6,7 +6,7 @@ import {
 import {
   getShipmentByShipmentId,
   upsertShipment,
-} from "@/lib/tocxi/db";
+} from "@/lib/tocxi/store";
 
 export async function GET(
   _request: NextRequest,

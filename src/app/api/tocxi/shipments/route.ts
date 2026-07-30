@@ -5,8 +5,8 @@ import {
 } from "@/lib/tocxi/service";
 import {
   upsertShipment,
-  listShipments as listShipmentsFromDb,
-} from "@/lib/tocxi/db";
+  listShipments as listShipmentsFromStore,
+} from "@/lib/tocxi/store";
 import { validateCreateShipment } from "@/lib/tocxi/validation";
 
 export async function POST(request: NextRequest) {
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status") ?? undefined;
     const search = searchParams.get("search") ?? undefined;
 
-    const { rows, total } = await listShipmentsFromDb({ page, size, status, search });
+    const { rows, total } = await listShipmentsFromStore({ page, size, status, search });
 
     return NextResponse.json({
       content: rows,

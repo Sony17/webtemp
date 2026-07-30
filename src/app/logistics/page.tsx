@@ -153,8 +153,8 @@ export default function LogisticsDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {data.content.map((s) => (
-                    <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                    {data.content.map((s) => (
+                    <tr key={s.shipmentId} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3">
                         <Link href={`/logistics/${s.shipmentId}`} className="text-sm font-medium text-blue-600 hover:text-blue-800">
                           {s.shipmentId}

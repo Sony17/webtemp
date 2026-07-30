@@ -4,7 +4,7 @@ import {
   parseWebhookPayload,
   isStatusTransitionAllowed,
 } from "@/lib/tocxi/webhooks";
-import { updateShipmentStatus, getShipmentByShipmentId } from "@/lib/tocxi/db";
+import { updateShipmentStatus, getShipmentByShipmentId } from "@/lib/tocxi/store";
 import { getShipment } from "@/lib/tocxi/service";
 
 export async function POST(request: NextRequest) {
