@@ -5,7 +5,7 @@ import {
 } from "@/lib/tocxi/service";
 import {
   upsertShipment,
-  listShipmentsFromDb,
+  listShipments as listShipmentsFromDb,
 } from "@/lib/tocxi/db";
 import { validateCreateShipment } from "@/lib/tocxi/validation";
 

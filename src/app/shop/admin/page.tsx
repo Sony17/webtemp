@@ -49,12 +49,13 @@ type Payment = {
   createdAt: number;
 };
 
-type Tab = "overview" | "orders" | "payments" | "issues" | "registry";
+type Tab = "overview" | "orders" | "payments" | "issues" | "registry" | "shipments";
 const TABS: { id: Tab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "orders", label: "Orders" },
   { id: "payments", label: "Payments" },
   { id: "issues", label: "Issues" },
+  { id: "shipments", label: "Shipments" },
   { id: "registry", label: "Registry" },
 ];
 
@@ -341,6 +342,21 @@ export default function OndcAdminPage() {
                 {JSON.stringify(registry, null, 2)}
               </pre>
             )}
+          </div>
+        ) : null}
+
+        {/* SHIPMENTS */}
+        {tab === "shipments" ? (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 text-center">
+            <p className="mb-3 text-sm text-zinc-400">
+              Manage Tocxi logistics shipments — view, create, and cancel shipments.
+            </p>
+            <a
+              href="/shop/admin/shipments"
+              className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors"
+            >
+              Open Shipments Console →
+            </a>
           </div>
         ) : null}
       </div>

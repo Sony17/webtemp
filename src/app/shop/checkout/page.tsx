@@ -17,6 +17,8 @@ import {
   Store,
   Bike,
   Clock,
+  PackageOpen,
+  IndianRupee,
 } from "lucide-react";
 import { Button, Card, Input, Label, Separator, Textarea } from "@/components/shop/ui";
 import { EmptyState, QuoteSummary } from "@/components/shop/widgets";
@@ -31,6 +33,7 @@ import {
   type FulfillmentOption,
 } from "@/lib/shop/types";
 import * as api from "@/lib/shop/api";
+import type { LogisticsQuoteResponse } from "@/lib/shop/api";
 
 const FULFILLMENT_ICON: Record<string, typeof Truck> = {
   Delivery: Truck,
@@ -72,6 +75,8 @@ export default function CheckoutPage() {
   const [instructions, setInstructions] = React.useState(address?.instructions ?? "");
   const [error, setError] = React.useState<string | null>(null);
   const [statusMsg, setStatusMsg] = React.useState("");
+  const [logistics, setLogistics] = React.useState<LogisticsQuoteResponse | null>(null);
+  const [logisticsLoading, setLogisticsLoading] = React.useState(false);
   const [locating, setLocating] = React.useState(false);
   // Reentrancy guard for placeOrder (survives re-renders; not display state).
   const placingRef = React.useRef(false);
@@ -221,6 +226,29 @@ export default function CheckoutPage() {
       setChosenFf(
         ffOptions.find((o) => o.type === "Delivery") ?? ffOptions[0] ?? null
       );
+
+      // Call the logistics quote endpoint for delivery fee information.
+      setLogisticsLoading(true);
+      const gpsParts = form.gps?.split(",").map((s) => parseFloat(s.trim())) ?? [];
+      if (gpsParts.length === 2 && !isNaN(gpsParts[0]) && !isNaN(gpsParts[1])) {
+        api
+          .logisticsQuote({
+            pickupLatitude: 12.9716,
+            pickupLongitude: 77.5946,
+            dropLatitude: gpsParts[0],
+            dropLongitude: gpsParts[1],
+            parcelSize: "SMALL",
+            weightKg: 0.5,
+            cod: false,
+            codAmount: 0,
+          })
+          .then(setLogistics)
+          .catch(() => setLogistics(null))
+          .finally(() => setLogisticsLoading(false));
+      } else {
+        setLogisticsLoading(false);
+      }
+
       setStep("review");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to get a quote.");
@@ -408,6 +436,49 @@ export default function CheckoutPage() {
             </button>
           </div>
         </Card>
+
+        {/* Logistics delivery fee — Tocxi quote */}
+        {logisticsLoading ? (
+          <Card className="p-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Checking delivery serviceability…
+            </div>
+          </Card>
+        ) : logistics ? (
+          <Card className="p-4">
+            <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
+              <PackageOpen className="h-4 w-4" /> Delivery fee
+            </h2>
+            {logistics.serviceable ? (
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Logistics fee</span>
+                  <span className="font-medium">₹{logistics.totalPrice.toFixed(2)}</span>
+                </div>
+                {logistics.codFee > 0 ? (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">COD fee</span>
+                    <span className="font-medium">₹{logistics.codFee.toFixed(2)}</span>
+                  </div>
+                ) : null}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Distance</span>
+                  <span className="font-medium">{logistics.estimatedDistanceKm.toFixed(1)} km</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Estimated delivery</span>
+                  <span className="font-medium">{logistics.estimatedDurationMin} min</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>Delivery not available to this address.</span>
+              </div>
+            )}
+          </Card>
+        ) : null}
 
         {/* Fulfillment options offered by the seller (on_select) */}
         {options.length > 0 ? (

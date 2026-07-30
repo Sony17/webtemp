@@ -28,6 +28,7 @@ import {
   updatePaymentStatus,
   PaymentStoreError,
 } from "@/lib/payments/store";
+import { autoCreateShipment } from "@/lib/tocxi/auto-shipment";
 
 // The payment store is `import "server-only"` and touches node:fs / @vercel/blob,
 // so this handler must run on the Node runtime, not Edge.
@@ -104,6 +105,18 @@ export async function POST(req: Request) {
         { error: "No payment found for this reference." },
         { status: 404 }
       );
+    }
+
+    if (record.status === "PAID" && record.orderId) {
+      try {
+        await autoCreateShipment({
+          transactionId: record.transactionId,
+          orderId: record.orderId,
+          amount: record.amount,
+        });
+      } catch {
+        // best-effort — payment is already reconciled
+      }
     }
 
     return NextResponse.json(record, { status: 200 });
