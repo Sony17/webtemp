@@ -17,6 +17,7 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { readAuditEvents, type AuditEvent } from "@/lib/ondc/audit";
+import { readOndcScopedEnv } from "@/lib/ondc/config";
 import {
   getObservabilityConfig,
   getObservabilityStats,
@@ -53,19 +54,20 @@ export async function GET() {
       environment: cfg?.environment ?? null,
       subscriberId: cfg?.subscriberId ?? null,
       endpoint: {
-        // Check both our name and ONDC's own ONDC_NO_ENDPOINT alias — the
-        // config resolver accepts either, so the display must too.
+        // Check both our name and ONDC's own ONDC_NO_ENDPOINT alias, each via
+        // the ONDC_ENV-scoped resolver — the config resolver accepts all of
+        // these, so the display must too.
         configured: !!(
-          process.env.ONDC_OBSERVABILITY_URL?.trim() ||
-          process.env.ONDC_NO_ENDPOINT?.trim()
+          readOndcScopedEnv("ONDC_OBSERVABILITY_URL") ||
+          readOndcScopedEnv("ONDC_NO_ENDPOINT")
         ),
         host,
       },
       tokenConfigured: !!(
-        process.env.ONDC_OBSERVABILITY_TOKEN?.trim() ||
-        process.env.ONDC_NO_TOKEN?.trim()
+        readOndcScopedEnv("ONDC_OBSERVABILITY_TOKEN") ||
+        readOndcScopedEnv("ONDC_NO_TOKEN")
       ),
-      killSwitch: process.env.ONDC_OBSERVABILITY_ENABLED?.trim() === "0",
+      killSwitch: readOndcScopedEnv("ONDC_OBSERVABILITY_ENABLED") === "0",
       stats: getObservabilityStats(),
     },
     { status: 200 }

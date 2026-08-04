@@ -21,9 +21,11 @@
 // from the ONDC Network Observability portal and is PER-ENVIRONMENT: the token
 // you generate for pre-prod is NOT the one you use in prod (the prod token comes
 // from the registry "update participant info" step after you subscribe to prod).
-// Because the token is a per-deployment secret, it lives in ONE env var
-// (ONDC_OBSERVABILITY_TOKEN) whose VALUE differs per deployment — the pre-prod
-// deployment holds the pre-prod token, the prod deployment holds the prod token.
+// Because the token is per-environment, all NO vars resolve through
+// readOndcScopedEnv(): ONDC_PREPROD_NO_TOKEN and ONDC_PROD_NO_TOKEN (likewise
+// _NO_ENDPOINT) can both be set, and ONDC_ENV picks which one is live. The
+// unscoped names (ONDC_NO_TOKEN / ONDC_OBSERVABILITY_TOKEN) remain as
+// fallbacks for single-environment deployments.
 //
 // ── Endpoint & payload schema ──────────────────────────────────────────────
 // The collector is ONDC's analytics ingest (pre-prod):
@@ -40,7 +42,7 @@
 import "server-only";
 import { after } from "next/server";
 import type { AuditTrace } from "@/lib/ondc/audit";
-import { getOndcPublicContext } from "@/lib/ondc/config";
+import { getOndcPublicContext, readOndcScopedEnv } from "@/lib/ondc/config";
 
 // ---------------------------------------------------------------------------
 // Config — read lazily from env, resilient, feature-flagged OFF by default.
@@ -78,14 +80,17 @@ function envTrim(name: string): string | undefined {
 // take effect without a restart, and so tests can flip env between cases. The
 // env reads are trivial; this is never in a tight loop.
 export function getObservabilityConfig(): ObservabilityConfig | null {
-  if (process.env.ONDC_OBSERVABILITY_ENABLED?.trim() === "0") return null;
+  if (readOndcScopedEnv("ONDC_OBSERVABILITY_ENABLED") === "0") return null;
 
   // Accept ONDC's own env names (ONDC_NO_ENDPOINT / ONDC_NO_TOKEN — the names
   // the NO portal documents) as aliases, falling back to our OBSERVABILITY_*.
+  // Each resolves ONDC_ENV-scoped first (ONDC_PROD_NO_TOKEN, …).
   const url =
-    envTrim("ONDC_OBSERVABILITY_URL") ?? envTrim("ONDC_NO_ENDPOINT");
+    readOndcScopedEnv("ONDC_OBSERVABILITY_URL") ??
+    readOndcScopedEnv("ONDC_NO_ENDPOINT");
   const token =
-    envTrim("ONDC_OBSERVABILITY_TOKEN") ?? envTrim("ONDC_NO_TOKEN");
+    readOndcScopedEnv("ONDC_OBSERVABILITY_TOKEN") ??
+    readOndcScopedEnv("ONDC_NO_TOKEN");
   // Both are required — a URL with no token (or vice versa) is a half-configured
   // state we treat as "off" rather than submitting unauthenticated logs.
   if (!url || !token) return null;

@@ -25,6 +25,7 @@
 // Reads ONDC config (which reads private keys) via getOndcConfig() through the
 // client, so it is server-only, mirroring config/context/auth/client/store.
 import "server-only";
+import { readOndcScopedEnv } from "@/lib/ondc/config";
 import { resolveBppSigningKey } from "@/lib/ondc/registry-client";
 
 // Workbench/staging counterparties (the ONDC workbench's mock seller,
@@ -41,7 +42,9 @@ const WORKBENCH_SUBSCRIBER_IDS = new Set<string>(["staging-automation.ondc.org"]
 export function isWorkbenchVerificationBypass(
   subscriberId: string | undefined
 ): boolean {
-  if (process.env.ONDC_ALLOW_WORKBENCH_BAP_MISMATCH !== "1") return false;
+  if (readOndcScopedEnv("ONDC_ALLOW_WORKBENCH_BAP_MISMATCH") !== "1") {
+    return false;
+  }
   if ((process.env.ONDC_ENV ?? "staging").trim().toLowerCase() === "prod") {
     return false;
   }

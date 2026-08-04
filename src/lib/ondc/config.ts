@@ -5,7 +5,11 @@
 // client import into a build error (see the Next.js data-security guide).
 //
 // All values come from environment variables so the same build can target the
-// staging / pre-prod / prod networks without code changes. Mirrors the env-
+// staging / pre-prod / prod networks without code changes. Every ONDC_* var is
+// resolved through readOndcScopedEnv(): an ONDC_ENV-prefixed variant (e.g.
+// ONDC_PROD_SIGNING_PRIVATE_KEY) wins over the plain name, so both networks'
+// credentials can live in the environment at once with ONDC_ENV as the only
+// switch. Mirrors the env-
 // driven switching used in src/lib/deployments.ts (the `useBlob` pattern), but
 // ONDC needs every credential present (and well-formed) to sign requests, so a
 // missing or malformed var is a hard error rather than a silent fallback.
@@ -111,7 +115,9 @@ class OndcNotConfiguredError extends Error {
   constructor(missing: string[]) {
     super(
       `Missing required ONDC environment variable(s): ${missing.join(", ")}. ` +
-        `Set them in your environment (see .env.example) before making ONDC calls.`
+        `Set them in your environment (see .env.example) before making ONDC ` +
+        `calls. Each also accepts an ONDC_ENV-scoped variant, e.g. ` +
+        `ONDC_PROD_SIGNING_PRIVATE_KEY when ONDC_ENV=prod.`
     );
     this.name = "OndcNotConfiguredError";
   }
@@ -129,6 +135,27 @@ class OndcConfigError extends Error {
 function trimmed(value: string | undefined): string | undefined {
   const t = value?.trim();
   return t ? t : undefined;
+}
+
+// Env-scoped variable resolution — the mechanism behind the ONDC_ENV switch.
+//
+// For ONDC_ENV=prod, readOndcScopedEnv("ONDC_SIGNING_PRIVATE_KEY") prefers
+// ONDC_PROD_SIGNING_PRIVATE_KEY and falls back to the unscoped name (same for
+// _PREPROD_ / _STAGING_). This lets one deployment hold BOTH the pre-prod and
+// prod credential sets side by side and switch networks by flipping ONDC_ENV
+// alone — no re-pasting keys per switch.
+//
+// Total (never throws): an unrecognized ONDC_ENV merely disables scoping here;
+// parseEnvironment() still reports it as a hard error on the config path.
+export function readOndcScopedEnv(name: string): string | undefined {
+  const raw = (process.env.ONDC_ENV ?? "staging").trim().toLowerCase();
+  if (VALID_ENVS.has(raw as OndcEnvironment)) {
+    const scoped = trimmed(
+      process.env[name.replace(/^ONDC_/, `ONDC_${raw.toUpperCase()}_`)]
+    );
+    if (scoped) return scoped;
+  }
+  return trimmed(process.env[name]);
 }
 
 function parseEnvironment(raw: string | undefined): OndcEnvironment {
@@ -205,7 +232,7 @@ function buildConfig(): OndcConfig {
   const missing: string[] = [];
 
   function required(name: string): string {
-    const value = trimmed(process.env[name]);
+    const value = readOndcScopedEnv(name);
     if (!value) missing.push(name);
     return value ?? "";
   }
@@ -225,25 +252,26 @@ function buildConfig(): OndcConfig {
   // "not configured" rather than "invalid".
   if (missing.length) throw new OndcNotConfiguredError(missing);
 
-  const bapUri = trimmed(process.env.ONDC_BAP_URI) ?? subscriberUri;
+  const bapUri = readOndcScopedEnv("ONDC_BAP_URI") ?? subscriberUri;
   const registryBaseUrl =
-    trimmed(process.env.ONDC_REGISTRY_BASE_URL) ?? defaults.registryBaseUrl;
-  const gatewayUrl = trimmed(process.env.ONDC_GATEWAY_URL) ?? defaults.gatewayUrl;
+    readOndcScopedEnv("ONDC_REGISTRY_BASE_URL") ?? defaults.registryBaseUrl;
+  const gatewayUrl =
+    readOndcScopedEnv("ONDC_GATEWAY_URL") ?? defaults.gatewayUrl;
 
   return {
     env,
     subscriberId,
     subscriberUri: normalizeUrl("ONDC_SUBSCRIBER_URI", subscriberUri),
-    bapId: trimmed(process.env.ONDC_BAP_ID) ?? subscriberId,
+    bapId: readOndcScopedEnv("ONDC_BAP_ID") ?? subscriberId,
     bapUri: normalizeUrl("ONDC_BAP_URI", bapUri),
     uniqueKeyId,
     registryBaseUrl: normalizeUrl("ONDC_REGISTRY_BASE_URL", registryBaseUrl),
     gatewayUrl: normalizeUrl("ONDC_GATEWAY_URL", gatewayUrl),
     registryEncryptionPublicKey: defaults.registryEncryptionPublicKey,
-    domain: trimmed(process.env.ONDC_DOMAIN) ?? "ONDC:RET10",
-    countryCode: trimmed(process.env.ONDC_COUNTRY_CODE) ?? "IND",
-    cityCode: trimmed(process.env.ONDC_CITY_CODE) ?? "std:080",
-    ttl: trimmed(process.env.ONDC_TTL) ?? "PT30S",
+    domain: readOndcScopedEnv("ONDC_DOMAIN") ?? "ONDC:RET10",
+    countryCode: readOndcScopedEnv("ONDC_COUNTRY_CODE") ?? "IND",
+    cityCode: readOndcScopedEnv("ONDC_CITY_CODE") ?? "std:080",
+    ttl: readOndcScopedEnv("ONDC_TTL") ?? "PT30S",
     secrets: redactable({
       signingPublicKey: validatePublicKey(
         "ONDC_SIGNING_PUBLIC_KEY",

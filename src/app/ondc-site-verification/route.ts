@@ -17,7 +17,7 @@
 // readers see "not configured yet" instead of a confusing empty-signature
 // page that would silently fail verification.
 import { NextResponse } from "next/server";
-import { isOndcConfigured } from "@/lib/ondc/config";
+import { isOndcConfigured, readOndcScopedEnv } from "@/lib/ondc/config";
 import { signRequestId } from "@/lib/ondc/auth";
 
 export const runtime = "nodejs";
@@ -48,7 +48,9 @@ export function GET() {
     );
   }
 
-  const requestId = process.env.ONDC_SITE_VERIFICATION_REQUEST_ID?.trim();
+  // Scoped per ONDC_ENV (ONDC_PROD_SITE_VERIFICATION_REQUEST_ID, …) so the
+  // pre-prod and prod request_ids can both stay configured.
+  const requestId = readOndcScopedEnv("ONDC_SITE_VERIFICATION_REQUEST_ID");
   if (!requestId) {
     return new NextResponse(
       htmlPage(

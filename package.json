@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "dotenv -e .env.preprod -- next dev",
+    "dev:preprod": "dotenv -e .env.preprod -- next dev",
+    "dev:prod": "dotenv -e .env.prod -- next dev",
     "build": "prisma generate && node scripts/migrate-if-configured.mjs && next build",
     "start": "next start",
     "lint": "eslint",
@@ -37,6 +39,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",

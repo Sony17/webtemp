@@ -31,7 +31,11 @@
 //
 // Mirrors the existing route conventions (NextResponse, runtime = "nodejs").
 import { after, NextResponse } from "next/server";
-import { getOndcConfig, isOndcConfigured } from "@/lib/ondc/config";
+import {
+  getOndcConfig,
+  isOndcConfigured,
+  readOndcScopedEnv,
+} from "@/lib/ondc/config";
 import {
   resolveBppSigningPublicKey,
   isWorkbenchVerificationBypass,
@@ -198,7 +202,12 @@ function normalizeOndcUri(value: string): string {
 // are unaffected. Remove the flag once ONDC fixes the harness / after certification.
 const STAGING_AUTOMATION_BAP_ID = "staging-automation.ondc.org";
 function isWorkbenchBapMismatchAllowed(): boolean {
-  return process.env.ONDC_ALLOW_WORKBENCH_BAP_MISMATCH === "1";
+  if (readOndcScopedEnv("ONDC_ALLOW_WORKBENCH_BAP_MISMATCH") !== "1") {
+    return false;
+  }
+  // Never active in prod — same guard as registry.isWorkbenchVerificationBypass,
+  // so a globally-set flag can't relax the bap_id echo gate on the live network.
+  return (process.env.ONDC_ENV ?? "staging").trim().toLowerCase() !== "prod";
 }
 
 // CATALOG REJECTION SIGNAL — when the SNP includes a top-level `error` on its
