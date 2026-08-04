@@ -33,16 +33,21 @@ The **self-contained module, API routes, webhook, and tests are built** (Phases
 - `.env.example` — `TOCXI_API_KEY` / `TOCXI_WEBHOOK_SECRET` / `TOCXI_BASE_URL`.
 - Tests — `client.test.ts`, `webhook.test.ts`, `store.idempotency.test.ts`
   (25 tests; wired into `vitest.config.ts`). Full suite green (`npm test`).
-- Admin — a **Logistics** tab in `src/app/shop/admin/page.tsx` (shipment list,
-  status, tracking link, cancel-before-pickup).
+- Admin — a **Logistics** tab in `src/app/shop/admin/page.tsx`: a **manual
+  booking form** (order id + pickup/drop + COD, with a "Check price"
+  serviceability probe via `/quote`) plus the shipment list, status, tracking
+  link, and cancel-before-pickup (Phase 7, T-22/T-23).
 
-**Deferred — needs a team decision (Phase 6, T-19/T-20/T-21):** the checkout
-delivery-fee quote and the *book-on-order-paid* trigger touch the live ONDC
-order + payment flow (mid-overhaul), and the roadmap itself flags the auto-book
-vs. manual-book choice as a call to confirm first. The backend is ready for
-either wiring — `POST /api/logistics/shipments` with the order id as
-`partnerReference` is the single seam to call. Onboarding + deploy (Phases 0, 9)
-are external (real credentials / Vercel env / webhook registration).
+**Booking trigger — DECIDED: manual-from-admin.** The auto-book-on-order-paid
+option (T-20) is intentionally NOT wired; an admin books each COD delivery by
+hand from the Logistics tab, so the live ONDC order + payment flow (mid-overhaul)
+stays untouched. The seam remains `POST /api/logistics/shipments` with the order
+id as `partnerReference` if auto-book is ever revisited.
+
+**Still deferred:** buyer-facing tracking on the order page (T-21) — reads its
+own row via `GET /api/logistics/shipments/{orderId}`, deferred until the shop
+overhaul settles. Onboarding + deploy (Phases 0, 9) are external (real
+credentials / Vercel env / webhook registration).
 
 ---
 
