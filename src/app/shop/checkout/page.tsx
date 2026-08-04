@@ -38,6 +38,17 @@ const FULFILLMENT_ICON: Record<string, typeof Truck> = {
   "Buyer-Delivery": Bike,
 };
 
+// A seller can reject select/init/confirm for reasons a shopper can't act on:
+// serviceability, a mis-configured or mis-versioned seller (e.g. the raw ONDC
+// NACK "Core version not supported"), out of stock, or simply never returning a
+// quote. The raw seller error — numeric codes, protocol jargon — is noise to a
+// buyer, so we swap it for plain-language copy that points at the one thing they
+// CAN do: buy the same item from a different seller. (The error screen's
+// "Search again" button is the recovery this copy refers to.)
+const SELLER_UNAVAILABLE_MESSAGE =
+  "This seller couldn't process your order right now. The same items are often " +
+  'available from other sellers — tap "Search again" to try a different one.';
+
 type Step = "address" | "quoting" | "review" | "placing" | "error";
 
 export default function CheckoutPage() {
@@ -194,7 +205,7 @@ export default function CheckoutPage() {
         fulfillment,
       });
       if (res.status === "NACK") {
-        throw new Error(res.error?.message ?? "Seller rejected the selection.");
+        throw new Error(SELLER_UNAVAILABLE_MESSAGE);
       }
       const state = await api.waitFor(
         transactionId,
@@ -209,9 +220,7 @@ export default function CheckoutPage() {
       // seller/network). Fail clearly and send the buyer back to search rather
       // than proceeding to "review" with a misleading local estimate.
       if (!quoteRecord) {
-        throw new Error(
-          "The seller didn't return a price — your search may have expired. Please search again to get live prices."
-        );
+        throw new Error(SELLER_UNAVAILABLE_MESSAGE);
       }
       setQuote(parseQuote(quoteRecord));
       // Surface the seller's offered fulfillment options (Home delivery /
@@ -268,7 +277,7 @@ export default function CheckoutPage() {
         instructions: instructions.trim() || undefined,
       });
       if (initRes.status === "NACK") {
-        throw new Error(initRes.error?.message ?? "Init was rejected.");
+        throw new Error(SELLER_UNAVAILABLE_MESSAGE);
       }
       // Wait for the on_init order (its inner ONDC order object) to surface.
       const initedState = await api.waitFor(
@@ -281,9 +290,7 @@ export default function CheckoutPage() {
         (b) => b.bppId === cartBpp.bppId
       )?.order?.order;
       if (!initedOrder) {
-        throw new Error(
-          "The seller hasn't finalised your order yet. Please try again in a moment."
-        );
+        throw new Error(SELLER_UNAVAILABLE_MESSAGE);
       }
 
       setStatusMsg("Placing your order…");
@@ -299,7 +306,7 @@ export default function CheckoutPage() {
         order: initedOrder,
       });
       if (confirmRes.status === "NACK") {
-        throw new Error(confirmRes.error?.message ?? "Confirm was rejected.");
+        throw new Error(SELLER_UNAVAILABLE_MESSAGE);
       }
       const finalState = await api.waitFor(
         transactionId,
