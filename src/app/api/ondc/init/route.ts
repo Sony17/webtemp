@@ -30,9 +30,10 @@
 // `NextResponse`, `runtime = "nodejs"`, JSON-body parsing with a 400 guard.
 import { NextResponse } from "next/server";
 import { isOndcConfigured } from "@/lib/ondc/config";
-import { buildContext } from "@/lib/ondc/context";
-import { sendOndcRequest, OndcClientError } from "@/lib/ondc/client";
+import type { OndcContext } from "@/lib/ondc/context";
+import { OndcClientError } from "@/lib/ondc/client";
 import { getQuote } from "@/lib/ondc/store";
+import { sendDirectedWithVersionFallback } from "@/lib/ondc/version-fallback";
 
 // ONDC signing uses node:crypto (via auth.ts), and the whole ondc/* stack is
 // `import "server-only"` — so this handler must run on the Node runtime, not
@@ -391,7 +392,9 @@ function buildInitMessage(input: {
           ...(input.billing.locality ? { locality: input.billing.locality } : {}),
           ...(input.billing.city ? { city: input.billing.city } : {}),
           ...(input.billing.state ? { state: input.billing.state } : {}),
-          ...(input.billing.country ? { country: input.billing.country } : {}),
+          // ONDC is India-only; strict 1.2.0 sellers (e.g. seller.easypay.co.in)
+          // require address.country. Default to IND when the buyer didn't type one.
+          country: input.billing.country ?? "IND",
           ...(input.billing.areaCode ? { area_code: input.billing.areaCode } : {}),
         }
       : undefined;
@@ -465,7 +468,10 @@ function buildInitMessage(input: {
                 ...(input.billing.locality ? { locality: input.billing.locality } : {}),
                 ...(input.billing.city ? { city: input.billing.city } : {}),
                 ...(input.billing.state ? { state: input.billing.state } : {}),
-                ...(input.billing.country ? { country: input.billing.country } : {}),
+                // ONDC is India-only; strict 1.2.0 sellers require
+                // fulfillments[].end.location.address.country (easypay NACKs 30000
+                // without it). Default to IND when the buyer didn't type one.
+                country: input.billing.country ?? "IND",
                 ...(input.deliveryAreaCode ?? input.billing.areaCode
                   ? { area_code: input.deliveryAreaCode ?? input.billing.areaCode }
                   : {}),
@@ -600,22 +606,15 @@ export async function POST(req: Request) {
   }
   if (!fulfillmentId) fulfillmentId = "F1";
 
-  // Build the `context` envelope. Like select, init is directed: we reuse the
-  // caller's transaction_id and thread bppId/bppUri through so buildContext
-  // attaches bpp_id/bpp_uri (required for every non-search action). message_id
-  // is minted fresh per request inside buildContext.
-  const context = buildContext({
-    action: "init",
-    transactionId,
-    bppId,
-    bppUri,
-  });
+  // Timestamp for the billing block. Independent of the context timestamp (which
+  // buildContext mints per attempt inside the fallback); a few ms apart is fine.
+  const billingTimestamp = new Date().toISOString();
 
   const message = buildInitMessage({
     providerId,
     items: itemsResult.items,
     billing: billingResult.billing,
-    timestamp: context.timestamp,
+    timestamp: billingTimestamp,
     fulfillmentId,
     fulfillmentType,
     deliveryGps,
@@ -627,13 +626,27 @@ export async function POST(req: Request) {
   // directed distinction; the URL must match).
   const url = `${bppOrigin}/init`;
 
+  // Context is built inside the version-fallback helper (it owns the core-version
+  // choice: 1.2.5 first, retrying at 1.2.0 only if the seller NACKs the version —
+  // some sellers are still on 1.2.0). Keep the winning context for the catch.
+  let usedContext: OndcContext | null = null;
   try {
-    const result = await sendOndcRequest<OndcInitMessage>({
-      url,
-      action: "init",
-      context,
-      message,
-    });
+    const { result, context, usedVersionFallback } =
+      await sendDirectedWithVersionFallback<OndcInitMessage>({
+        url,
+        action: "init",
+        contextParams: { action: "init", transactionId, bppId, bppUri },
+        message,
+      });
+    usedContext = context;
+
+    if (usedVersionFallback) {
+      console.log("ondc.init version-field fallback used", {
+        transactionId: context.transaction_id,
+        bppId,
+        finalStatus: result.status,
+      });
+    }
 
     // The synchronous reply is only ACK/NACK. On ACK the BPP accepted the init
     // and the firmed-up order will arrive asynchronously on on_init — we hand the
@@ -659,8 +672,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: err.message,
-          transactionId: context.transaction_id,
-          messageId: context.message_id,
+          transactionId: usedContext?.transaction_id ?? transactionId,
+          messageId: usedContext?.message_id,
         },
         { status: err.timeout ? 504 : 502 }
       );

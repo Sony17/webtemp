@@ -32,8 +32,9 @@
 // `NextResponse`, `runtime = "nodejs"`, JSON-body parsing with a 400 guard.
 import { NextResponse } from "next/server";
 import { isOndcConfigured } from "@/lib/ondc/config";
-import { buildContext } from "@/lib/ondc/context";
-import { sendOndcRequest, OndcClientError } from "@/lib/ondc/client";
+import type { OndcContext } from "@/lib/ondc/context";
+import { OndcClientError } from "@/lib/ondc/client";
+import { sendDirectedWithVersionFallback } from "@/lib/ondc/version-fallback";
 
 // ONDC signing uses node:crypto (via auth.ts), and the whole ondc/* stack is
 // `import "server-only"` — so this handler must run on the Node runtime, not
@@ -353,17 +354,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // Build the `context` envelope. Unlike search, select is directed: we reuse
-  // the caller's transaction_id and thread bppId/bppUri through so buildContext
-  // attaches bpp_id/bpp_uri (required for every non-search action). message_id
-  // is minted fresh per request inside buildContext.
-  const context = buildContext({
-    action: "select",
-    transactionId,
-    bppId,
-    bppUri,
-  });
-
   const message = buildSelectMessage({
     providerId,
     items: itemsResult.items,
@@ -378,16 +368,52 @@ export async function POST(req: Request) {
   // directed distinction; the URL must match).
   const url = `${bppOrigin}/select`;
 
+  // The `context` envelope is built inside the version-fallback helper, which
+  // owns the version-field choice: it sends the default `core_version` envelope
+  // and, only if the seller NACKs it as an unsupported core version, retries the
+  // SAME order under the `version` field (some strict sellers read that instead).
+  // We keep the winning context in scope for the catch block's logging/response.
+  let usedContext: OndcContext | null = null;
   try {
-    const result = await sendOndcRequest<OndcSelectMessage>({
-      url,
-      action: "select",
-      context,
-      message,
-      // Workbench/seller requires the Digest header as a precondition (returns
-      // HTTP 428 without it). Same as search/route.ts.
-      sendDigestHeader: true,
-    });
+    const { result, context, usedVersionFallback } =
+      await sendDirectedWithVersionFallback<OndcSelectMessage>({
+        url,
+        action: "select",
+        // transaction_id is reused; bppId/bppUri make buildContext attach
+        // bpp_id/bpp_uri (required for every non-search action). message_id is
+        // minted fresh per attempt inside buildContext.
+        contextParams: { action: "select", transactionId, bppId, bppUri },
+        message,
+        // Workbench/seller requires the Digest header as a precondition (returns
+        // HTTP 428 without it). Same as search/route.ts.
+        sendDigestHeader: true,
+      });
+    usedContext = context;
+
+    if (usedVersionFallback) {
+      console.log("ondc.select version-field fallback used", {
+        transactionId: context.transaction_id,
+        bppId,
+        finalStatus: result.status,
+      });
+    }
+
+    // A NACK is a valid protocol outcome, not a transport fault — but it's the
+    // exact reason a checkout dead-ends, and until now its reason lived ONLY in
+    // the HTTP response body (gone the moment the buyer navigates away). Log it
+    // server-side so a 422 is diagnosable from logs. `usedDefaultLocation` flags
+    // the top suspect: we sent the placeholder serving-location id because a
+    // chosen item carried none from discovery (see DEFAULT_PROVIDER_LOCATION_ID).
+    if (result.status === "NACK") {
+      console.warn("ondc.select NACK", {
+        transactionId: context.transaction_id,
+        messageId: context.message_id,
+        bppId,
+        providerId,
+        usedDefaultLocation: itemsResult.items.some((it) => !it.locationId),
+        error: result.error,
+      });
+    }
 
     // The synchronous reply is only ACK/NACK. On ACK the BPP accepted the select
     // and the quote will arrive asynchronously on on_select — we hand the caller
@@ -411,7 +437,7 @@ export async function POST(req: Request) {
     // throw. Map a timeout to 504, any other transport fault to 502.
     if (err instanceof OndcClientError) {
       console.error("ondc.select client error", {
-        transactionId: context.transaction_id,
+        transactionId: usedContext?.transaction_id ?? transactionId,
         message: err.message,
         httpStatus: err.httpStatus,
         responseHeaders: err.responseHeaders,
@@ -420,8 +446,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: err.message,
-          transactionId: context.transaction_id,
-          messageId: context.message_id,
+          transactionId: usedContext?.transaction_id ?? transactionId,
+          messageId: usedContext?.message_id,
           debug: {
             httpStatus: err.httpStatus,
             responseHeaders: err.responseHeaders,

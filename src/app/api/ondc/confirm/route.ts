@@ -36,9 +36,10 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { isOndcConfigured } from "@/lib/ondc/config";
-import { buildContext } from "@/lib/ondc/context";
-import { sendOndcRequest, OndcClientError } from "@/lib/ondc/client";
+import type { OndcContext } from "@/lib/ondc/context";
+import { OndcClientError } from "@/lib/ondc/client";
 import { getOrder, saveConfirmOrder } from "@/lib/ondc/store";
+import { sendDirectedWithVersionFallback } from "@/lib/ondc/version-fallback";
 import { sendEmail } from "@/lib/email/send";
 import { orderConfirmationEmail } from "@/lib/email/templates";
 
@@ -430,17 +431,6 @@ export async function POST(req: Request) {
     confirmOrder.id = orderId;
   }
 
-  // Build the `context` envelope. Like init, confirm is directed: we reuse the
-  // caller's transaction_id and thread bppId/bppUri through so buildContext
-  // attaches bpp_id/bpp_uri (required for every non-search action). message_id
-  // is minted fresh per request inside buildContext.
-  const context = buildContext({
-    action: "confirm",
-    transactionId,
-    bppId,
-    bppUri,
-  });
-
   // The confirm message IS the finalized order — we commit to what on_init
   // firmed up rather than re-deriving it (the key difference from init).
   const message: OndcConfirmMessage = { order: orderResult.order };
@@ -450,13 +440,29 @@ export async function POST(req: Request) {
   // directed distinction; the URL must match).
   const url = `${bppOrigin}/confirm`;
 
+  // Context is built inside the version-fallback helper (1.2.5 first, retried at
+  // 1.2.0 only on a version NACK — for sellers still on 1.2.0). The order (and
+  // its BNP-minted order id) is identical across both attempts, and a version
+  // NACK means the seller rejected the first attempt, so nothing is placed twice.
+  // Keep the winning context for the persist + response + catch.
+  let usedContext: OndcContext | null = null;
   try {
-    const result = await sendOndcRequest<OndcConfirmMessage>({
-      url,
-      action: "confirm",
-      context,
-      message,
-    });
+    const { result, context, usedVersionFallback } =
+      await sendDirectedWithVersionFallback<OndcConfirmMessage>({
+        url,
+        action: "confirm",
+        contextParams: { action: "confirm", transactionId, bppId, bppUri },
+        message,
+      });
+    usedContext = context;
+
+    if (usedVersionFallback) {
+      console.log("ondc.confirm version-field fallback used", {
+        transactionId: context.transaction_id,
+        bppId,
+        finalStatus: result.status,
+      });
+    }
 
     // The synchronous reply is only ACK/NACK. On ACK the BPP accepted the order
     // and the placed-order state will arrive asynchronously on on_confirm — we
@@ -534,8 +540,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: err.message,
-          transactionId: context.transaction_id,
-          messageId: context.message_id,
+          transactionId: usedContext?.transaction_id ?? transactionId,
+          messageId: usedContext?.message_id,
         },
         { status: err.timeout ? 504 : 502 }
       );
