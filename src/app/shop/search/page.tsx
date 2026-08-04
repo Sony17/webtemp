@@ -11,7 +11,7 @@ import { RefreshCw, Search as SearchIcon, SearchX, Store } from "lucide-react";
 import { Button } from "@/components/shop/ui";
 import { EmptyState, ProductCard, Spinner } from "@/components/shop/widgets";
 import { ErrorState } from "@/components/shop/ErrorState";
-import { ProductGridSkeleton } from "@/components/shop/Skeletons";
+import { SearchLoader } from "@/components/shop/SearchLoader";
 import { FilterSheet } from "@/components/shop/Filters";
 import { Stagger, StaggerItem } from "@/components/shop/motion";
 import { useShop } from "@/lib/shop/store";
@@ -234,7 +234,7 @@ function SearchScreen() {
           onRetry={() => runSearch(q)}
         />
       ) : searching && !txn ? (
-        <ProductGridSkeleton />
+        <SearchLoader />
       ) : !txn ? (
         <EmptyState
           icon={<SearchIcon className="h-7 w-7" />}
@@ -243,7 +243,7 @@ function SearchScreen() {
         />
       ) : products.length === 0 ? (
         polling ? (
-          <ProductGridSkeleton />
+          <SearchLoader />
         ) : (
           <EmptyState
             icon={<SearchX className="h-7 w-7" />}
@@ -257,7 +257,7 @@ function SearchScreen() {
         // polling stops, show a definitive "No products found" instead of the
         // unmatched full catalog.
         polling ? (
-          <ProductGridSkeleton />
+          <SearchLoader />
         ) : (
           <EmptyState
             icon={<SearchX className="h-7 w-7" />}

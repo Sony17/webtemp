@@ -3,9 +3,14 @@
 import { Skeleton } from "@/components/shop/ui";
 import { cn } from "@/lib/shop/cn";
 
-export function ProductCardSkeleton() {
+export function ProductCardSkeleton({ shimmer }: { shimmer?: boolean }) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-soft">
+    <div
+      className={cn(
+        "flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-soft",
+        shimmer && "skeleton-shimmer"
+      )}
+    >
       <Skeleton className="aspect-square w-full rounded-none" />
       <div className="space-y-2 p-3">
         <Skeleton className="h-3 w-16" />
@@ -23,9 +28,13 @@ export function ProductCardSkeleton() {
 export function ProductGridSkeleton({
   count = 10,
   className,
+  shimmer,
 }: {
   count?: number;
   className?: string;
+  // Adds a moving sheen sweep on top of the pulse — a more premium "still
+  // loading" feel for the longer ONDC discovery wait.
+  shimmer?: boolean;
 }) {
   return (
     <div
@@ -35,7 +44,7 @@ export function ProductGridSkeleton({
       )}
     >
       {Array.from({ length: count }).map((_, i) => (
-        <ProductCardSkeleton key={i} />
+        <ProductCardSkeleton key={i} shimmer={shimmer} />
       ))}
     </div>
   );
