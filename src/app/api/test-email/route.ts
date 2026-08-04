@@ -28,12 +28,12 @@ export async function POST(req: Request) {
 
   const result = await sendEmail({
     to,
-    subject: "OpenIdea — test email",
+    subject: "Open Groceries — test email",
     html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
       <h2 style="margin:0 0 8px">Test email</h2>
       <p style="margin:0 0 16px;color:#444">If you're reading this, Resend is working correctly for <strong>${emailFrom()}</strong>.</p>
       <hr style="border:none;border-top:1px solid #eee" />
-      <p style="color:#888;font-size:12px">Sent from the OpenIdea admin · ${new Date().toISOString()}</p>
+      <p style="color:#888;font-size:12px">Sent from the Open Groceries admin · ${new Date().toISOString()}</p>
     </div>`,
   });
 

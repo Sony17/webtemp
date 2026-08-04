@@ -1,5 +1,13 @@
 @AGENTS.md
 
+## Safety rules
+
+- Never modify or delete production data.
+- Never commit or push changes unless I explicitly approve.
+- Never access or upload session, credential, or secret files.
+- Only work in the current branch.
+- Ask for confirmation before any destructive operation.
+
 ## Buyer Delivery Flow — /select curl
 
 Mints a fresh UUID for `transactionId` on every invocation (Delivery Flow is a new session per ONDC contract); reuse the printed id through `on_select` → `init` → `on_init` → `confirm` → `on_confirm`.

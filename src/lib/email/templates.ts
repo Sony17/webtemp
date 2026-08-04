@@ -38,7 +38,7 @@ export function orderConfirmationEmail(opts: {
   total?: string;
   orderUrl?: string;
 }): { subject: string; html: string } {
-  const subject = `Your OpenIdea order is confirmed — #${opts.orderId}`;
+  const subject = `Your Open Groceries order is confirmed — #${opts.orderId}`;
   const seller = opts.providerName ? ` from ${escapeHtml(opts.providerName)}` : "";
   const cta = opts.orderUrl
     ? `<p style="margin:24px 0"><a href="${opts.orderUrl}" style="background:#2563eb;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600;display:inline-block">View your order</a></p>`
@@ -46,7 +46,7 @@ export function orderConfirmationEmail(opts: {
 
   const html = wrapHtml(`
   <h2 style="margin:0 0 8px">Order confirmed</h2>
-  <p style="margin:0 0 16px;color:#444">Thanks for shopping on OpenIdea. Your order${seller} has been placed on the ONDC network.</p>
+  <p style="margin:0 0 16px;color:#444">Thanks for shopping on Open Groceries. Your order${seller} has been placed on the ONDC network.</p>
   ${orderDetailsTable(opts)}
   ${cta}
   ${footer()}

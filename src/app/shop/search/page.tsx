@@ -171,7 +171,7 @@ function SearchScreen() {
     <div className="space-y-4">
       <form
         onSubmit={submit}
-        className="sticky top-14 z-20 -mx-4 bg-background/80 px-4 py-2 backdrop-blur-md"
+        className="sticky top-14 z-20 -mx-4 bg-background/80 px-4 py-2 backdrop-blur-md md:top-16 md:-mx-6 md:px-6"
       >
         <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 shadow-sm focus-within:ring-2 focus-within:ring-ring">
           <SearchIcon className="h-5 w-5 text-muted-foreground" />
@@ -280,10 +280,10 @@ function SearchScreen() {
           }
         />
       ) : (
-        <Stagger className="grid grid-cols-2 gap-3">
+        <Stagger className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {shown.map((p, i) => (
             <StaggerItem key={`${p.bppId}:${p.providerId}:${p.itemId}`}>
-              <ProductCard product={p} onAdd={addToCart} priority={i < 4} />
+              <ProductCard product={p} onAdd={addToCart} priority={i < 5} />
             </StaggerItem>
           ))}
         </Stagger>

@@ -10,7 +10,7 @@
 //   2. Add + verify the domain openidea.co.in (DNS: SPF + DKIM records Resend
 //      gives you) so mail can be sent FROM support@openidea.co.in.
 //   3. Create an API key → set RESEND_API_KEY in Vercel (Production).
-//   4. Optionally set EMAIL_FROM (defaults to "OpenIdea <support@openidea.co.in>").
+//   4. Optionally set EMAIL_FROM (defaults to "Open Groceries <support@openidea.co.in>").
 //
 // Shared helper: sendBuyerEmail extracts billing.email from the stored order and
 // sends the provided subject/html. All callers fire-and-forget so a failure never
@@ -59,7 +59,7 @@ export async function sendBuyerEmail(
 // The verified From identity. Must be an address on a domain verified in Resend
 // (or Resend's onboarding@resend.dev while testing). Override via EMAIL_FROM.
 export function emailFrom(): string {
-  return process.env.EMAIL_FROM?.trim() || "OpenIdea <support@openidea.co.in>";
+  return process.env.EMAIL_FROM?.trim() || "Open Groceries <support@openidea.co.in>";
 }
 
 // Whether email is wired (an API key is present). Callers can skip work when off.

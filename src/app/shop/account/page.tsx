@@ -147,8 +147,8 @@ export default function AccountPage() {
           <Info className="h-4 w-4" /> About
         </h2>
         <p className="mt-1.5 text-xs text-muted-foreground">
-          OpenIdea is a Buyer App on the ONDC network (RET10). You shop across
-          many independent sellers through one open protocol — discovery,
+          Open Groceries is a Buyer App on the ONDC network (RET10). You shop
+          across many independent sellers through one open protocol — discovery,
           ordering, fulfilment and grievances all run on ONDC.
         </p>
       </Card>

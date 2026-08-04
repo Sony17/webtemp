@@ -13,6 +13,31 @@ import { Rating } from "@/components/shop/Rating";
 import { productKey } from "@/lib/shop/hooks/use-favourites";
 import { cn, formatINR } from "@/lib/shop/cn";
 import type { Product } from "@/lib/shop/types";
+import type { ShopCategory } from "@/lib/shop/categories";
+
+// A single grocery category tile: a soft tinted chip with a lucide icon and a
+// label, linking to a seeded ONDC search. No emoji (see the no-emoji rule).
+export function CategoryTile({ category }: { category: ShopCategory }) {
+  const { Icon, tint, label, query } = category;
+  return (
+    <Link
+      href={`/shop/search?q=${encodeURIComponent(query)}`}
+      className="group flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-3 text-center shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft-lg"
+    >
+      <span
+        className={cn(
+          "grid h-14 w-14 place-items-center rounded-2xl transition-transform group-hover:scale-105 sm:h-16 sm:w-16",
+          tint
+        )}
+      >
+        <Icon className="h-7 w-7" strokeWidth={1.75} />
+      </span>
+      <span className="text-[11px] font-medium leading-tight sm:text-xs">
+        {label}
+      </span>
+    </Link>
+  );
+}
 
 export function SectionHeader({
   title,
@@ -284,16 +309,16 @@ export function ProductCard({
   )}`;
 
   return (
-    <Card className="flex flex-col overflow-hidden">
-      <Link href={href} className="relative block aspect-square">
+    <Card className="group flex flex-col overflow-hidden shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-soft-lg">
+      <Link href={href} className="relative block aspect-square overflow-hidden bg-muted/40">
         <ProductThumb
           src={product.image}
           alt={product.name}
           priority={priority}
-          className="h-full w-full"
+          className="h-full w-full transition-transform duration-300 group-hover:scale-105"
         />
         {discount > 0 ? (
-          <span className="absolute left-2 top-2 rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
+          <span className="absolute left-2 top-2 rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground shadow-soft">
             {discount}% OFF
           </span>
         ) : null}
@@ -304,7 +329,7 @@ export function ProductCard({
         />
       </Link>
       <div className="flex flex-1 flex-col p-3">
-        <Link href={href} className="line-clamp-2 text-sm font-medium">
+        <Link href={href} className="line-clamp-2 text-sm font-medium leading-snug">
           {product.name}
         </Link>
         {/* Seller name first (so buyers can tell sellers apart / pick a specific
@@ -331,7 +356,7 @@ export function ProductCard({
             <Button
               size="sm"
               variant="outline"
-              className="h-8 px-3"
+              className="h-8 border-primary/40 bg-primary/5 px-4 font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
               onClick={() => onAdd(product)}
             >
               Add

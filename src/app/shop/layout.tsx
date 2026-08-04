@@ -9,8 +9,8 @@ import { ThemeProvider } from "@/lib/shop/theme";
 import Chrome from "@/components/shop/Chrome";
 
 export const metadata: Metadata = {
-  title: "OpenIdea — Shop on ONDC",
-  description: "Discover and buy from sellers across the ONDC network.",
+  title: "Open Groceries — Fresh groceries on ONDC",
+  description: "Shop fresh groceries from local sellers across the ONDC network.",
 };
 
 export default function ShopLayout({
