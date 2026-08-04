@@ -21,15 +21,22 @@
 // server-only, mirroring config/context/auth/client/store/registry.
 import "server-only";
 import { signRequest } from "@/lib/ondc/auth";
-import { getOndcConfig } from "@/lib/ondc/config";
+import { getOndcConfig, type OndcEnvironment } from "@/lib/ondc/config";
 
 // ONDC registry participant role for the lookup `type` filter. OpenIdea is a
-// Buyer NP, so its registry participant type is "buyerApp" — the exact value the
-// ONDC portal registers and the registry `type` enum expects (NOT the Beckn role
-// token "BAP", which belongs to bap_id/bpp_id in transaction context, not the
-// registry type discriminator). The registry enum uses buyerApp / sellerApp /
-// gateway / LSP, so "BAP" here would never match a record.
-const LOOKUP_PARTICIPANT_TYPE = "buyerApp";
+// Buyer NP, but the registry's `type` VOCABULARY differs by environment, and the
+// filter is an EXACT match — the wrong token yields NACK 15045 "No matching
+// network participant found" even though the record is present and SUBSCRIBED.
+//
+// Verified live against prod.registry.ondc.org (2026-08): a /lookup with
+// type="buyerApp" NACKs 15045, while type="BAP" returns the record — whose own
+// stored `type` is "BAP". So prod uses the Beckn role tokens (BAP / BPP / BG),
+// whereas the pre-prod/staging v2.0 registry uses the portal vocabulary
+// (buyerApp / sellerApp / gateway / LSP) — consistent with registry-client.ts
+// sending "sellerApp" to preprod. Hence the filter is chosen by env, not fixed.
+function lookupParticipantType(env: OndcEnvironment): string {
+  return env === "prod" ? "BAP" : "buyerApp";
+}
 
 // Result of a single diagnostic /lookup call. `raw` is whatever the registry
 // returned: parsed JSON when the body is JSON, otherwise the raw text (so a
@@ -81,7 +88,7 @@ export async function lookupSubscriber(
     domain: config.domain,
     country: config.countryCode,
     city: config.cityCode,
-    type: LOOKUP_PARTICIPANT_TYPE,
+    type: lookupParticipantType(config.env),
     ukId: config.uniqueKeyId,
   };
 

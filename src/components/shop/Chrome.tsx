@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronDown,
   MapPin,
+  Store,
 } from "lucide-react";
 import { cn } from "@/lib/shop/cn";
 import { useShop } from "@/lib/shop/store";
@@ -152,6 +153,7 @@ function mobileTitle(pathname: string): string {
   if (pathname.startsWith("/shop/orders")) return "Your orders";
   if (pathname.startsWith("/shop/account")) return "My account";
   if (pathname.startsWith("/shop/search")) return "Search";
+  if (pathname.startsWith("/shop/sellers")) return "Stores";
   if (pathname.startsWith("/shop/seller")) return "Store";
   if (pathname.startsWith("/shop/product")) return "Product details";
   if (pathname.startsWith("/shop/order")) return "Order details";
@@ -233,6 +235,12 @@ function Header({
 
         {/* Desktop actions */}
         <nav className="flex shrink-0 items-center gap-1">
+          <HeaderNavLink
+            href="/shop/sellers"
+            icon={Store}
+            label="Stores"
+            active={pathname.startsWith("/shop/sellers")}
+          />
           <HeaderNavLink
             href="/shop/orders"
             icon={Package}

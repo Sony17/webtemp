@@ -49,6 +49,11 @@ export function search(body: {
   category?: string;
   deliveryGps?: string;
   deliveryAreaCode?: string;
+  // Buyer's reverse-geocoded place — carried only so the dev mock catalog can
+  // locate its synthetic sellers in the buyer's city (not sent to the network).
+  deliveryCity?: string;
+  deliveryLocality?: string;
+  deliveryState?: string;
   transactionId?: string;
   incremental?: boolean;
   incrementalMode?: "start" | "stop" | "pull";

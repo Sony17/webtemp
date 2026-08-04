@@ -35,6 +35,7 @@ import { isOndcConfigured } from "@/lib/ondc/config";
 import type { OndcContext } from "@/lib/ondc/context";
 import { OndcClientError } from "@/lib/ondc/client";
 import { sendDirectedWithVersionFallback } from "@/lib/ondc/version-fallback";
+import { recordOutboundNack } from "@/lib/ondc/audit";
 
 // ONDC signing uses node:crypto (via auth.ts), and the whole ondc/* stack is
 // `import "server-only"` — so this handler must run on the Node runtime, not
@@ -412,6 +413,17 @@ export async function POST(req: Request) {
         providerId,
         usedDefaultLocation: itemsResult.items.some((it) => !it.locationId),
         error: result.error,
+      });
+      // Persist it (durable, seller-keyed) so /shop/admin can surface which
+      // sellers are rejecting orders. Fire-and-forget.
+      recordOutboundNack({
+        action: "select",
+        bppId,
+        providerId,
+        transactionId: context.transaction_id,
+        messageId: context.message_id,
+        errorCode: result.error?.code,
+        responseBody: result.error,
       });
     }
 

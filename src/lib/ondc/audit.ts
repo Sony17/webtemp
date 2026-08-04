@@ -43,6 +43,11 @@ export type AuditEvent = {
   transactionId?: string;
   messageId?: string;
   bppId?: string;
+  // Provider within the BPP, when known. Inbound on_* callbacks don't carry it
+  // (the context has only bpp_id), but OUTBOUND actions we initiate (select /
+  // init / confirm) target a specific provider — recordOutboundNack sets it so
+  // the admin "seller health" roll-up can key NACKs by (bppId, providerId).
+  providerId?: string;
   // What we replied with. responseBody is the ack/nack envelope object (not
   // re-serialised — kept structured so the audit reader can filter on code).
   responseStatus: number;
@@ -245,6 +250,51 @@ export function finalizeAuditTrace(
     } catch (err) {
       console.warn("ondc.audit write failed", {
         action: trace.action,
+        msg: err instanceof Error ? err.message : String(err),
+      });
+    }
+  })();
+}
+
+// Record an OUTBOUND action's NACK (select / init / confirm — the BAP-initiated
+// half of the lifecycle). Those routes don't run through beginAuditTrace — that
+// is for INBOUND on_* callbacks, which have request headers and a raw body — so
+// this is the thin outbound equivalent: it appends the same AuditEvent shape
+// with just the fields an outbound exchange actually has, marked ackStatus:
+// "NACK". This is what makes a checkout dead-end (a seller rejection) visible in
+// the admin "seller health" view instead of vanishing into the HTTP response.
+// Fire-and-forget, exactly like finalizeAuditTrace — never await in the hot path.
+export function recordOutboundNack(input: {
+  action: string;
+  bppId?: string;
+  providerId?: string;
+  transactionId?: string;
+  messageId?: string;
+  errorCode?: string;
+  responseBody?: unknown;
+}): void {
+  const ev: AuditEvent = {
+    ts: new Date().toISOString(),
+    action: input.action,
+    durationMs: 0,
+    requestHeaders: {},
+    rawBody: "",
+    transactionId: input.transactionId,
+    messageId: input.messageId,
+    bppId: input.bppId,
+    providerId: input.providerId,
+    responseStatus: 422,
+    responseBody: input.responseBody ?? null,
+    ackStatus: "NACK",
+    errorCode: input.errorCode,
+  };
+  void (async () => {
+    try {
+      await ensureHydrated();
+      await appendEvent(ev);
+    } catch (err) {
+      console.warn("ondc.audit outbound-nack write failed", {
+        action: input.action,
         msg: err instanceof Error ? err.message : String(err),
       });
     }

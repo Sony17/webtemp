@@ -40,6 +40,7 @@ import type { OndcContext } from "@/lib/ondc/context";
 import { OndcClientError } from "@/lib/ondc/client";
 import { getOrder, saveConfirmOrder } from "@/lib/ondc/store";
 import { sendDirectedWithVersionFallback } from "@/lib/ondc/version-fallback";
+import { recordOutboundNack } from "@/lib/ondc/audit";
 import { sendEmail } from "@/lib/email/send";
 import { orderConfirmationEmail } from "@/lib/email/templates";
 
@@ -518,6 +519,20 @@ export async function POST(req: Request) {
         });
         void sendEmail({ to: billingEmail, subject, html });
       }
+    }
+
+    if (result.status === "NACK") {
+      // Durable, seller-keyed record for the admin "seller health" view (same as
+      // select / init). providerId lives on the order at this stage.
+      recordOutboundNack({
+        action: "confirm",
+        bppId,
+        providerId: str(confirmOrder.provider?.id),
+        transactionId: context.transaction_id,
+        messageId: context.message_id,
+        errorCode: result.error?.code,
+        responseBody: result.error,
+      });
     }
 
     const payload = {

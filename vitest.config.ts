@@ -23,6 +23,7 @@ export default defineConfig({
     include: [
       "src/lib/ondc/**/*.test.ts",
       "src/lib/logistics/**/*.test.ts",
+      "src/lib/shop/**/*.test.ts",
     ],
     exclude: ["src/lib/ondc/payment.test.ts", "node_modules/**"],
   },

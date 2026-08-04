@@ -20,6 +20,8 @@ import { NextResponse } from "next/server";
 import { getOndcConfig, isOndcConfigured } from "@/lib/ondc/config";
 import { buildContext } from "@/lib/ondc/context";
 import { sendOndcRequest, OndcClientError } from "@/lib/ondc/client";
+import { buildMockCatalog } from "@/lib/ondc/mock-catalog";
+import { saveCatalog } from "@/lib/ondc/store";
 
 // ONDC signing uses node:crypto (via auth.ts), and the whole ondc/* stack is
 // `import "server-only"` — so this handler must run on the Node runtime, not
@@ -49,6 +51,13 @@ type SearchRequestBody = {
   category?: string;
   deliveryGps?: string;
   deliveryAreaCode?: string;
+  // Buyer's reverse-geocoded place (city / locality / state). ONDC's real
+  // serviceability is keyed on gps+pincode, so these are NOT sent to the network;
+  // they exist so the DEV mock catalog (ONDC_MOCK_CATALOG) can locate its
+  // synthetic sellers in the buyer's actual city instead of a hardcoded one.
+  deliveryCity?: string;
+  deliveryLocality?: string;
+  deliveryState?: string;
   transactionId?: string;
   // Optional override of the dispatch target. Default is `${gatewayUrl}/search`
   // (broadcast to the network via the preprod/prod gateway). Override when
@@ -302,6 +311,9 @@ export async function POST(req: Request) {
   const category = str(body.category);
   const deliveryGps = str(body.deliveryGps);
   const deliveryAreaCode = str(body.deliveryAreaCode);
+  const deliveryCity = str(body.deliveryCity);
+  const deliveryLocality = str(body.deliveryLocality);
+  const deliveryState = str(body.deliveryState);
   const transactionId = str(body.transactionId);
   const targetUrl = str(body.targetUrl);
   const incremental = body.incremental === true;
@@ -370,6 +382,49 @@ export async function POST(req: Request) {
     ...(transactionId ? { transactionId } : {}),
     ...(incremental ? { city: "*" } : {}),
   });
+
+  // DEV OFFLINE MOCK. With ONDC_MOCK_CATALOG=true we never touch the gateway:
+  // synthesize a small multi-seller catalog LOCATED AROUND THE BUYER and write it
+  // straight into the store the buyer app polls (/api/shop/state), then ACK. On a
+  // localhost dev server this is the only way to see location-relevant results —
+  // real on_search callbacks are POSTed to our public bap_uri, and the staging
+  // test sellers are all pinned to one city. Gated to dev by the env flag, which
+  // is unset (off) in every deployed environment.
+  if (process.env.ONDC_MOCK_CATALOG === "true") {
+    const slices = buildMockCatalog({
+      query,
+      category,
+      deliveryGps,
+      deliveryAreaCode,
+      deliveryCity,
+      deliveryLocality,
+      deliveryState,
+    });
+    for (const slice of slices) {
+      await saveCatalog({
+        transactionId: context.transaction_id,
+        bppId: slice.bppId,
+        bppUri: slice.bppUri,
+        messageId: slice.messageId,
+        catalog: slice.catalog,
+      });
+    }
+    console.log("ondc.search MOCK catalog synthesized", {
+      transactionId: context.transaction_id,
+      sellers: slices.length,
+      deliveryGps: deliveryGps ?? null,
+      deliveryCity: deliveryCity ?? null,
+    });
+    return NextResponse.json(
+      {
+        status: "ACK",
+        transactionId: context.transaction_id,
+        messageId: context.message_id,
+        mock: true,
+      },
+      { status: 200 }
+    );
+  }
 
   const message = buildSearchMessage({
     query,

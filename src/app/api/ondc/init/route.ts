@@ -34,6 +34,7 @@ import type { OndcContext } from "@/lib/ondc/context";
 import { OndcClientError } from "@/lib/ondc/client";
 import { getQuote } from "@/lib/ondc/store";
 import { sendDirectedWithVersionFallback } from "@/lib/ondc/version-fallback";
+import { recordOutboundNack } from "@/lib/ondc/audit";
 
 // ONDC signing uses node:crypto (via auth.ts), and the whole ondc/* stack is
 // `import "server-only"` — so this handler must run on the Node runtime, not
@@ -653,6 +654,20 @@ export async function POST(req: Request) {
     // caller the ids needed to correlate that callback. On NACK the BPP rejected
     // it (item now unavailable, not serviceable, …); surface its error and use
     // 422 so clients can distinguish "rejected" from a transport failure.
+    if (result.status === "NACK") {
+      // Durable, seller-keyed record for the admin "seller health" view (same as
+      // select). A seller that NACKs init after ACK-ing select is its own signal.
+      recordOutboundNack({
+        action: "init",
+        bppId,
+        providerId,
+        transactionId: context.transaction_id,
+        messageId: context.message_id,
+        errorCode: result.error?.code,
+        responseBody: result.error,
+      });
+    }
+
     const payload = {
       status: result.status,
       transactionId: context.transaction_id,

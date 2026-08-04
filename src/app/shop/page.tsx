@@ -230,6 +230,25 @@ export default function ShopHome() {
         </div>
       </Reveal>
 
+      {/* Browse stores — nearest-first seller directory */}
+      <Reveal as="section" delay={0.05}>
+        <Link
+          href="/shop/sellers"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-soft transition-colors hover:border-primary/40 hover:bg-accent/30"
+        >
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Store className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">Browse stores near you</p>
+            <p className="truncate text-xs text-muted-foreground">
+              Every seller on the network, sorted by distance
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </Link>
+      </Reveal>
+
       {/* Recently viewed */}
       <RecentlyViewed />
 

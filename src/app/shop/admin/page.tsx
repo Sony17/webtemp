@@ -5,9 +5,17 @@
 // guarded client-side by the same admin flag as the other admin pages
 // (localStorage "oi_admin"; admin/admin login). Demo-grade auth — the data APIs
 // are ungated server-side; harden before production.
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { sortSellersByDistance, formatDistance } from "@/lib/shop/types";
+import { detectCurrentLocation } from "@/lib/shop/geolocate";
 
 // This admin page synchronizes with external systems (the admin flag in
 // localStorage + the dashboard data endpoints), so the auth-guard and data-load
@@ -53,6 +61,21 @@ type Seller = {
   locality?: string;
   city?: string;
   areaCode?: string;
+  gps?: string; // "lat,long" of the seller's first location — drives distance sort
+};
+// One seller's order-rejection roll-up, as returned by GET
+// /api/shop/admin/seller-nacks — how often it NACKed select/init/confirm and the
+// most recent error. The signal behind a checkout dead-end.
+type SellerNack = {
+  bppId: string;
+  providerId?: string;
+  name?: string;
+  total: number;
+  byAction: Record<string, number>;
+  lastAt: string;
+  lastAction: string;
+  lastCode?: string;
+  lastMessage?: string;
 };
 type Payment = {
   transactionId: string;
@@ -93,6 +116,7 @@ type Tab =
   | "overview"
   | "orders"
   | "sellers"
+  | "health"
   | "payments"
   | "logistics"
   | "issues"
@@ -101,6 +125,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "orders", label: "Orders" },
   { id: "sellers", label: "Sellers" },
+  { id: "health", label: "Seller health" },
   { id: "payments", label: "Payments" },
   { id: "logistics", label: "Logistics" },
   { id: "issues", label: "Issues" },
@@ -149,6 +174,10 @@ export default function OndcAdminPage() {
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [registry, setRegistry] = useState<unknown>(null);
   const [sellers, setSellers] = useState<Seller[] | null>(null);
+  const [nacks, setNacks] = useState<SellerNack[] | null>(null);
+  // Reference point for the Sellers tab's distance sort. Empty → sort by name.
+  const [nearGps, setNearGps] = useState("");
+  const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [busyRef, setBusyRef] = useState<string | null>(null);
@@ -215,6 +244,38 @@ export default function OndcAdminPage() {
         .catch(() => setSellers([]));
     }
   }, [authed, tab, sellers]);
+
+  // Seller-health (order rejections) lazy-loaded on first open of its tab.
+  useEffect(() => {
+    if (authed && tab === "health" && nacks === null) {
+      fetch("/api/shop/admin/seller-nacks", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((d: { sellers?: SellerNack[] }) => setNacks(d.sellers ?? []))
+        .catch(() => setNacks([]));
+    }
+  }, [authed, tab, nacks]);
+
+  // Sellers ordered by distance from the reference point (nearest first). With no
+  // reference set, sortSellersByDistance falls back to a stable name sort.
+  const sortedSellers = useMemo(
+    () => (sellers ? sortSellersByDistance(sellers, nearGps.trim() || undefined) : null),
+    [sellers, nearGps]
+  );
+
+  // Prefill the reference point from the browser's location (admin isn't a buyer,
+  // so "distance from buyer" needs a point to measure from — this or a typed gps).
+  const useMyLocation = useCallback(async () => {
+    setLocating(true);
+    setError(null);
+    try {
+      const loc = await detectCurrentLocation();
+      setNearGps(loc.gps);
+    } catch {
+      setError("Couldn't get your location — enter a lat,long manually.");
+    } finally {
+      setLocating(false);
+    }
+  }, []);
 
   const markPaid = async (p: Payment) => {
     const bankReference =
@@ -391,41 +452,153 @@ export default function OndcAdminPage() {
               Every seller (ONDC provider) that has answered a search on this
               network, deduped across all transactions. The network has no global
               directory — a seller appears here only after it returns a catalog.
-              {sellers ? ` ${sellers.length} seen.` : ""}
+              {sortedSellers ? ` ${sortedSellers.length} seen.` : ""}
             </p>
-            {sellers === null ? (
+
+            {/* Distance-sort reference. Admin isn't a buyer, so nearest-first
+                needs a point to measure from: type a lat,long or use this device. */}
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <input
+                value={nearGps}
+                onChange={(e) => setNearGps(e.target.value)}
+                placeholder="Sort near lat,long (e.g. 12.9716,77.5946)"
+                inputMode="decimal"
+                className="w-72 max-w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-emerald-600"
+              />
+              <button
+                onClick={useMyLocation}
+                disabled={locating}
+                className="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800 disabled:opacity-60"
+              >
+                {locating ? "Locating…" : "Use my location"}
+              </button>
+              {nearGps ? (
+                <button
+                  onClick={() => setNearGps("")}
+                  className="rounded-lg px-2 py-2 text-xs text-zinc-500 hover:text-zinc-300"
+                >
+                  Clear
+                </button>
+              ) : (
+                <span className="text-xs text-zinc-600">
+                  or sorted A–Z until a reference is set
+                </span>
+              )}
+            </div>
+
+            {sortedSellers === null ? (
               <p className="text-sm text-zinc-500">Loading…</p>
             ) : (
               <Table
-                head={["Seller", "BPP", "Location", "Rating"]}
+                head={["Seller", "BPP", "Location", "Distance", "Rating"]}
                 empty={
-                  sellers.length === 0
+                  sortedSellers.length === 0
                     ? "No sellers discovered yet — run a search first."
                     : null
                 }
-                rows={sellers.map((s) => [
-                  <span key="n" className="flex items-center gap-2.5">
+                rows={sortedSellers.map((s) => [
+                  <Link
+                    key="n"
+                    href={`/shop/admin/seller/${encodeURIComponent(
+                      s.bppId
+                    )}/${encodeURIComponent(s.providerId)}`}
+                    className="flex items-center gap-2.5 hover:opacity-90"
+                  >
                     <SellerAvatar name={s.name} image={s.image} />
                     <span className="min-w-0">
-                      <span className="block truncate font-medium text-zinc-100">
+                      <span className="block truncate font-medium text-emerald-300 hover:underline">
                         {s.name}
                       </span>
                       <span className="block truncate text-[11px] text-zinc-500">
                         {s.shortDesc ?? s.providerId}
                       </span>
                     </span>
-                  </span>,
+                  </Link>,
                   <span key="b" className="font-mono text-xs">
                     {short(s.bppId, 22)}
                   </span>,
                   <span key="l" className="text-xs text-zinc-400">
                     {sellerPlace(s) ?? "—"}
                   </span>,
+                  <span key="d" className="block text-right text-xs text-zinc-300">
+                    {formatDistance(s.distanceKm) ?? "—"}
+                  </span>,
                   <span key="r" className="block text-right font-medium">
                     {s.rating != null ? s.rating.toFixed(1) : "—"}
                   </span>,
                 ])}
-                alignRight={[3]}
+                alignRight={[3, 4]}
+              />
+            )}
+          </>
+        ) : null}
+
+        {/* SELLER HEALTH — sellers that rejected orders (NACKed the lifecycle) */}
+        {tab === "health" ? (
+          <>
+            <p className="mb-3 text-sm text-zinc-400">
+              Sellers that synchronously REJECTED an order (a NACK on
+              select&nbsp;/&nbsp;init&nbsp;/&nbsp;confirm) — the exact reason a
+              checkout dead-ends. Ranked by how often they fail; the last error is
+              the seller&apos;s own reason. Use it to fix a mapping on our side or
+              denylist a persistently-broken seller.
+              {nacks ? ` ${nacks.length} sellers with rejections.` : ""}
+            </p>
+            {nacks === null ? (
+              <p className="text-sm text-zinc-500">Loading…</p>
+            ) : (
+              <Table
+                head={["Seller", "BPP", "Rejections", "Last error", "When"]}
+                empty={
+                  nacks.length === 0
+                    ? "No seller rejections recorded — every order the buyers placed was accepted."
+                    : null
+                }
+                rows={nacks.map((n) => [
+                  n.providerId ? (
+                    <Link
+                      key="n"
+                      href={`/shop/admin/seller/${encodeURIComponent(
+                        n.bppId
+                      )}/${encodeURIComponent(n.providerId)}`}
+                      className="font-medium text-emerald-300 hover:underline"
+                    >
+                      {n.name ?? n.providerId}
+                    </Link>
+                  ) : (
+                    <span key="n" className="font-medium text-zinc-300">
+                      {n.name ?? "—"}
+                    </span>
+                  ),
+                  <span key="b" className="font-mono text-xs">
+                    {short(n.bppId, 22)}
+                  </span>,
+                  <span key="c" className="flex items-center gap-2">
+                    <Badge text={String(n.total)} tone="rose" />
+                    <span className="text-[11px] text-zinc-500">
+                      {Object.entries(n.byAction)
+                        .map(([a, c]) => `${a} ${c}`)
+                        .join(" · ")}
+                    </span>
+                  </span>,
+                  <span key="e" className="block max-w-xs">
+                    {n.lastCode ? (
+                      <span className="font-mono text-xs text-rose-300">
+                        {n.lastCode}
+                      </span>
+                    ) : null}
+                    {n.lastMessage ? (
+                      <span className="block truncate text-xs text-zinc-400">
+                        {n.lastMessage}
+                      </span>
+                    ) : !n.lastCode ? (
+                      <span className="text-xs text-zinc-600">—</span>
+                    ) : null}
+                  </span>,
+                  <span key="w" className="whitespace-nowrap text-xs text-zinc-500">
+                    {new Date(n.lastAt).toLocaleString()}
+                  </span>,
+                ])}
               />
             )}
           </>

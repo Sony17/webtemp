@@ -135,6 +135,26 @@ const num = (v: unknown): number | undefined => {
 export function parseCatalogs(catalogs: CatalogRecord[]): Product[] {
   const products: Product[] = [];
 
+  // Pre-index each provider's first serving location across ALL slices, keyed by
+  // (bppId, providerId). An incremental on_search can split a provider's
+  // `locations` into a DIFFERENT message than its `items` (parseProviders already
+  // merges providers across slices this way). Resolving location only within the
+  // slice an item arrives in would leave items from a locations-less slice with
+  // no locationId — and checkout then has no real serving location to send on
+  // `select`, so the route falls back to a placeholder id the seller rejects
+  // (an ORDER_PROVIDER_LOCATIONS_ID-class NACK → the checkout dead-end). Indexing
+  // over the union of a provider's slices keeps the real location id attached.
+  const providerLocation = new Map<string, string>();
+  for (const rec of catalogs) {
+    for (const pRaw of arr(obj(rec.catalog)["bpp/providers"])) {
+      const p = obj(pRaw);
+      const key = `${rec.bppId}|${str(p.id) ?? ""}`;
+      if (providerLocation.has(key)) continue;
+      const locId = str(arr(p.locations).map((l) => obj(l))[0]?.id);
+      if (locId) providerLocation.set(key, locId);
+    }
+  }
+
   for (const rec of catalogs) {
     const cat = obj(rec.catalog);
     const providers = arr(cat["bpp/providers"]);
@@ -145,9 +165,12 @@ export function parseCatalogs(catalogs: CatalogRecord[]): Product[] {
       const providerName =
         str(obj(p.descriptor).name) ?? providerId ?? "Seller";
 
-      // Index provider locations so an item's location_id resolves to one.
+      // Resolve this provider's serving location: prefer a location present in
+      // THIS slice, else one seen in any other slice of the same provider (the
+      // cross-slice index above). Items still override with their own location_id.
       const locations = arr(p.locations).map((l) => obj(l));
-      const firstLocationId = str(locations[0]?.id);
+      const firstLocationId =
+        str(locations[0]?.id) ?? providerLocation.get(`${rec.bppId}|${providerId}`);
 
       for (const iRaw of arr(p.items)) {
         const it = obj(iRaw);
@@ -651,6 +674,7 @@ export type Seller = {
   locality?: string; // human place label from the seller's first location
   city?: string;
   areaCode?: string;
+  gps?: string; // "lat,long" of the seller's first location — drives distance sort
 };
 
 // Extract each seller (provider) once from the accumulated catalog slices,
@@ -685,6 +709,7 @@ export function parseProviders(catalogs: CatalogRecord[]): Seller[] {
         locality: str(addr.locality) ?? str(addr.street),
         city: str(addr.city) ?? str(addr.state_district),
         areaCode: str(addr.area_code) ?? str(loc.area_code),
+        gps: str(loc.gps),
       };
 
       const prev = byKey.get(key);
@@ -699,6 +724,7 @@ export function parseProviders(catalogs: CatalogRecord[]): Seller[] {
               locality: prev.locality ?? next.locality,
               city: prev.city ?? next.city,
               areaCode: prev.areaCode ?? next.areaCode,
+              gps: prev.gps ?? next.gps,
             }
           : next
       );
@@ -728,4 +754,83 @@ export function itemsForProvider(
   return products.filter(
     (p) => p.bppId === bppId && p.providerId === providerId
   );
+}
+
+/* -- Distance (sort sellers by proximity) ----------------------------------- */
+
+// Parse an ONDC "lat,long" gps string (the shape carried in fulfillment /
+// location.gps) into a coordinate, or null when absent/malformed. Tolerates
+// surrounding whitespace; rejects out-of-range values so a typo can't sort to
+// the top.
+export function parseGps(gps?: string): { lat: number; lng: number } | null {
+  if (!gps) return null;
+  const parts = gps.split(",");
+  if (parts.length !== 2) return null;
+  const lat = Number(parts[0].trim());
+  const lng = Number(parts[1].trim());
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return { lat, lng };
+}
+
+// Great-circle distance in km between two coordinates (haversine). Good enough
+// for "nearest seller" ordering at city scale — we sort by it, not bill on it.
+export function haversineKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number }
+): number {
+  const R = 6371; // mean Earth radius, km
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+// Distance from a reference gps to a seller's location, or undefined when either
+// coordinate is missing/invalid. Used to sort a seller list nearest-first and to
+// render a "x.y km away" chip.
+export function sellerDistanceKm(
+  seller: Pick<Seller, "gps">,
+  fromGps?: string
+): number | undefined {
+  const from = parseGps(fromGps);
+  const to = parseGps(seller.gps);
+  if (!from || !to) return undefined;
+  return haversineKm(from, to);
+}
+
+// A seller with its computed distance from the reference point (undefined when
+// unknown), the shape the browse/list surfaces render.
+export type SellerWithDistance = Seller & { distanceKm?: number };
+
+// Order sellers nearest-first from a reference gps. Sellers whose distance can't
+// be computed (no gps on either side) sink to the bottom, ordered by name so the
+// list stays stable. With no reference point, falls back to a plain name sort —
+// so the same function drives both "located" and "no location set" states.
+export function sortSellersByDistance(
+  sellers: Seller[],
+  fromGps?: string
+): SellerWithDistance[] {
+  return sellers
+    .map((s) => ({ ...s, distanceKm: sellerDistanceKm(s, fromGps) }))
+    .sort((a, b) => {
+      if (a.distanceKm != null && b.distanceKm != null) {
+        return a.distanceKm - b.distanceKm || a.name.localeCompare(b.name);
+      }
+      if (a.distanceKm != null) return -1; // known distance sorts before unknown
+      if (b.distanceKm != null) return 1;
+      return a.name.localeCompare(b.name);
+    });
+}
+
+// Compact "2.4 km" / "800 m" label for a distance chip, or undefined.
+export function formatDistance(km?: number): string | undefined {
+  if (km == null || !Number.isFinite(km)) return undefined;
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  return `${km.toFixed(km < 10 ? 1 : 0)} km`;
 }

@@ -77,6 +77,9 @@ function SearchScreen() {
         query: activeQuery,
         deliveryAreaCode: address?.areaCode,
         deliveryGps: address?.gps,
+        deliveryCity: address?.city,
+        deliveryLocality: address?.locality,
+        deliveryState: address?.state,
         incremental: true,
         incrementalMode: "pull",
         transactionId: txn,
@@ -118,12 +121,21 @@ function SearchScreen() {
       const saved = address ?? readSavedAddress();
       let gps = saved?.gps;
       let areaCode = saved?.areaCode;
+      // The buyer's place (city / locality / state) rides along so the dev mock
+      // catalog can locate its sellers where the buyer actually is. Seeded from
+      // the saved address, upgraded from a fresh reverse-geocode when we detect.
+      let city = saved?.city;
+      let locality = saved?.locality;
+      let state = saved?.state;
       if (!gps) {
         setLocating(true);
         try {
           const loc = await detectCurrentLocation();
           gps = loc.gps;
           areaCode = areaCode ?? loc.areaCode;
+          city = city ?? loc.city;
+          locality = locality ?? loc.locality;
+          state = state ?? loc.state;
           setAddress({
             ...(saved ?? { name: "", phone: "" }),
             gps: loc.gps,
@@ -144,6 +156,9 @@ function SearchScreen() {
           query: trimmed,
           deliveryAreaCode: areaCode,
           deliveryGps: gps,
+          deliveryCity: city,
+          deliveryLocality: locality,
+          deliveryState: state,
         });
         if (res.status === "NACK") {
           setError(res.error?.message ?? "The network rejected the search.");
