@@ -5,6 +5,10 @@
 // progression (on_confirm → on_status → on_track → on_cancel/on_update) and
 // surfaces every post-order action: status refresh, track, cancel, return,
 // support, rate, raise a grievance.
+//
+// UI is CTA-led: a state-aware status hero carries the single most important
+// next action (pay / track / rate / continue) as one dominant button; every
+// other control (manage, support, cancel) is deliberately subordinate below.
 import * as React from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
@@ -19,15 +23,19 @@ import {
   MessageSquareWarning,
   Copy,
   RefreshCw,
+  Wallet,
+  ShoppingBag,
+  ArrowRight,
 } from "lucide-react";
-import { Button, Card, Badge, Separator } from "@/components/shop/ui";
+import { Button, Card, Badge } from "@/components/shop/ui";
 import {
   EmptyState,
   QuoteSummary,
-  Spinner,
   Timeline,
   RefundSummary,
 } from "@/components/shop/widgets";
+import { OrderDetailSkeleton } from "@/components/shop/Skeletons";
+import { CourierTracking } from "@/components/shop/CourierTracking";
 import { useShopState } from "@/lib/shop/useShopState";
 import {
   parseQuote,
@@ -39,7 +47,7 @@ import {
   type BppState,
 } from "@/lib/shop/types";
 import * as api from "@/lib/shop/api";
-import { formatINR } from "@/lib/shop/cn";
+import { cn, formatINR } from "@/lib/shop/cn";
 
 const CANCEL_REASONS = [
   { id: "001", label: "Price of one or more items has changed" },
@@ -114,7 +122,7 @@ export default function OrderPage() {
     }
   };
 
-  if (!state && polling) return <Spinner label="Loading your order…" />;
+  if (!state && polling) return <OrderDetailSkeleton />;
 
   if (!order) {
     return (
@@ -129,73 +137,198 @@ export default function OrderPage() {
   const cancelled = status === "Cancelled";
   const completed = status === "Completed";
 
+  // The single most important next step for this order, promoted to a hero CTA.
+  // Priority: recover a cancelled order → celebrate a completed one → collect an
+  // outstanding payment → track an in-flight order. Everything else stays below.
+  const orderPath = `/shop/order/${encodeURIComponent(txn)}/${encodeURIComponent(
+    bppId
+  )}`;
+  const trackHref = track && track.startsWith("http") ? track : null;
+  type Primary = {
+    label: string;
+    sub?: string;
+    icon: React.ReactNode;
+    href?: string;
+    external?: boolean;
+    onClick?: () => void;
+    busy?: boolean;
+  };
+  let primary: Primary | null;
+  if (cancelled) {
+    primary = {
+      label: "Continue shopping",
+      icon: <ShoppingBag className="h-4 w-4" />,
+      href: "/shop",
+    };
+  } else if (completed) {
+    primary = {
+      label: "Rate your order",
+      icon: <Star className="h-4 w-4" />,
+      href: `${orderPath}/rate`,
+    };
+  } else if (pay) {
+    primary = {
+      label: "Complete payment",
+      sub: formatINR(pay.amount),
+      icon: <Wallet className="h-4 w-4" />,
+      href: `${orderPath}/payment`,
+    };
+  } else if (trackHref) {
+    primary = {
+      label: "Track your order",
+      icon: <Truck className="h-4 w-4" />,
+      href: trackHref,
+      external: true,
+    };
+  } else if (orderId) {
+    primary = {
+      label: "Get latest tracking",
+      icon: <Truck className="h-4 w-4" />,
+      onClick: () =>
+        act("track", () =>
+          api.track({ transactionId: txn, bppId, bppUri: bpp!.bppUri, orderId })
+        ),
+      busy: busy === "track",
+    };
+  } else {
+    primary = null;
+  }
+
+  const primaryInner = primary ? (
+    <>
+      <span className="inline-flex items-center gap-2">
+        {primary.busy ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          primary.icon
+        )}
+        {primary.label}
+      </span>
+      <span className="inline-flex items-center gap-2">
+        {primary.sub ? <span className="font-semibold">{primary.sub}</span> : null}
+        <ArrowRight className="h-4 w-4 opacity-90" />
+      </span>
+    </>
+  ) : null;
+  const primaryCls = "w-full justify-between shadow-soft";
+  const primaryCta = !primary ? null : primary.external && primary.href ? (
+    <a href={primary.href} target="_blank" rel="noreferrer" className="block">
+      <Button size="lg" className={primaryCls}>
+        {primaryInner}
+      </Button>
+    </a>
+  ) : primary.href ? (
+    <Link href={primary.href} className="block">
+      <Button size="lg" className={primaryCls}>
+        {primaryInner}
+      </Button>
+    </Link>
+  ) : (
+    <Button
+      size="lg"
+      className={primaryCls}
+      disabled={primary.busy}
+      onClick={primary.onClick}
+    >
+      {primaryInner}
+    </Button>
+  );
+
   return (
-    <div className="space-y-4 pb-8">
-      {/* Success / status banner */}
+    <div className="space-y-4 pb-10">
+      {/* Status hero — state, order id, and the single primary next action */}
       <Card
-        className={
+        className={cn(
+          "overflow-hidden p-0 shadow-soft-lg",
           cancelled
-            ? "border-destructive/30 bg-destructive/5 p-5"
-            : "border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-900/40 dark:bg-emerald-900/10"
-        }
+            ? "border-destructive/30"
+            : "border-emerald-200 dark:border-emerald-900/40"
+        )}
       >
-        <div className="flex items-center gap-3">
-          {cancelled ? (
-            <XCircle className="h-8 w-8 text-destructive" />
-          ) : (
-            <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+        <div
+          className={cn(
+            "p-5",
+            cancelled
+              ? "bg-gradient-to-b from-destructive/5 to-transparent"
+              : "bg-gradient-to-b from-emerald-50 to-transparent dark:from-emerald-900/10"
           )}
-          <div>
-            <p className="font-semibold">
-              {cancelled
-                ? "Order cancelled"
-                : justPlaced
-                  ? "Order placed!"
-                  : "Your order"}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {orderId ? `Order #${orderId}` : "Awaiting order id…"}
-            </p>
+        >
+          <div className="flex items-center gap-3">
+            <span
+              className={cn(
+                "grid h-11 w-11 shrink-0 place-items-center rounded-full text-white shadow-soft",
+                cancelled ? "bg-destructive" : "bg-emerald-600"
+              )}
+            >
+              {cancelled ? (
+                <XCircle className="h-6 w-6" />
+              ) : (
+                <CheckCircle2 className="h-6 w-6" />
+              )}
+            </span>
+            <div className="min-w-0">
+              <p className="text-base font-semibold leading-tight">
+                {cancelled
+                  ? "Order cancelled"
+                  : justPlaced
+                    ? "Order placed"
+                    : "Your order"}
+              </p>
+              <p className="truncate text-sm text-muted-foreground">
+                {orderId ? `Order #${orderId}` : "Awaiting order id…"}
+              </p>
+            </div>
+            <Badge
+              variant={
+                cancelled ? "destructive" : completed ? "success" : "secondary"
+              }
+              className="ml-auto shrink-0"
+            >
+              {status}
+            </Badge>
           </div>
-          <Badge
-            variant={cancelled ? "destructive" : completed ? "success" : "secondary"}
-            className="ml-auto"
-          >
-            {status}
-          </Badge>
+
+          {primaryCta ? <div className="mt-4">{primaryCta}</div> : null}
+
+          {/* Live refresh row */}
+          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              {polling ? (
+                <>
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                  Live updates on
+                </>
+              ) : (
+                "Updates paused"
+              )}
+            </span>
+            {orderId ? (
+              <button
+                onClick={() =>
+                  act("status", () =>
+                    api.status({
+                      transactionId: txn,
+                      bppId,
+                      bppUri: bpp!.bppUri,
+                      orderId,
+                    })
+                  )
+                }
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+              >
+                <RefreshCw
+                  className={`h-3.5 w-3.5 ${busy === "status" ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </button>
+            ) : null}
+          </div>
         </div>
       </Card>
 
-      {/* Live refresh row */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1.5">
-          {polling ? (
-            <>
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-              Live updates on
-            </>
-          ) : (
-            "Updates paused"
-          )}
-        </span>
-        {orderId ? (
-          <button
-            onClick={() =>
-              act("status", () =>
-                api.status({ transactionId: txn, bppId, bppUri: bpp!.bppUri, orderId })
-              )
-            }
-            className="inline-flex items-center gap-1 font-medium text-primary"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${busy === "status" ? "animate-spin" : ""}`} />
-            Refresh status
-          </button>
-        ) : null}
-      </div>
-
       {/* Quote */}
       {quote ? (
-        <Card className="p-4">
+        <Card className="p-4 shadow-soft">
           <h2 className="mb-3 text-sm font-semibold">Bill details</h2>
           <QuoteSummary quote={quote} />
         </Card>
@@ -203,7 +336,7 @@ export default function OrderPage() {
 
       {/* Refund (RTO / cancellation / return settlement from quote_trail) */}
       {refund ? (
-        <Card className="border-emerald-200 p-4 dark:border-emerald-900/40">
+        <Card className="border-emerald-200 p-4 shadow-soft dark:border-emerald-900/40">
           <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
             <RotateCcw className="h-4 w-4 text-emerald-600" /> Refund
           </h2>
@@ -213,8 +346,10 @@ export default function OrderPage() {
 
       {/* Payment instructions (manual settlement) */}
       {pay && !cancelled ? (
-        <Card className="p-4">
-          <h2 className="mb-1 text-sm font-semibold">Payment</h2>
+        <Card className="p-4 shadow-soft">
+          <h2 className="mb-1 flex items-center gap-1.5 text-sm font-semibold">
+            <Wallet className="h-4 w-4" /> Payment
+          </h2>
           <p className="mb-3 text-xs text-muted-foreground">
             Pay using the reference below. Your order is reserved while payment
             settles.
@@ -235,11 +370,7 @@ export default function OrderPage() {
               complete payment.
             </p>
           ) : null}
-          <Link
-            href={`/shop/order/${encodeURIComponent(txn)}/${encodeURIComponent(
-              bppId
-            )}/payment`}
-          >
+          <Link href={`${orderPath}/payment`}>
             <Button variant="outline" className="mt-3 w-full">
               Manage payment
             </Button>
@@ -249,7 +380,7 @@ export default function OrderPage() {
 
       {/* Tracking */}
       {!cancelled && orderId ? (
-        <Card className="p-4">
+        <Card className="p-4 shadow-soft">
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-1.5 text-sm font-semibold">
               <Truck className="h-4 w-4" /> Delivery
@@ -330,73 +461,55 @@ export default function OrderPage() {
         </Card>
       ) : null}
 
+      {/* Courier delivery (our own last-mile Tocxi shipment, if one was booked).
+          Renders nothing when this order has no courier shipment. */}
+      <CourierTracking txn={txn} orderId={orderId} />
+
       {/* Order timeline */}
       {timeline.length ? (
-        <Card className="p-4">
+        <Card className="p-4 shadow-soft">
           <h2 className="mb-3 text-sm font-semibold">Order timeline</h2>
           <Timeline events={timeline} />
         </Card>
       ) : null}
 
-      <Separator />
-
-      {/* Actions */}
-      <div className="grid grid-cols-2 gap-3">
-        {!cancelled && !completed ? (
+      {/* Manage order — secondary actions, subordinate to the hero CTA */}
+      <div className="space-y-2 pt-1">
+        <p className="px-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Manage order
+        </p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {!cancelled ? (
+            <Link href={`${orderPath}/return`} className="block">
+              <Button variant="outline" className="w-full justify-start shadow-soft">
+                <RotateCcw className="h-4 w-4" /> Return / Replace
+              </Button>
+            </Link>
+          ) : null}
           <Button
             variant="outline"
-            onClick={() => setShowCancel((s) => !s)}
-            className="justify-start"
+            className="w-full justify-start shadow-soft"
+            disabled={busy === "support"}
+            onClick={() =>
+              act("support", () =>
+                api.support({
+                  transactionId: txn,
+                  bppId,
+                  bppUri: bpp!.bppUri,
+                  refId: orderId ?? txn,
+                })
+              )
+            }
           >
-            <XCircle className="h-4 w-4" /> Cancel order
+            <Headphones className="h-4 w-4" />
+            {busy === "support" ? "Contacting…" : "Contact seller"}
           </Button>
-        ) : null}
-        <Link
-          href={`/shop/order/${encodeURIComponent(txn)}/${encodeURIComponent(
-            bppId
-          )}/return`}
-        >
-          <Button variant="outline" className="w-full justify-start">
-            <RotateCcw className="h-4 w-4" /> Return / Replace
-          </Button>
-        </Link>
-        <Button
-          variant="outline"
-          className="justify-start"
-          disabled={busy === "support"}
-          onClick={() =>
-            act("support", () =>
-              api.support({
-                transactionId: txn,
-                bppId,
-                bppUri: bpp!.bppUri,
-                refId: orderId ?? txn,
-              })
-            )
-          }
-        >
-          <Headphones className="h-4 w-4" /> Contact seller
-        </Button>
-        <Link
-          href={`/shop/order/${encodeURIComponent(txn)}/${encodeURIComponent(
-            bppId
-          )}/issue`}
-        >
-          <Button variant="outline" className="w-full justify-start">
-            <MessageSquareWarning className="h-4 w-4" /> Raise an issue
-          </Button>
-        </Link>
-        {completed ? (
-          <Link
-            href={`/shop/order/${encodeURIComponent(txn)}/${encodeURIComponent(
-              bppId
-            )}/rate`}
-          >
-            <Button variant="outline" className="w-full justify-start">
-              <Star className="h-4 w-4" /> Rate order
+          <Link href={`${orderPath}/issue`} className="block">
+            <Button variant="outline" className="w-full justify-start shadow-soft">
+              <MessageSquareWarning className="h-4 w-4" /> Raise an issue
             </Button>
           </Link>
-        ) : null}
+        </div>
       </div>
 
       {/* Support contact result */}
@@ -409,7 +522,7 @@ export default function OrderPage() {
           };
           const hasAny = sup.phone || sup.email || sup.uri;
           return (
-            <Card className="p-4 text-sm">
+            <Card className="p-4 text-sm shadow-soft">
               <p className="font-medium">Seller support</p>
               <div className="mt-2 space-y-1 text-muted-foreground">
                 {sup.phone ? (
@@ -450,9 +563,21 @@ export default function OrderPage() {
         })()
       ) : null}
 
+      {/* Cancel — de-emphasised destructive action, kept well clear of the CTAs */}
+      {!cancelled && !completed ? (
+        <div className="pt-1 text-center">
+          <button
+            onClick={() => setShowCancel((s) => !s)}
+            className="mx-auto inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-destructive"
+          >
+            <XCircle className="h-4 w-4" /> Cancel this order
+          </button>
+        </div>
+      ) : null}
+
       {/* Inline cancel */}
       {showCancel ? (
-        <Card className="space-y-3 p-4">
+        <Card className="space-y-3 border-destructive/30 p-4 shadow-soft">
           <h3 className="text-sm font-semibold">Why are you cancelling?</h3>
           <div className="space-y-2">
             {CANCEL_REASONS.map((r) => (

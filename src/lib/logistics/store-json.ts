@@ -436,6 +436,23 @@ export async function getShipment(
   return null;
 }
 
+// Resolve a shipment by the ONDC transaction id it was booked against. Lets the
+// buyer order page (which always has the txn in its URL) find its courier
+// shipment without knowing the Tocxi id. Returns the NEWEST match when more than
+// one shipment shares a transaction (rare — one per order in the pilot).
+export async function getShipmentByTransaction(
+  transactionId: string
+): Promise<ShipmentRecord | null> {
+  await ensureHydrated();
+  let latest: ShipmentRecord | null = null;
+  for (const rec of getState().shipments.values()) {
+    if (rec.transactionId === transactionId) {
+      if (!latest || rec.createdAt > latest.createdAt) latest = rec;
+    }
+  }
+  return latest;
+}
+
 // All tracked shipments, newest first — optionally filtered by status. Backs the
 // admin ops console. (On this JSON backend the list only reflects THIS instance's
 // snapshot; the Postgres backend is what makes it complete — see store-db.ts.)

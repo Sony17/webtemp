@@ -783,3 +783,26 @@ export async function listIssues(): Promise<IssueRecord[]> {
 export async function countTransactions(): Promise<number> {
   return run("count transactions", async () => getPrisma().ondcSearch.count());
 }
+
+// Every catalog slice across all transactions, newest first. Feeds the admin
+// "Sellers" roll-up, which folds these into one row per unique (bppId,
+// providerId) via parseProviders. Bounded take so a large network history can't
+// unbound the query — the seller fold dedups anyway, so a cap on slices only
+// risks omitting sellers seen exclusively in the oldest slices.
+export async function listCatalogs(): Promise<CatalogRecord[]> {
+  return run("list catalogs", async () => {
+    const prisma = getPrisma();
+    const rows = await prisma.searchResult.findMany({
+      orderBy: { receivedAt: "desc" },
+      take: 2000,
+    });
+    return rows.map((r) => ({
+      transactionId: r.transactionId,
+      bppId: r.bppId,
+      bppUri: r.bppUri,
+      messageId: r.messageId,
+      catalog: r.catalog,
+      receivedAt: r.receivedAt.getTime(),
+    }));
+  });
+}

@@ -38,16 +38,21 @@ The **self-contained module, API routes, webhook, and tests are built** (Phases
   serviceability probe via `/quote`) plus the shipment list, status, tracking
   link, and cancel-before-pickup (Phase 7, T-22/T-23).
 
+- Buyer tracking (T-21) — a **Courier delivery** card on the order page
+  (`src/components/shop/CourierTracking.tsx`) reads our own row via
+  `GET /api/logistics/shipments/{id}` (resolves by order id, shipment id, OR the
+  txn in the URL), renders a live status stepper + tracking link, and stays
+  invisible when no courier shipment exists.
+
 **Booking trigger — DECIDED: manual-from-admin.** The auto-book-on-order-paid
 option (T-20) is intentionally NOT wired; an admin books each COD delivery by
 hand from the Logistics tab, so the live ONDC order + payment flow (mid-overhaul)
 stays untouched. The seam remains `POST /api/logistics/shipments` with the order
 id as `partnerReference` if auto-book is ever revisited.
 
-**Still deferred:** buyer-facing tracking on the order page (T-21) — reads its
-own row via `GET /api/logistics/shipments/{orderId}`, deferred until the shop
-overhaul settles. Onboarding + deploy (Phases 0, 9) are external (real
-credentials / Vercel env / webhook registration).
+**External only (Phases 0, 9):** onboarding (real `X-API-Key` + webhook secret)
+and deploy (Vercel env + registering the production `…/api/logistics/webhook`
+URL with Tocxi). Everything in code is done.
 
 ---
 

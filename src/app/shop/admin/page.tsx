@@ -39,6 +39,21 @@ type IssueRow = {
   updatedAt: number;
 };
 type Summary = { counts: Counts; orders: OrderRow[]; issues: IssueRow[] };
+// One deduped seller (ONDC provider), as returned by GET /api/shop/admin/sellers.
+// Mirrors the Seller shape (src/lib/shop/types.ts) — folded from every stored
+// on_search catalog slice into one row per unique (bppId, providerId).
+type Seller = {
+  bppId: string;
+  bppUri: string;
+  providerId: string;
+  name: string;
+  image?: string;
+  shortDesc?: string;
+  rating?: number;
+  locality?: string;
+  city?: string;
+  areaCode?: string;
+};
 type Payment = {
   transactionId: string;
   orderId?: string;
@@ -74,10 +89,18 @@ type Shipment = {
   createdAt: number;
 };
 
-type Tab = "overview" | "orders" | "payments" | "logistics" | "issues" | "registry";
+type Tab =
+  | "overview"
+  | "orders"
+  | "sellers"
+  | "payments"
+  | "logistics"
+  | "issues"
+  | "registry";
 const TABS: { id: Tab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "orders", label: "Orders" },
+  { id: "sellers", label: "Sellers" },
   { id: "payments", label: "Payments" },
   { id: "logistics", label: "Logistics" },
   { id: "issues", label: "Issues" },
@@ -111,6 +134,12 @@ function when(ms: number): string {
 }
 const short = (s: string, n = 10) => (s.length > n ? `${s.slice(0, n)}…` : s);
 
+// Human place label for a seller — locality · city · pincode, whichever are set.
+function sellerPlace(s: Seller): string | undefined {
+  const parts = [s.locality, s.city, s.areaCode].filter(Boolean) as string[];
+  return parts.length ? parts.join(" · ") : undefined;
+}
+
 export default function OndcAdminPage() {
   const router = useRouter();
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -119,6 +148,7 @@ export default function OndcAdminPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [registry, setRegistry] = useState<unknown>(null);
+  const [sellers, setSellers] = useState<Seller[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [busyRef, setBusyRef] = useState<string | null>(null);
@@ -174,6 +204,17 @@ export default function OndcAdminPage() {
         .catch(() => setRegistry({ error: "Failed to load registry status." }));
     }
   }, [authed, tab, registry]);
+
+  // Sellers are lazy-loaded on first open of the tab (like registry): the roll-up
+  // scans every stored catalog slice, so we don't pull it on every dashboard load.
+  useEffect(() => {
+    if (authed && tab === "sellers" && sellers === null) {
+      fetch("/api/shop/admin/sellers", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((d: { sellers?: Seller[] }) => setSellers(d.sellers ?? []))
+        .catch(() => setSellers([]));
+    }
+  }, [authed, tab, sellers]);
 
   const markPaid = async (p: Payment) => {
     const bankReference =
@@ -341,6 +382,53 @@ export default function OndcAdminPage() {
             ])}
             alignRight={[3]}
           />
+        ) : null}
+
+        {/* SELLERS (deduped ONDC providers seen across every search) */}
+        {tab === "sellers" ? (
+          <>
+            <p className="mb-3 text-xs text-zinc-500">
+              Every seller (ONDC provider) that has answered a search on this
+              network, deduped across all transactions. The network has no global
+              directory — a seller appears here only after it returns a catalog.
+              {sellers ? ` ${sellers.length} seen.` : ""}
+            </p>
+            {sellers === null ? (
+              <p className="text-sm text-zinc-500">Loading…</p>
+            ) : (
+              <Table
+                head={["Seller", "BPP", "Location", "Rating"]}
+                empty={
+                  sellers.length === 0
+                    ? "No sellers discovered yet — run a search first."
+                    : null
+                }
+                rows={sellers.map((s) => [
+                  <span key="n" className="flex items-center gap-2.5">
+                    <SellerAvatar name={s.name} image={s.image} />
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium text-zinc-100">
+                        {s.name}
+                      </span>
+                      <span className="block truncate text-[11px] text-zinc-500">
+                        {s.shortDesc ?? s.providerId}
+                      </span>
+                    </span>
+                  </span>,
+                  <span key="b" className="font-mono text-xs">
+                    {short(s.bppId, 22)}
+                  </span>,
+                  <span key="l" className="text-xs text-zinc-400">
+                    {sellerPlace(s) ?? "—"}
+                  </span>,
+                  <span key="r" className="block text-right font-medium">
+                    {s.rating != null ? s.rating.toFixed(1) : "—"}
+                  </span>,
+                ])}
+                alignRight={[3]}
+              />
+            )}
+          </>
         ) : null}
 
         {/* PAYMENTS (reconcile) */}
@@ -936,6 +1024,32 @@ function Badge({
           ? "bg-rose-500/15 text-rose-300"
           : "bg-zinc-700/40 text-zinc-300";
   return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>{text}</span>;
+}
+
+// Seller logo (descriptor.symbol / first catalog image) with a graceful fallback
+// to the name's initial. Native <img> + onError mirrors ProductThumb — ONDC
+// images come from arbitrary seller hosts next/image would reject. No emoji: the
+// fallback is the seller's first letter.
+function SellerAvatar({ name, image }: { name: string; image?: string }) {
+  const [failed, setFailed] = useState(false);
+  if (image && !failed) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={image}
+        alt=""
+        onError={() => setFailed(true)}
+        loading="lazy"
+        decoding="async"
+        className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-zinc-700"
+      />
+    );
+  }
+  return (
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-300 ring-1 ring-zinc-700">
+      {name.trim().charAt(0).toUpperCase() || "?"}
+    </span>
+  );
 }
 
 function Table({

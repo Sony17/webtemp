@@ -20,6 +20,7 @@ import { getShipment as getFromTocxi, TocxiError } from "@/lib/logistics/client"
 import {
   getShipment,
   getShipmentByReference,
+  getShipmentByTransaction,
   updateShipmentStatus,
   type ShipmentRecord,
 } from "@/lib/logistics/store";
@@ -27,10 +28,15 @@ import { isShipmentStatus } from "@/lib/logistics/types";
 
 export const runtime = "nodejs";
 
-// Resolve a stored shipment by either key: partnerReference (order id) first,
-// then Tocxi shipmentId. Returns null when neither matches.
+// Resolve a stored shipment by any handle: partnerReference (order id) first,
+// then Tocxi shipmentId, then the ONDC transaction id — so the buyer order page
+// can look it up by the txn in its URL. Returns null when none matches.
 async function resolve(id: string): Promise<ShipmentRecord | null> {
-  return (await getShipmentByReference(id)) ?? (await getShipment(id));
+  return (
+    (await getShipmentByReference(id)) ??
+    (await getShipment(id)) ??
+    (await getShipmentByTransaction(id))
+  );
 }
 
 export async function GET(

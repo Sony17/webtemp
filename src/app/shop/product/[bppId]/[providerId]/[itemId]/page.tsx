@@ -5,6 +5,7 @@
 // screen shows the chosen item plus a compare-sellers list (cheapest first).
 // The product data comes from the active discovery transaction's catalogs.
 import * as React from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Check, Store, Star, PackageSearch, Truck, Tags, Zap } from "lucide-react";
 import { Button, Card, Badge } from "@/components/shop/ui";
@@ -175,7 +176,14 @@ export default function ProductPage() {
         <h1 className="text-xl font-semibold leading-snug">{product.name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {product.unit ? `${product.unit} · ` : ""}Sold by{" "}
-          {activeOffer!.providerName}
+          <Link
+            href={`/shop/seller/${encodeURIComponent(
+              activeOffer!.bppId
+            )}/${encodeURIComponent(activeOffer!.providerId)}`}
+            className="font-medium text-primary hover:underline"
+          >
+            {activeOffer!.providerName}
+          </Link>
         </p>
         <div className="mt-3 flex items-center gap-2">
           <span className="text-2xl font-semibold">
@@ -267,8 +275,18 @@ export default function ProductPage() {
         }
         return (
           <div>
-            <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
-              <Tags className="h-4 w-4" /> More from {activeOffer!.providerName}
+            <h2 className="mb-2 flex items-center justify-between gap-1.5 text-sm font-semibold">
+              <span className="flex items-center gap-1.5">
+                <Tags className="h-4 w-4" /> More from {product.providerName}
+              </span>
+              <Link
+                href={`/shop/seller/${encodeURIComponent(
+                  bppId
+                )}/${encodeURIComponent(providerId)}`}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                View store
+              </Link>
             </h2>
             <div className="space-y-3">
               {[...groups.entries()].map(([cat, items]) => (

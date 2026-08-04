@@ -41,6 +41,7 @@ function pageWidth(pathname: string) {
   const wide =
     pathname === "/shop" ||
     pathname.startsWith("/shop/search") ||
+    pathname.startsWith("/shop/seller") ||
     pathname.startsWith("/shop/orders");
   return wide ? "max-w-6xl" : "max-w-2xl";
 }
@@ -151,6 +152,7 @@ function mobileTitle(pathname: string): string {
   if (pathname.startsWith("/shop/orders")) return "Your orders";
   if (pathname.startsWith("/shop/account")) return "My account";
   if (pathname.startsWith("/shop/search")) return "Search";
+  if (pathname.startsWith("/shop/seller")) return "Store";
   if (pathname.startsWith("/shop/product")) return "Product details";
   if (pathname.startsWith("/shop/order")) return "Order details";
   return "Open Groceries";
@@ -408,10 +410,13 @@ export default function Chrome({ children }: { children: React.ReactNode }) {
   }
 
   const widthClass = pageWidth(pathname ?? "/shop");
-  // Discovery surfaces (home + search) show the floating CartBar; reserve extra
-  // bottom room there so the last product row never hides behind it.
+  // Discovery surfaces (home + search + seller storefront) show the floating
+  // CartBar; reserve extra bottom room there so the last product row never hides
+  // behind it.
   const onDiscovery =
-    pathname === "/shop" || (pathname?.startsWith("/shop/search") ?? false);
+    pathname === "/shop" ||
+    (pathname?.startsWith("/shop/search") ?? false) ||
+    (pathname?.startsWith("/shop/seller") ?? false);
 
   return (
     <div

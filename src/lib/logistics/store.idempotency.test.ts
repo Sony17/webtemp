@@ -30,6 +30,7 @@ import {
   updateShipmentStatus,
   getShipmentByReference,
   getShipment,
+  getShipmentByTransaction,
   listShipments,
   shouldAdvanceStatus,
   type CreateShipmentInput,
@@ -199,5 +200,11 @@ describe("reads", () => {
     expect((await getShipment("PRCL-9F3A2B7C"))?.partnerReference).toBe("order-88213");
     expect((await getShipmentByReference("order-88213"))?.shipmentId).toBe("PRCL-9F3A2B7C");
     expect(await getShipment("nope")).toBeNull();
+  });
+
+  it("getShipmentByTransaction resolves by ONDC txn (buyer-page lookup)", async () => {
+    await createShipment(baseInput({ transactionId: "txn-abc" }));
+    expect((await getShipmentByTransaction("txn-abc"))?.shipmentId).toBe("PRCL-9F3A2B7C");
+    expect(await getShipmentByTransaction("txn-none")).toBeNull();
   });
 });

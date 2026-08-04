@@ -7,14 +7,20 @@
 import * as React from "react";
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { RefreshCw, Search as SearchIcon, SearchX, Store } from "lucide-react";
+import {
+  Navigation,
+  RefreshCw,
+  Search as SearchIcon,
+  SearchX,
+  Store,
+} from "lucide-react";
 import { Button } from "@/components/shop/ui";
 import { EmptyState, ProductCard, Spinner } from "@/components/shop/widgets";
 import { ErrorState } from "@/components/shop/ErrorState";
 import { SearchLoader } from "@/components/shop/SearchLoader";
 import { FilterSheet } from "@/components/shop/Filters";
 import { Stagger, StaggerItem } from "@/components/shop/motion";
-import { useShop } from "@/lib/shop/store";
+import { useShop, type Address } from "@/lib/shop/store";
 import { useShopState } from "@/lib/shop/useShopState";
 import {
   parseCatalogs,
@@ -25,15 +31,33 @@ import {
   type ShopFilters,
   type CatalogRecord,
 } from "@/lib/shop/types";
+import { detectCurrentLocation } from "@/lib/shop/geolocate";
 import * as api from "@/lib/shop/api";
+
+// The shop store hydrates `address` from localStorage in a mount effect, one
+// tick after the seeded search fires — so read the persisted address directly
+// here to avoid re-detecting location for a returning user. Mirrors the direct
+// localStorage read in Chrome's first-visit prompt (same LS key).
+const LS_ADDRESS = "shop.address.v1";
+function readSavedAddress(): Address | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(LS_ADDRESS);
+    return raw ? (JSON.parse(raw) as Address) : null;
+  } catch {
+    return null;
+  }
+}
 
 function SearchScreen() {
   const router = useRouter();
   const params = useSearchParams();
   const initialQ = params.get("q") ?? "";
-  const { address, addToCart, setTransactionId } = useShop();
+  const { address, addToCart, setAddress, setTransactionId } = useShop();
 
   const [q, setQ] = React.useState(initialQ);
+  // True while we're acquiring the buyer's live GPS before a search fires.
+  const [locating, setLocating] = React.useState(false);
   // The query that the CURRENT results are filtered against — set when a search
   // actually fires (not on every keystroke), so editing the box without
   // submitting doesn't re-filter the visible catalog mid-type.
@@ -84,11 +108,42 @@ function SearchScreen() {
       setError(null);
       setTxn(null);
       setAccum(new Map()); // fresh search → discard the previous seller set
+
+      // Carry the buyer's live location into the ONDC intent so sellers serving
+      // their area respond (RET10 serviceability is keyed on GPS). If no GPS is
+      // saved yet, detect it now (permission-gated) and persist it — keeping any
+      // pincode the buyer typed manually. A denied/failed fix just searches with
+      // whatever we already have (pincode, or nothing). `saved` prefers the
+      // hydrated store value, falling back to localStorage for the first-tick.
+      const saved = address ?? readSavedAddress();
+      let gps = saved?.gps;
+      let areaCode = saved?.areaCode;
+      if (!gps) {
+        setLocating(true);
+        try {
+          const loc = await detectCurrentLocation();
+          gps = loc.gps;
+          areaCode = areaCode ?? loc.areaCode;
+          setAddress({
+            ...(saved ?? { name: "", phone: "" }),
+            gps: loc.gps,
+            areaCode: saved?.areaCode ?? loc.areaCode,
+            locality: saved?.locality ?? loc.locality,
+            city: saved?.city ?? loc.city,
+            state: saved?.state ?? loc.state,
+          });
+        } catch {
+          // No live fix — fall through and search with the saved pincode (if any).
+        } finally {
+          setLocating(false);
+        }
+      }
+
       try {
         const res = await api.search({
           query: trimmed,
-          deliveryAreaCode: address?.areaCode,
-          deliveryGps: address?.gps,
+          deliveryAreaCode: areaCode,
+          deliveryGps: gps,
         });
         if (res.status === "NACK") {
           setError(res.error?.message ?? "The network rejected the search.");
@@ -102,7 +157,7 @@ function SearchScreen() {
         setSearching(false);
       }
     },
-    [address, setTransactionId]
+    [address, setAddress, setTransactionId]
   );
 
   // Fire the initial search from the ?q= seed once. runSearch kicks off a
@@ -187,6 +242,23 @@ function SearchScreen() {
           </button>
         </div>
       </form>
+
+      {/* Live-location line: shows we're acquiring GPS, then where we're
+          searching from once a delivery location is set. */}
+      {locating ? (
+        <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Navigation className="h-3.5 w-3.5 animate-pulse text-primary" />
+          Detecting your current location…
+        </p>
+      ) : address?.gps || address?.areaCode ? (
+        <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Navigation className="h-3.5 w-3.5 text-primary" />
+          Sellers near{" "}
+          <span className="font-medium text-foreground">
+            {address.city ?? address.locality ?? address.areaCode}
+          </span>
+        </p>
+      ) : null}
 
       {/* Status line + filters */}
       {txn ? (

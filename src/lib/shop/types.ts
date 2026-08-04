@@ -632,3 +632,100 @@ export function offersForProduct(
     }))
     .sort((a, b) => a.price - b.price);
 }
+
+/* -- Seller (provider) profile ---------------------------------------------- */
+
+// A seller's storefront identity — richer than the per-Product `providerName`
+// the cards carry. Sourced from the ONDC provider `descriptor` + first location
+// so a seller profile page can render a header (logo, area, rating). Item lists
+// come from Product[] (see itemsForProvider) — a seller answers `search` with
+// their whole catalog, so every item is already present.
+export type Seller = {
+  bppId: string;
+  bppUri: string;
+  providerId: string;
+  name: string;
+  image?: string; // provider logo (descriptor.symbol / first image)
+  shortDesc?: string;
+  rating?: number;
+  locality?: string; // human place label from the seller's first location
+  city?: string;
+  areaCode?: string;
+};
+
+// Extract each seller (provider) once from the accumulated catalog slices,
+// merging fields across slices (an incremental on_search can split a provider
+// across messages). Keyed by (bppId, providerId).
+export function parseProviders(catalogs: CatalogRecord[]): Seller[] {
+  const byKey = new Map<string, Seller>();
+
+  for (const rec of catalogs) {
+    const cat = obj(rec.catalog);
+    for (const pRaw of arr(cat["bpp/providers"])) {
+      const p = obj(pRaw);
+      const providerId = str(p.id) ?? "";
+      const key = `${rec.bppId}|${providerId}`;
+
+      const d = obj(p.descriptor);
+      const images = arr(d.images);
+      const image =
+        str(d.symbol) ?? str(images[0]) ?? str(obj(images[0]).url);
+
+      const loc = obj(arr(p.locations)[0]);
+      const addr = obj(loc.address);
+
+      const next: Seller = {
+        bppId: rec.bppId,
+        bppUri: rec.bppUri,
+        providerId,
+        name: str(d.name) ?? providerId ?? "Seller",
+        image,
+        shortDesc: str(d.short_desc) ?? str(d.long_desc),
+        rating: num(p.rating),
+        locality: str(addr.locality) ?? str(addr.street),
+        city: str(addr.city) ?? str(addr.state_district),
+        areaCode: str(addr.area_code) ?? str(loc.area_code),
+      };
+
+      const prev = byKey.get(key);
+      byKey.set(
+        key,
+        prev
+          ? {
+              ...prev,
+              image: prev.image ?? next.image,
+              shortDesc: prev.shortDesc ?? next.shortDesc,
+              rating: prev.rating ?? next.rating,
+              locality: prev.locality ?? next.locality,
+              city: prev.city ?? next.city,
+              areaCode: prev.areaCode ?? next.areaCode,
+            }
+          : next
+      );
+    }
+  }
+
+  return [...byKey.values()];
+}
+
+// Find a single seller by identity from the catalog slices.
+export function findSeller(
+  catalogs: CatalogRecord[],
+  bppId: string,
+  providerId: string
+): Seller | undefined {
+  return parseProviders(catalogs).find(
+    (s) => s.bppId === bppId && s.providerId === providerId
+  );
+}
+
+// Every product a given seller (provider) offers, from the parsed catalog.
+export function itemsForProvider(
+  products: Product[],
+  bppId: string,
+  providerId: string
+): Product[] {
+  return products.filter(
+    (p) => p.bppId === bppId && p.providerId === providerId
+  );
+}

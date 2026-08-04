@@ -18,7 +18,9 @@ export function CartBar() {
   const { cartCount, cartTotal, lines } = useShop();
 
   const onDiscovery =
-    pathname === "/shop" || (pathname?.startsWith("/shop/search") ?? false);
+    pathname === "/shop" ||
+    (pathname?.startsWith("/shop/search") ?? false) ||
+    (pathname?.startsWith("/shop/seller") ?? false);
 
   if (!onDiscovery || cartCount === 0) return null;
 

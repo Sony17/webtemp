@@ -34,4 +34,5 @@ export const createShipment = backend.createShipment;
 export const updateShipmentStatus = backend.updateShipmentStatus;
 export const getShipment = backend.getShipment;
 export const getShipmentByReference = backend.getShipmentByReference;
+export const getShipmentByTransaction = backend.getShipmentByTransaction;
 export const listShipments = backend.listShipments;

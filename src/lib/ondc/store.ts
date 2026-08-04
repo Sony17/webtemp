@@ -78,4 +78,5 @@ export const getIssuesByTransaction = backend.getIssuesByTransaction;
 // Admin dashboard: cross-transaction lists + counts.
 export const listOrders = backend.listOrders;
 export const listIssues = backend.listIssues;
+export const listCatalogs = backend.listCatalogs;
 export const countTransactions = backend.countTransactions;

@@ -431,9 +431,17 @@ export function ProductCard({
           {product.name}
         </Link>
         {/* Seller name first (so buyers can tell sellers apart / pick a specific
-            one on ONDC), with the unit appended when present. */}
+            one on ONDC), linking to the seller's storefront, with the unit
+            appended when present. */}
         <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-          {product.providerName}
+          <Link
+            href={`/shop/seller/${encodeURIComponent(
+              product.bppId
+            )}/${encodeURIComponent(product.providerId)}`}
+            className="hover:text-primary hover:underline"
+          >
+            {product.providerName}
+          </Link>
           {product.unit ? ` · ${product.unit}` : ""}
         </p>
         {product.rating ? (

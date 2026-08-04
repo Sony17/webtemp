@@ -754,3 +754,16 @@ export async function countTransactions(): Promise<number> {
   for (const o of s.orders.values()) txns.add(o.transactionId);
   return txns.size;
 }
+
+// Every catalog slice across all discovery sessions, newest first. The network
+// has no global seller registry — a provider is only visible once it answers a
+// `search`. The admin "Sellers" view folds these slices into one row per unique
+// (bppId, providerId); dedup lives in parseProviders (src/lib/shop/types.ts), so
+// this stays a pure enumeration (mirrors listOrders/listIssues). On this JSON
+// backend it reflects only THIS instance's snapshot; Postgres makes it complete.
+export async function listCatalogs(): Promise<CatalogRecord[]> {
+  await ensureHydrated();
+  return [...getState().catalogs.values()].sort(
+    (a, b) => b.receivedAt - a.receivedAt
+  );
+}

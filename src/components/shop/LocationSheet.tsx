@@ -19,6 +19,11 @@ import { Button, Input, Label } from "@/components/shop/ui";
 import { useShop, type Address } from "@/lib/shop/store";
 import { useTheme } from "@/lib/shop/theme";
 import { cn } from "@/lib/shop/cn";
+import {
+  getCurrentPosition,
+  reverseGeocode,
+  GeolocationUnavailableError,
+} from "@/lib/shop/geolocate";
 
 type LocForm = {
   areaCode: string;
@@ -37,8 +42,6 @@ function fromAddress(a: Address | null): LocForm {
     gps: a?.gps ?? "",
   };
 }
-
-type NominatimAddress = Record<string, string | undefined>;
 
 export function LocationSheet({
   open,
@@ -73,60 +76,39 @@ export function LocationSheet({
   }, [open]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const detect = React.useCallback(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setError("Location isn't available in this browser — enter a pincode below.");
-      return;
-    }
+  const detect = React.useCallback(async () => {
     setLocating(true);
     setError(null);
     setNote(null);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        const gps = `${lat.toFixed(6)},${lon.toFixed(6)}`;
-        setForm((f) => ({ ...f, gps }));
-        setNote("Location detected — finding your area…");
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=16&addressdetails=1`,
-            { headers: { Accept: "application/json" } }
-          );
-          if (res.ok) {
-            const json = (await res.json()) as { address?: NominatimAddress };
-            const a = json.address ?? {};
-            setForm((f) => ({
-              ...f,
-              areaCode: a.postcode ?? f.areaCode,
-              locality:
-                a.suburb ??
-                a.neighbourhood ??
-                a.residential ??
-                a.village ??
-                a.town ??
-                f.locality,
-              city: a.city ?? a.town ?? a.county ?? a.state_district ?? f.city,
-              state: a.state ?? f.state,
-            }));
-            setNote("Found your area — confirm the details and save.");
-          } else {
-            setNote("Location set — add your pincode to finish.");
-          }
-        } catch {
-          setNote("Location set — add your pincode to finish.");
-        } finally {
-          setLocating(false);
-        }
-      },
-      () => {
-        setLocating(false);
-        setError(
-          "Couldn't get your location. Allow location access, or enter a pincode below."
-        );
-      },
-      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 300_000 }
-    );
+    try {
+      const pos = await getCurrentPosition();
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const gps = `${lat.toFixed(6)},${lon.toFixed(6)}`;
+      setForm((f) => ({ ...f, gps }));
+      setNote("Location detected — finding your area…");
+      const a = await reverseGeocode(lat, lon);
+      if (a) {
+        setForm((f) => ({
+          ...f,
+          areaCode: a.areaCode ?? f.areaCode,
+          locality: a.locality ?? f.locality,
+          city: a.city ?? f.city,
+          state: a.state ?? f.state,
+        }));
+        setNote("Found your area — confirm the details and save.");
+      } else {
+        setNote("Location set — add your pincode to finish.");
+      }
+    } catch (e) {
+      setError(
+        e instanceof GeolocationUnavailableError
+          ? "Location isn't available in this browser — enter a pincode below."
+          : "Couldn't get your location. Allow location access, or enter a pincode below."
+      );
+    } finally {
+      setLocating(false);
+    }
   }, []);
 
   const set = (k: keyof LocForm, v: string) =>

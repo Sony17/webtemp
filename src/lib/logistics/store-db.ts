@@ -245,6 +245,19 @@ export async function getShipment(
   return row ? toRecord(row as unknown as Row) : null;
 }
 
+// Resolve by ONDC transaction id (indexed, not unique) — newest first. Backs the
+// buyer order page's courier-shipment lookup.
+export async function getShipmentByTransaction(
+  transactionId: string
+): Promise<ShipmentRecord | null> {
+  const prisma = getPrisma();
+  const row = await prisma.shipment.findFirst({
+    where: { transactionId },
+    orderBy: { createdAt: "desc" },
+  });
+  return row ? toRecord(row as unknown as Row) : null;
+}
+
 export async function listShipments(opts?: {
   status?: ShipmentStatus;
   limit?: number;
