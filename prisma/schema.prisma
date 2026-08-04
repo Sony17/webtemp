@@ -183,3 +183,52 @@ model Payment {
   @@index([status])
   @@map("ondc_payment")
 }
+
+// Logistics shipment ledger — our OWN record of every last-mile courier booking
+// placed through the Tocxi Partner API (src/lib/logistics/). Independent of the
+// ONDC tables (no FK): a shipment is keyed by our order id (partnerReference),
+// booked when an order is confirmed, and advanced through the Tocxi lifecycle by
+// inbound webhooks. Keeping our own row means the shop/admin render status
+// without hitting Tocxi, and webhook updates have somewhere durable to land.
+// partnerReference (order id) and shipmentId (Tocxi's PRCL-… id) are both unique
+// so either can resolve a shipment. pickup / drop / quote / statusHistory ride as
+// Json so a wire-shape change needs no migration — same intent as ondc_order.
+model Shipment {
+  id               String    @id @default(cuid())
+  // Our order id — the spine joining a shop order to its Tocxi shipment, and the
+  // Idempotency-Key used on create. Unique → re-booking an order is a no-op.
+  partnerReference String    @unique
+  // Tocxi's shipment id (PRCL-…), assigned on create.
+  shipmentId       String    @unique
+  // ONDC transaction id when the order originates from ONDC (optional).
+  transactionId    String?
+  // ShipmentStatus union as a String (not enum) to mirror the JSON store and let
+  // a new Tocxi status land without a migration: PENDING | CONFIRMED | PICKED_UP
+  // | IN_TRANSIT | OUT_FOR_DELIVERY | DELIVERED | CANCELLED | FAILED.
+  status           String
+  // Pickup / drop endpoints (contactName, contactPhone, lat/lng, …) as sent.
+  pickup           Json
+  drop             Json
+  // SMALL | MEDIUM | LARGE (optional; SMALL is Tocxi's default).
+  parcelSize       String?
+  weightKg         Float?
+  cod              Boolean   @default(false)
+  codAmount        Float?
+  // The quote captured at booking (price / distance / eta), for display.
+  quote            Json?
+  estimatedPrice   Float?
+  trackingUrl      String?
+  // Air-waybill number, populated once confirmed/picked up (via webhook).
+  awbNo            String?
+  // Append-only [{ status, at, eventTimestamp? }] progression. Json (not a
+  // separate table) because access is always "this shipment's whole history".
+  statusHistory    Json      @default("[]")
+  // Instant of the last status-changing event we applied (webhook / cancel).
+  lastEventAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([status])
+  @@index([transactionId])
+  @@map("logistics_shipment")
+}

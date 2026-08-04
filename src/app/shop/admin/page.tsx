@@ -49,14 +49,54 @@ type Payment = {
   createdAt: number;
 };
 
-type Tab = "overview" | "orders" | "payments" | "issues" | "registry";
+// One tracked Tocxi shipment, as returned by GET /api/logistics/shipments. Mirrors
+// the ShipmentRecord shape (src/lib/logistics/store-json.ts) — only the fields the
+// console renders are typed here.
+type ShipmentStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "PICKED_UP"
+  | "IN_TRANSIT"
+  | "OUT_FOR_DELIVERY"
+  | "DELIVERED"
+  | "CANCELLED"
+  | "FAILED";
+type Shipment = {
+  partnerReference: string;
+  shipmentId: string;
+  transactionId?: string;
+  status: ShipmentStatus;
+  trackingUrl?: string;
+  awbNo?: string;
+  estimatedPrice?: number;
+  cod: boolean;
+  codAmount?: number;
+  createdAt: number;
+};
+
+type Tab = "overview" | "orders" | "payments" | "logistics" | "issues" | "registry";
 const TABS: { id: Tab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "orders", label: "Orders" },
   { id: "payments", label: "Payments" },
+  { id: "logistics", label: "Logistics" },
   { id: "issues", label: "Issues" },
   { id: "registry", label: "Registry" },
 ];
+
+// A shipment is cancellable only before pickup — PENDING or CONFIRMED. Past that,
+// Tocxi refuses (the cancel route returns 409), so we hide the button.
+const CANCELLABLE: ReadonlySet<ShipmentStatus> = new Set([
+  "PENDING",
+  "CONFIRMED",
+]);
+// Map a shipment status to a Badge tone: delivered = good, terminal exception =
+// bad, everything in-flight = neutral.
+function shipmentTone(s: ShipmentStatus): "zinc" | "emerald" | "amber" | "rose" {
+  if (s === "DELIVERED") return "emerald";
+  if (s === "CANCELLED" || s === "FAILED") return "rose";
+  return "amber";
+}
 
 function inr(n?: number | null): string {
   if (n == null || Number.isNaN(n)) return "—";
@@ -77,6 +117,7 @@ export default function OndcAdminPage() {
   const [tab, setTab] = useState<Tab>("overview");
   const [summary, setSummary] = useState<Summary | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [shipments, setShipments] = useState<Shipment[]>([]);
   const [registry, setRegistry] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -100,15 +141,20 @@ export default function OndcAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const [sRes, pRes] = await Promise.all([
+      const [sRes, pRes, lRes] = await Promise.all([
         fetch("/api/shop/admin/summary", { cache: "no-store" }),
         fetch("/api/payments/list", { cache: "no-store" }),
+        fetch("/api/logistics/shipments?limit=200", { cache: "no-store" }),
       ]);
       const s = (await sRes.json()) as Summary & { error?: string };
       const p = (await pRes.json()) as { payments?: Payment[]; error?: string };
+      const l = (await lRes.json()) as { shipments?: Shipment[]; error?: string };
       if (!sRes.ok) throw new Error(s.error ?? "Failed to load summary");
       setSummary(s);
       setPayments(p.payments ?? []);
+      // Shipments are best-effort: a missing/unconfigured logistics store must
+      // not blank the whole dashboard, so we tolerate its failure.
+      setShipments(lRes.ok ? l.shipments ?? [] : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load dashboard.");
     } finally {
@@ -153,6 +199,38 @@ export default function OndcAdminPage() {
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to mark paid.");
+    } finally {
+      setBusyRef(null);
+    }
+  };
+
+  // Cancel a shipment before pickup (POST /api/logistics/shipments/{id}/cancel).
+  // The route returns 409 if it's already been picked up — surface that message
+  // rather than a generic failure.
+  const cancelShipment = async (s: Shipment) => {
+    const reason =
+      window.prompt(
+        `Cancel shipment ${s.shipmentId} (order ${s.partnerReference}).\nReason:`,
+        "cancelled by merchant"
+      ) ?? undefined;
+    if (reason === undefined) return; // dismissed
+    setBusyRef(s.shipmentId);
+    try {
+      const res = await fetch(
+        `/api/logistics/shipments/${encodeURIComponent(s.shipmentId)}/cancel`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: reason.trim() || undefined }),
+        }
+      );
+      if (!res.ok) {
+        const d = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(d.error ?? `Failed (${res.status})`);
+      }
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to cancel shipment.");
     } finally {
       setBusyRef(null);
     }
@@ -308,6 +386,88 @@ export default function OndcAdminPage() {
           </>
         ) : null}
 
+        {/* LOGISTICS (Tocxi shipments) */}
+        {tab === "logistics" ? (
+          <>
+            <p className="mb-3 text-xs text-zinc-500">
+              Last-mile courier shipments booked through Tocxi. Book a delivery
+              by hand below (pilot: Delhi NCR, COD). Status updates arrive live
+              over webhooks. Cancel is available before pickup only.
+            </p>
+            <BookShipmentCard onBooked={refresh} />
+            <Table
+              head={[
+                "Shipment",
+                "Order / Txn",
+                "Status",
+                "Tracking",
+                "Price",
+                "Created",
+                "Action",
+              ]}
+              empty={shipments.length === 0 ? "No shipments booked yet." : null}
+              rows={shipments.map((s) => [
+                <span key="s" className="font-mono text-xs">
+                  {s.shipmentId}
+                  {s.awbNo ? (
+                    <div className="text-[11px] text-zinc-500">AWB {s.awbNo}</div>
+                  ) : null}
+                </span>,
+                <span key="o" className="text-xs">
+                  {s.partnerReference}
+                  {s.transactionId ? (
+                    <div className="text-[11px] text-zinc-500">
+                      {short(s.transactionId, 12)}
+                    </div>
+                  ) : null}
+                </span>,
+                <span key="st">
+                  <Badge text={s.status} tone={shipmentTone(s.status)} />
+                  {s.cod ? (
+                    <div className="mt-0.5 text-[11px] text-zinc-500">
+                      COD {inr(s.codAmount)}
+                    </div>
+                  ) : null}
+                </span>,
+                <span key="t" className="text-xs">
+                  {s.trackingUrl ? (
+                    <a
+                      href={s.trackingUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-emerald-400 hover:text-emerald-300 hover:underline"
+                    >
+                      Track
+                    </a>
+                  ) : (
+                    <span className="text-zinc-600">—</span>
+                  )}
+                </span>,
+                <span key="p" className="block text-right font-medium">
+                  {inr(s.estimatedPrice)}
+                </span>,
+                <span key="c" className="text-xs text-zinc-400">
+                  {when(s.createdAt)}
+                </span>,
+                <span key="ac" className="block text-right">
+                  {CANCELLABLE.has(s.status) ? (
+                    <button
+                      onClick={() => cancelShipment(s)}
+                      disabled={busyRef === s.shipmentId}
+                      className="rounded-full border border-rose-500/40 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 disabled:opacity-60"
+                    >
+                      {busyRef === s.shipmentId ? "Cancelling…" : "Cancel"}
+                    </button>
+                  ) : (
+                    <span className="text-xs text-zinc-500">—</span>
+                  )}
+                </span>,
+              ])}
+              alignRight={[4, 6]}
+            />
+          </>
+        ) : null}
+
         {/* ISSUES */}
         {tab === "issues" ? (
           <Table
@@ -408,6 +568,332 @@ function TestEmailCard() {
   );
 }
 
+// Manual booking form for the Logistics tab (roadmap T-23). An admin enters the
+// order id + pickup/drop + COD, optionally checks serviceability & price, then
+// books — POST /api/logistics/shipments (idempotent on the order id). This is the
+// pilot's booking path in lieu of auto-book-on-paid; the live order/payment flow
+// is untouched. On success the pickup (store) is kept so the next booking only
+// needs a new order id + drop.
+type FormCoord = {
+  contactName: string;
+  contactPhone: string;
+  addressLine: string;
+  pincode: string;
+  latitude: string;
+  longitude: string;
+};
+const EMPTY_COORD: FormCoord = {
+  contactName: "",
+  contactPhone: "",
+  addressLine: "",
+  pincode: "",
+  latitude: "",
+  longitude: "",
+};
+
+// Parse a trimmed numeric input, or undefined when blank/invalid.
+function toNum(s: string): number | undefined {
+  const t = s.trim();
+  if (!t) return undefined;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+// Validate + normalize a pickup/drop form group into the wire Address shape.
+function coordToAddress(
+  c: FormCoord
+):
+  | {
+      ok: true;
+      address: {
+        contactName: string;
+        contactPhone: string;
+        addressLine?: string;
+        pincode?: string;
+        latitude: number;
+        longitude: number;
+      };
+    }
+  | { ok: false; error: string } {
+  const latitude = toNum(c.latitude);
+  const longitude = toNum(c.longitude);
+  if (!c.contactName.trim() || !c.contactPhone.trim()) {
+    return { ok: false, error: "contact name and phone are required" };
+  }
+  if (latitude === undefined || longitude === undefined) {
+    return { ok: false, error: "latitude and longitude must be numbers" };
+  }
+  return {
+    ok: true,
+    address: {
+      contactName: c.contactName.trim(),
+      contactPhone: c.contactPhone.trim(),
+      addressLine: c.addressLine.trim() || undefined,
+      pincode: c.pincode.trim() || undefined,
+      latitude,
+      longitude,
+    },
+  };
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  required = false,
+  inputMode,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  inputMode?: "decimal" | "numeric" | "tel" | "text";
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[11px] uppercase tracking-wide text-zinc-500">
+        {label}
+        {required ? " *" : ""}
+      </span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        inputMode={inputMode}
+        className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-emerald-600"
+      />
+    </label>
+  );
+}
+
+function BookShipmentCard({ onBooked }: { onBooked: () => void | Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [orderId, setOrderId] = useState("");
+  const [transactionId, setTransactionId] = useState("");
+  const [pickup, setPickup] = useState<FormCoord>(EMPTY_COORD);
+  const [drop, setDrop] = useState<FormCoord>(EMPTY_COORD);
+  const [parcelSize, setParcelSize] = useState<"SMALL" | "MEDIUM" | "LARGE">("MEDIUM");
+  const [weightKg, setWeightKg] = useState("");
+  const [packageDescription, setPackageDescription] = useState("Groceries");
+  const [cod, setCod] = useState(true);
+  const [codAmount, setCodAmount] = useState("");
+
+  type Quote = {
+    serviceable: boolean;
+    totalPrice: number;
+    codFee: number;
+    estimatedDistanceKm: number;
+    estimatedDurationMin: number;
+    currency: string;
+  };
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [quoting, setQuoting] = useState(false);
+  const [booking, setBooking] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Update one field of a pickup/drop group.
+  const set =
+    (setter: React.Dispatch<React.SetStateAction<FormCoord>>, key: keyof FormCoord) =>
+    (v: string) =>
+      setter((prev) => ({ ...prev, [key]: v }));
+
+  const coordFields = (
+    legend: string,
+    state: FormCoord,
+    setter: React.Dispatch<React.SetStateAction<FormCoord>>
+  ) => (
+    <fieldset className="rounded-lg border border-zinc-800 p-3">
+      <legend className="px-1 text-xs font-semibold text-zinc-300">{legend}</legend>
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="Contact name" value={state.contactName} onChange={set(setter, "contactName")} required />
+        <Field label="Contact phone" value={state.contactPhone} onChange={set(setter, "contactPhone")} inputMode="tel" required />
+        <Field label="Address line" value={state.addressLine} onChange={set(setter, "addressLine")} />
+        <Field label="Pincode" value={state.pincode} onChange={set(setter, "pincode")} placeholder="110001" inputMode="numeric" />
+        <Field label="Latitude" value={state.latitude} onChange={set(setter, "latitude")} placeholder="28.6304" inputMode="decimal" required />
+        <Field label="Longitude" value={state.longitude} onChange={set(setter, "longitude")} placeholder="77.2177" inputMode="decimal" required />
+      </div>
+    </fieldset>
+  );
+
+  const checkQuote = async () => {
+    const p = coordToAddress(pickup);
+    if (!p.ok) return setMsg({ ok: false, text: `Pickup: ${p.error}` });
+    const d = coordToAddress(drop);
+    if (!d.ok) return setMsg({ ok: false, text: `Drop: ${d.error}` });
+    setQuoting(true);
+    setMsg(null);
+    setQuote(null);
+    try {
+      const res = await fetch("/api/logistics/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pickupLatitude: p.address.latitude,
+          pickupLongitude: p.address.longitude,
+          dropLatitude: d.address.latitude,
+          dropLongitude: d.address.longitude,
+          parcelSize,
+          weightKg: toNum(weightKg),
+          cod,
+          codAmount: cod ? toNum(codAmount) : undefined,
+        }),
+      });
+      const data = (await res.json()) as Quote & { error?: string };
+      if (!res.ok) throw new Error(data.error ?? `Failed (${res.status})`);
+      setQuote(data);
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : "Quote failed" });
+    } finally {
+      setQuoting(false);
+    }
+  };
+
+  const book = async () => {
+    if (!orderId.trim()) return setMsg({ ok: false, text: "Order id is required." });
+    const p = coordToAddress(pickup);
+    if (!p.ok) return setMsg({ ok: false, text: `Pickup: ${p.error}` });
+    const d = coordToAddress(drop);
+    if (!d.ok) return setMsg({ ok: false, text: `Drop: ${d.error}` });
+    const amt = toNum(codAmount);
+    if (cod && (amt === undefined || amt < 0)) {
+      return setMsg({ ok: false, text: "COD amount is required for a COD shipment." });
+    }
+    setBooking(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/logistics/shipments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          partnerReference: orderId.trim(),
+          transactionId: transactionId.trim() || undefined,
+          pickup: p.address,
+          drop: d.address,
+          packageDescription: packageDescription.trim() || undefined,
+          parcelSize,
+          weightKg: toNum(weightKg),
+          cod,
+          codAmount: cod ? amt : undefined,
+        }),
+      });
+      const data = (await res.json()) as {
+        shipment?: { shipmentId: string; status: string };
+        error?: string;
+      };
+      if (!res.ok || !data.shipment) {
+        throw new Error(data.error ?? `Failed (${res.status})`);
+      }
+      setMsg({ ok: true, text: `Booked ${data.shipment.shipmentId} · ${data.shipment.status}` });
+      // Keep pickup (the store rarely changes); clear the order-specific fields.
+      setOrderId("");
+      setTransactionId("");
+      setDrop(EMPTY_COORD);
+      setCodAmount("");
+      setQuote(null);
+      await onBooked();
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : "Booking failed" });
+    } finally {
+      setBooking(false);
+    }
+  };
+
+  return (
+    <div className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900/40">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-4 py-3 text-left"
+      >
+        <span className="text-sm font-semibold text-zinc-200">Book a shipment</span>
+        <span className="text-xs text-zinc-500">{open ? "Hide" : "New booking"}</span>
+      </button>
+
+      {open ? (
+        <div className="space-y-3 border-t border-zinc-800 p-4">
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Order id (partnerReference)" value={orderId} onChange={setOrderId} placeholder="order-88213" required />
+            <Field label="Transaction id (optional)" value={transactionId} onChange={setTransactionId} placeholder="ONDC txn" />
+          </div>
+
+          {coordFields("Pickup (store)", pickup, setPickup)}
+          {coordFields("Drop (buyer)", drop, setDrop)}
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <label className="block">
+              <span className="mb-1 block text-[11px] uppercase tracking-wide text-zinc-500">
+                Parcel size
+              </span>
+              <select
+                value={parcelSize}
+                onChange={(e) =>
+                  setParcelSize(e.target.value as "SMALL" | "MEDIUM" | "LARGE")
+                }
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-emerald-600"
+              >
+                <option value="SMALL">SMALL</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="LARGE">LARGE</option>
+              </select>
+            </label>
+            <Field label="Weight (kg)" value={weightKg} onChange={setWeightKg} placeholder="4.0" inputMode="decimal" />
+            <Field label="Package" value={packageDescription} onChange={setPackageDescription} />
+            <Field label="COD amount (₹)" value={codAmount} onChange={setCodAmount} placeholder="640" inputMode="decimal" required={cod} />
+          </div>
+
+          <label className="flex items-center gap-2 text-xs text-zinc-400">
+            <input
+              type="checkbox"
+              checked={cod}
+              onChange={(e) => setCod(e.target.checked)}
+              className="h-4 w-4 rounded border-zinc-600 bg-zinc-950 accent-emerald-600"
+            />
+            Cash on delivery (required for the pilot)
+          </label>
+
+          {quote ? (
+            <div
+              className={`rounded-lg border px-3 py-2 text-xs ${
+                quote.serviceable
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                  : "border-rose-500/30 bg-rose-500/10 text-rose-300"
+              }`}
+            >
+              {quote.serviceable
+                ? `Serviceable · ${inr(quote.totalPrice)} (COD fee ${inr(quote.codFee)}) · ~${quote.estimatedDurationMin} min · ${quote.estimatedDistanceKm} km`
+                : "Not serviceable for this pickup/drop."}
+            </div>
+          ) : null}
+
+          {msg ? (
+            <p className={`text-xs ${msg.ok ? "text-emerald-400" : "text-rose-400"}`}>
+              {msg.text}
+            </p>
+          ) : null}
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={checkQuote}
+              disabled={quoting || booking}
+              className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800 disabled:opacity-60"
+            >
+              {quoting ? "Checking…" : "Check price"}
+            </button>
+            <button
+              onClick={book}
+              disabled={booking || quoting}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
+            >
+              {booking ? "Booking…" : "Book shipment"}
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function Stat({
   label,
   value,
@@ -439,14 +925,16 @@ function Badge({
   tone = "zinc",
 }: {
   text: string;
-  tone?: "zinc" | "emerald" | "amber";
+  tone?: "zinc" | "emerald" | "amber" | "rose";
 }) {
   const cls =
     tone === "emerald"
       ? "bg-emerald-500/15 text-emerald-300"
       : tone === "amber"
         ? "bg-amber-500/15 text-amber-300"
-        : "bg-zinc-700/40 text-zinc-300";
+        : tone === "rose"
+          ? "bg-rose-500/15 text-rose-300"
+          : "bg-zinc-700/40 text-zinc-300";
   return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>{text}</span>;
 }
 

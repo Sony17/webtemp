@@ -7,30 +7,45 @@
 import * as React from "react";
 import Link from "next/link";
 import { Loader2, ImageOff, Plus, Minus } from "lucide-react";
-import { Button, Card } from "@/components/shop/ui";
+import { Card } from "@/components/shop/ui";
 import { FavouriteButton } from "@/components/shop/FavouriteButton";
 import { Rating } from "@/components/shop/Rating";
 import { productKey } from "@/lib/shop/hooks/use-favourites";
+import { useShop } from "@/lib/shop/store";
 import { cn, formatINR } from "@/lib/shop/cn";
 import type { Product } from "@/lib/shop/types";
 import type { ShopCategory } from "@/lib/shop/categories";
 
-// A single grocery category tile: a soft tinted chip with a lucide icon and a
-// label, linking to a seeded ONDC search. No emoji (see the no-emoji rule).
+// A single grocery category tile: a real category photo on a soft tinted chip
+// (with a lucide icon as the graceful fallback), plus a label — linking to a
+// seeded ONDC search. No emoji (see the no-emoji rule).
 export function CategoryTile({ category }: { category: ShopCategory }) {
-  const { Icon, tint, label, query } = category;
+  const { Icon, tint, label, query, image } = category;
+  const [failed, setFailed] = React.useState(false);
   return (
     <Link
       href={`/shop/search?q=${encodeURIComponent(query)}`}
-      className="group flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-3 text-center shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft-lg"
+      className="group flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-2.5 text-center shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft-lg sm:p-3"
     >
       <span
         className={cn(
-          "grid h-14 w-14 place-items-center rounded-2xl transition-transform group-hover:scale-105 sm:h-16 sm:w-16",
+          "relative grid h-16 w-16 place-items-center overflow-hidden rounded-2xl transition-transform group-hover:scale-105 sm:h-[4.5rem] sm:w-[4.5rem]",
           tint
         )}
       >
-        <Icon className="h-7 w-7" strokeWidth={1.75} />
+        {image && !failed ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={image}
+            alt={label}
+            loading="lazy"
+            decoding="async"
+            onError={() => setFailed(true)}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <Icon className="h-7 w-7" strokeWidth={1.75} />
+        )}
       </span>
       <span className="text-[11px] font-medium leading-tight sm:text-xs">
         {label}
@@ -167,6 +182,89 @@ export function QuantityStepper({
         disabled={value >= max}
       >
         <Plus className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+// The signature quick-commerce add control: a compact "ADD" pill that swaps
+// in place for a filled −/qty/+ stepper once the item is in the cart (the
+// Blinkit/Zepto interaction). Reads the live quantity straight from the cart
+// store so every card, list row and detail page stays in sync automatically.
+// `+` re-uses addToCart (increment), `−` uses setQuantity (removes at 0).
+export function CartControl({
+  product,
+  onAdd,
+  size = "sm",
+  className,
+}: {
+  product: Product;
+  // Optional hook for the FIRST add (e.g. analytics / seeding a snapshot);
+  // falls back to the store's addToCart when omitted.
+  onAdd?: (p: Product) => void;
+  size?: "sm" | "lg";
+  className?: string;
+}) {
+  const { lines, addToCart, setQuantity } = useShop();
+  const qty =
+    lines.find(
+      (l) =>
+        l.product.itemId === product.itemId && l.product.bppId === product.bppId
+    )?.quantity ?? 0;
+
+  const dims =
+    size === "lg"
+      ? "h-11 min-w-[7.5rem] text-sm"
+      : "h-8 min-w-[4.75rem] text-xs";
+  const iconBtn = size === "lg" ? "w-11" : "w-8";
+
+  if (qty === 0) {
+    return (
+      <button
+        type="button"
+        aria-label={`Add ${product.name} to cart`}
+        onClick={() => (onAdd ? onAdd(product) : addToCart(product))}
+        className={cn(
+          "inline-flex items-center justify-center rounded-lg border border-primary/40 bg-primary/5 px-4 font-bold uppercase tracking-wide text-primary shadow-soft transition-colors hover:bg-primary hover:text-primary-foreground active:scale-95",
+          dims,
+          className
+        )}
+      >
+        Add
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center justify-between rounded-lg bg-primary font-bold text-primary-foreground shadow-soft",
+        dims,
+        className
+      )}
+    >
+      <button
+        type="button"
+        aria-label="Decrease quantity"
+        onClick={() => setQuantity(product.itemId, product.bppId, qty - 1)}
+        className={cn(
+          "grid h-full place-items-center rounded-l-lg transition-colors hover:bg-white/15 active:scale-90",
+          iconBtn
+        )}
+      >
+        <Minus className={size === "lg" ? "h-4 w-4" : "h-3.5 w-3.5"} />
+      </button>
+      <span className="tabular-nums">{qty}</span>
+      <button
+        type="button"
+        aria-label="Increase quantity"
+        onClick={() => addToCart(product, 1)}
+        className={cn(
+          "grid h-full place-items-center rounded-r-lg transition-colors hover:bg-white/15 active:scale-90",
+          iconBtn
+        )}
+      >
+        <Plus className={size === "lg" ? "h-4 w-4" : "h-3.5 w-3.5"} />
       </button>
     </div>
   );
@@ -352,16 +450,7 @@ export function ProductCard({
               </span>
             ) : null}
           </div>
-          {onAdd ? (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 border-primary/40 bg-primary/5 px-4 font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
-              onClick={() => onAdd(product)}
-            >
-              Add
-            </Button>
-          ) : null}
+          {onAdd ? <CartControl product={product} onAdd={onAdd} /> : null}
         </div>
       </div>
     </Card>

@@ -6,12 +6,12 @@
 // The product data comes from the active discovery transaction's catalogs.
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Check, ShoppingCart, Store, Star, PackageSearch, Truck, Tags } from "lucide-react";
-import { Button, Card, Separator, Badge } from "@/components/shop/ui";
+import { Check, Store, Star, PackageSearch, Truck, Tags, Zap } from "lucide-react";
+import { Button, Card, Badge } from "@/components/shop/ui";
 import {
   EmptyState,
   ProductThumb,
-  QuantityStepper,
+  CartControl,
 } from "@/components/shop/widgets";
 import { Disclosure } from "@/components/shop/Disclosure";
 import { DetailSkeleton } from "@/components/shop/Skeletons";
@@ -33,7 +33,7 @@ export default function ProductPage() {
     itemId: string;
   }>();
   const router = useRouter();
-  const { transactionId, addToCart } = useShop();
+  const { transactionId, addToCart, lines } = useShop();
 
   const bppId = decodeURIComponent(params.bppId);
   const providerId = decodeURIComponent(params.providerId);
@@ -92,7 +92,6 @@ export default function ProductPage() {
 
   // Which seller offer is currently selected (defaults to the one in the URL).
   const [selected, setSelected] = React.useState<SellerOffer | null>(null);
-  const [qty, setQty] = React.useState(1);
 
   const offers = product ? offersForProduct(products, product) : [];
   const activeOffer: SellerOffer | null =
@@ -143,9 +142,16 @@ export default function ProductPage() {
     maxPrice: activeOffer!.maxPrice,
   };
 
-  const add = (then?: "cart" | "checkout") => {
-    addToCart(toAdd, qty);
-    if (then === "checkout") router.push("/shop/cart");
+  // How many of THIS offer are already in the cart (drives the add→stepper
+  // control and lets "Buy now" skip a redundant add).
+  const inCart =
+    lines.find(
+      (l) => l.product.itemId === toAdd.itemId && l.product.bppId === toAdd.bppId
+    )?.quantity ?? 0;
+
+  const buyNow = () => {
+    if (inCart === 0) addToCart(toAdd, 1);
+    router.push("/shop/cart");
   };
 
   const discount =
@@ -298,21 +304,17 @@ export default function ProductPage() {
         );
       })()}
 
-      <Separator />
-
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">Quantity</span>
-        <QuantityStepper value={qty} onChange={(v) => setQty(Math.max(1, v))} min={1} />
-      </div>
-
-      {/* Sticky action bar */}
-      <div className="fixed inset-x-0 bottom-[3.25rem] z-20 border-t border-border bg-background/95 backdrop-blur-md">
+      {/* Sticky action bar — price on the left, the signature add→stepper
+          control (in-cart quantity, adjustable in place), and Buy now. */}
+      <div className="fixed inset-x-0 bottom-[3.25rem] z-20 border-t border-border bg-background/95 backdrop-blur-md md:bottom-0">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
-          <Button variant="outline" className="flex-1" onClick={() => add()}>
-            <ShoppingCart className="h-4 w-4" /> Add to cart
-          </Button>
-          <Button className="flex-1" onClick={() => add("checkout")}>
-            Buy now
+          <div className="flex shrink-0 flex-col leading-tight">
+            <span className="text-[11px] text-muted-foreground">Price</span>
+            <span className="text-lg font-semibold">{formatINR(toAdd.price)}</span>
+          </div>
+          <CartControl product={toAdd} size="lg" className="flex-1" />
+          <Button size="lg" className="flex-1" onClick={buyNow}>
+            <Zap className="h-4 w-4" /> Buy now
           </Button>
         </div>
       </div>
