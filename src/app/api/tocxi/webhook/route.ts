@@ -1,6 +1,6 @@
 // Tocxi inbound status webhook — the critical trust boundary.
 //
-//   POST /api/logistics/webhook
+//   POST /api/tocxi/webhook
 //   Headers: X-Tocxi-Event: shipment.status
 //            X-Tocxi-Signature: <hex HMAC-SHA256 of the RAW body, webhook secret>
 //   Body:    { event, shipmentId, partnerReference, status, awbNo?, timestamp? }
