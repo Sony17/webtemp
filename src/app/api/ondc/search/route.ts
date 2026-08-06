@@ -54,6 +54,11 @@ type SearchRequestBody = {
   // the supported domains (config.domains) or the request is rejected — this is
   // what lets a fashion search reach fashion sellers instead of only grocery.
   domain?: string;
+  // ONDC STD city code for discovery routing (e.g. "std:0120" for Noida, "*" for
+  // pan-India). The network returns sellers serving this city. Optional: when
+  // absent, falls back to config.cityCode. Passing the buyer's actual city (derived
+  // from their pincode) is what stops every search from being pinned to one city.
+  city?: string;
   deliveryGps?: string;
   deliveryAreaCode?: string;
   // Buyer's reverse-geocoded place (city / locality / state). ONDC's real
@@ -315,6 +320,7 @@ export async function POST(req: Request) {
   const query = str(body.query);
   const category = str(body.category);
   const domain = str(body.domain);
+  const cityCode = str(body.city);
   const deliveryGps = str(body.deliveryGps);
   const deliveryAreaCode = str(body.deliveryAreaCode);
   const deliveryCity = str(body.deliveryCity);
@@ -393,11 +399,20 @@ export async function POST(req: Request) {
   //     incremental request (a concrete city there makes its generator read an
   //     undefined bucket and throw). ONDC QA flow: 1st = city-call search with
   //     the specific city; 2nd = incremental-pull search with city "*".
+  // Discovery city routing (ONDC context.city). The network returns sellers
+  // serving this city, so a single fixed value city-locks discovery — the root
+  // cause of a Noida buyer seeing only Bangalore (std:080) stores. Precedence:
+  //   1. incremental refresh → "*" (unchanged; the pull flow requires it)
+  //   2. ONDC_SEARCH_CITY env override (set to "*" for pan-India discovery)
+  //   3. the buyer's pincode-derived STD city passed by the client
+  //   4. buildContext's default (config.cityCode) when none of the above is set
+  const cityOverride = str(process.env.ONDC_SEARCH_CITY);
+  const searchCity = incremental ? "*" : cityOverride ?? cityCode;
   const context = buildContext({
     action: "search",
     ...(transactionId ? { transactionId } : {}),
     ...(domain ? { domain } : {}),
-    ...(incremental ? { city: "*" } : {}),
+    ...(searchCity ? { city: searchCity } : {}),
   });
 
   // DEV OFFLINE MOCK. With ONDC_MOCK_CATALOG=true we never touch the gateway:
@@ -430,6 +445,7 @@ export async function POST(req: Request) {
     console.log("ondc.search MOCK catalog synthesized", {
       transactionId: context.transaction_id,
       sellers: slices.length,
+      contextCity: context.city,
       deliveryGps: deliveryGps ?? null,
       deliveryCity: deliveryCity ?? null,
     });

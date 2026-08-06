@@ -50,6 +50,9 @@ export function search(body: {
   // ONDC retail domain to discover in (e.g. "ONDC:RET12" for fashion). Omitted →
   // the app's primary/grocery domain. This is what surfaces fashion sellers.
   domain?: string;
+  // ONDC STD city code for discovery routing (e.g. "std:0120" Noida, "*" pan-India).
+  // Derived from the buyer's pincode so results aren't pinned to one fixed city.
+  city?: string;
   deliveryGps?: string;
   deliveryAreaCode?: string;
   // Buyer's reverse-geocoded place — carried only so the dev mock catalog can

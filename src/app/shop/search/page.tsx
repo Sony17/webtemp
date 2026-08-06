@@ -35,6 +35,13 @@ import { detectCurrentLocation } from "@/lib/shop/geolocate";
 import { departmentLabel } from "@/lib/shop/categories";
 import * as api from "@/lib/shop/api";
 
+// Discovery city routing. "*" = pan-India: the network returns every serviceable
+// seller regardless of city, and the app sorts them by distance from the buyer.
+// This deliberately avoids pinning discovery to one city (which locked a Noida
+// buyer to Bangalore-only results). Operators can force a specific STD city via
+// the server's ONDC_SEARCH_CITY env var, which takes precedence over this.
+const DISCOVERY_CITY = "*";
+
 // The shop store hydrates `address` from localStorage in a mount effect, one
 // tick after the seeded search fires — so read the persisted address directly
 // here to avoid re-detecting location for a returning user. Mirrors the direct
@@ -48,6 +55,22 @@ function readSavedAddress(): Address | null {
   } catch {
     return null;
   }
+}
+
+// Translate a raw ONDC gateway NACK into buyer-facing copy. The most common one
+// on a non-grocery department is the registry rejecting our bap_id for a domain we
+// aren't enrolled for ("Invalid bap_id ... for domain ONDC:RET12") — that's an
+// ONDC subscriber-registration gap, not a user error, so we say so plainly instead
+// of surfacing the raw protocol string.
+function friendlyNack(msg: string | undefined, domain?: string): string {
+  const m = (msg ?? "").trim();
+  if (/bap_id/i.test(m) && /domain/i.test(m)) {
+    const dept = departmentLabel(domain);
+    return dept
+      ? `${dept} isn't available on this network yet — this app isn't registered with ONDC for ${domain}.`
+      : `This category isn't available on this network yet (ONDC registration pending${domain ? ` for ${domain}` : ""}).`;
+  }
+  return m || "The network rejected the search.";
 }
 
 function SearchScreen() {
@@ -80,6 +103,8 @@ function SearchScreen() {
       const res = await api.search({
         query: activeQuery,
         domain: searchDomain,
+        // Pan-India discovery — not pinned to any single city (see DISCOVERY_CITY).
+        city: DISCOVERY_CITY,
         deliveryAreaCode: address?.areaCode,
         deliveryGps: address?.gps,
         deliveryCity: address?.city,
@@ -90,7 +115,7 @@ function SearchScreen() {
         transactionId: txn,
       });
       if (res.status === "NACK") {
-        setError(res.error?.message ?? "Refresh rejected by the network.");
+        setError(friendlyNack(res.error?.message, searchDomain) ?? "Refresh rejected by the network.");
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Refresh failed.");
@@ -163,6 +188,8 @@ function SearchScreen() {
         const res = await api.search({
           query: trimmed,
           domain: searchDomain,
+          // Pan-India discovery — not pinned to any single city (see DISCOVERY_CITY).
+          city: DISCOVERY_CITY,
           deliveryAreaCode: areaCode,
           deliveryGps: gps,
           deliveryCity: city,
@@ -170,7 +197,7 @@ function SearchScreen() {
           deliveryState: state,
         });
         if (res.status === "NACK") {
-          setError(res.error?.message ?? "The network rejected the search.");
+          setError(friendlyNack(res.error?.message, searchDomain));
         } else {
           setTxn(res.transactionId);
           setTransactionId(res.transactionId);
