@@ -139,3 +139,23 @@ export function departmentLabel(domain?: string): string | undefined {
   if (!domain) return undefined;
   return DEPARTMENTS.find((d) => d.domain === domain)?.label;
 }
+
+// Domains that are actually LIVE on the ONDC network for this subscriber — i.e.
+// the subscriber is registered for them AND the gateway accepts their searches.
+// A domain the subscriber isn't registered for NACKs at the gateway ("Invalid
+// bap_id ... for domain ONDC:RETxx"), so we mark its department "coming soon"
+// rather than firing a search that can't succeed. Grocery (RET10) is the
+// verified-registered default; as you complete each domain's ONDC registration,
+// add it to NEXT_PUBLIC_ONDC_LIVE_DOMAINS (comma-separated), e.g.
+// "ONDC:RET10,ONDC:RET12" — no code change or redeploy of logic needed.
+const LIVE_DOMAINS: string[] = (
+  process.env.NEXT_PUBLIC_ONDC_LIVE_DOMAINS ?? "ONDC:RET10"
+)
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+// Whether a department's domain is live (registered + searchable) right now.
+export function isDomainLive(domain: string): boolean {
+  return LIVE_DOMAINS.includes(domain);
+}

@@ -27,39 +27,68 @@ import {
   CATEGORIES,
   DEPARTMENTS,
   FASHION_CATEGORIES,
+  isDomainLive,
   type Department,
 } from "@/lib/shop/categories";
 import { cn } from "@/lib/shop/cn";
 
-// A top-level department card (Grocery / Fashion / Beauty / Electronics) linking
-// to a domain-seeded ONDC search. Non-grocery departments carry their domain so
-// the right sellers answer; grocery omits it (defaults to the primary domain).
+// A top-level department card (Grocery / Fashion / Beauty / Electronics). A LIVE
+// department (its ONDC domain is registered + searchable) links to a domain-seeded
+// search. A not-yet-live department (e.g. fashion before RET12 registration) is
+// shown but marked "Soon" and doesn't fire a search that the gateway would NACK —
+// flip it live via NEXT_PUBLIC_ONDC_LIVE_DOMAINS once registered.
 function DepartmentCard({ dept }: { dept: Department }) {
+  const live = isDomainLive(dept.domain);
   const href =
     dept.domain !== "ONDC:RET10"
       ? `/shop/search?q=${encodeURIComponent(dept.query)}&domain=${encodeURIComponent(dept.domain)}`
       : `/shop/search?q=${encodeURIComponent(dept.query)}`;
-  return (
-    <Link
-      href={href}
-      className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft-lg sm:flex-col sm:items-start sm:gap-2 sm:p-4"
-    >
+
+  const inner = (
+    <>
       <span
         className={cn(
-          "grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-transform group-hover:scale-105",
+          "grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-transform",
+          live && "group-hover:scale-105",
           dept.tint
         )}
       >
         <dept.Icon className="h-5 w-5" strokeWidth={1.75} />
       </span>
       <span className="min-w-0">
-        <span className="block text-sm font-semibold leading-tight">
+        <span className="flex items-center gap-1.5 text-sm font-semibold leading-tight">
           {dept.label}
+          {!live && (
+            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              Soon
+            </span>
+          )}
         </span>
         <span className="hidden text-xs text-muted-foreground sm:block">
-          {dept.categories.length} categories
+          {live ? `${dept.categories.length} categories` : "Coming soon"}
         </span>
       </span>
+    </>
+  );
+
+  const base =
+    "group flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-soft transition-all sm:flex-col sm:items-start sm:gap-2 sm:p-4";
+
+  // Not live → a non-clickable, muted tile (no search fired, no NACK).
+  if (!live) {
+    return (
+      <div className={cn(base, "cursor-default opacity-60")} aria-disabled="true">
+        {inner}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      className={cn(base, "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft-lg")}
+    >
+      {inner}
     </Link>
   );
 }
@@ -283,19 +312,36 @@ export default function ShopHome() {
         </div>
       </Reveal>
 
-      {/* Fashion strip — browse fashion (ONDC:RET12) categories directly */}
+      {/* Fashion strip — browse fashion (ONDC:RET12) categories. Until the
+          subscriber is registered for RET12 on ONDC, it's shown but flagged
+          "coming soon" and made non-interactive (a search would NACK). */}
       <Reveal as="section">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold tracking-tight">Fashion</h2>
-          <Link
-            href="/shop/search?q=shirt&domain=ONDC%3ARET12"
-            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-          >
-            View all
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+            Fashion
+            {!isDomainLive("ONDC:RET12") && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                Coming soon
+              </span>
+            )}
+          </h2>
+          {isDomainLive("ONDC:RET12") && (
+            <Link
+              href="/shop/search?q=shirt&domain=ONDC%3ARET12"
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              View all
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
         </div>
-        <div className="grid grid-cols-4 gap-3 sm:grid-cols-6">
+        <div
+          className={cn(
+            "grid grid-cols-4 gap-3 sm:grid-cols-6",
+            !isDomainLive("ONDC:RET12") && "pointer-events-none opacity-60"
+          )}
+          aria-disabled={!isDomainLive("ONDC:RET12")}
+        >
           {FASHION_CATEGORIES.map((c) => (
             <CategoryTile key={c.id} category={c} />
           ))}
