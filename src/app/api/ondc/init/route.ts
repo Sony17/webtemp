@@ -80,6 +80,9 @@ type InitRequestBody = {
   transactionId?: string;
   bppId?: string;
   bppUri?: string;
+  // ONDC retail domain this order routes on (e.g. fashion "ONDC:RET12").
+  // Optional: defaults to the app primary/grocery domain (config.domain).
+  domain?: string;
   providerId?: string;
   items?: unknown;
   billing?: {
@@ -514,6 +517,7 @@ export async function POST(req: Request) {
   const transactionId = str(body.transactionId);
   const bppId = str(body.bppId);
   const bppUri = str(body.bppUri);
+  const domain = str(body.domain);
   const providerId = str(body.providerId);
   const deliveryGps = str(body.fulfillment?.gps);
   const deliveryAreaCode = str(body.fulfillment?.areaCode);
@@ -636,7 +640,13 @@ export async function POST(req: Request) {
       await sendDirectedWithVersionFallback<OndcInitMessage>({
         url,
         action: "init",
-        contextParams: { action: "init", transactionId, bppId, bppUri },
+        contextParams: {
+          action: "init",
+          transactionId,
+          bppId,
+          bppUri,
+          ...(domain ? { domain } : {}),
+        },
         message,
       });
     usedContext = context;

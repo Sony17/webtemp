@@ -37,6 +37,7 @@ import {
 import { OrderDetailSkeleton } from "@/components/shop/Skeletons";
 import { CourierTracking } from "@/components/shop/CourierTracking";
 import { useShopState } from "@/lib/shop/useShopState";
+import { useShop } from "@/lib/shop/store";
 import {
   parseQuote,
   orderState,
@@ -63,6 +64,14 @@ export default function OrderPage() {
 
   const txn = decodeURIComponent(params.txn);
   const bppId = decodeURIComponent(params.bppId);
+
+  // ONDC domain this order was placed on (fashion, …), from the locally-remembered
+  // order ref — so status/track/cancel/support route on the same domain. Undefined
+  // for grocery / pre-existing orders → the routes default to the primary domain.
+  const { orders } = useShop();
+  const orderDomain = orders.find(
+    (o) => o.transactionId === txn && o.bppId === bppId
+  )?.domain;
 
   const { state, polling, refetch } = useShopState(txn, {
     intervalMs: 4000,
@@ -186,7 +195,7 @@ export default function OrderPage() {
       icon: <Truck className="h-4 w-4" />,
       onClick: () =>
         act("track", () =>
-          api.track({ transactionId: txn, bppId, bppUri: bpp!.bppUri, orderId })
+          api.track({ transactionId: txn, bppId, bppUri: bpp!.bppUri, domain: orderDomain, orderId })
         ),
       busy: busy === "track",
     };
@@ -310,6 +319,7 @@ export default function OrderPage() {
                       transactionId: txn,
                       bppId,
                       bppUri: bpp!.bppUri,
+                      domain: orderDomain,
                       orderId,
                     })
                   )
@@ -391,7 +401,7 @@ export default function OrderPage() {
               disabled={busy === "track"}
               onClick={() =>
                 act("track", () =>
-                  api.track({ transactionId: txn, bppId, bppUri: bpp!.bppUri, orderId })
+                  api.track({ transactionId: txn, bppId, bppUri: bpp!.bppUri, domain: orderDomain, orderId })
                 )
               }
             >
@@ -496,6 +506,7 @@ export default function OrderPage() {
                   transactionId: txn,
                   bppId,
                   bppUri: bpp!.bppUri,
+                  domain: orderDomain,
                   refId: orderId ?? txn,
                 })
               )
@@ -601,6 +612,7 @@ export default function OrderPage() {
                   transactionId: txn,
                   bppId,
                   bppUri: bpp!.bppUri,
+                  domain: orderDomain,
                   orderId: orderId!,
                   cancellationReasonId: cancelReason,
                 });

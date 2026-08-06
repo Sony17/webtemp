@@ -65,6 +65,9 @@ type StatusRequestBody = {
   transactionId?: string;
   bppId?: string;
   bppUri?: string;
+  // ONDC retail domain this order routes on (e.g. fashion "ONDC:RET12").
+  // Optional: defaults to the app primary/grocery domain (config.domain).
+  domain?: string;
   orderId?: string;
 };
 
@@ -111,6 +114,7 @@ export async function POST(req: Request) {
   const transactionId = str(body.transactionId);
   const bppId = str(body.bppId);
   const bppUri = str(body.bppUri);
+  const domain = str(body.domain);
   const orderId = str(body.orderId);
 
   // transaction_id is the spine of the lifecycle: status MUST continue the same
@@ -162,6 +166,7 @@ export async function POST(req: Request) {
     transactionId,
     bppId,
     bppUri,
+    ...(domain ? { domain } : {}),
   });
 
   // The status message is just the order id to look up — nothing to commit, only

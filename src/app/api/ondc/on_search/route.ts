@@ -243,7 +243,7 @@ function extractInboundError(payload: OnSearchCallback): OndcError | null {
 // us as the BAP (defense in depth on top of the signature check).
 function extractAndValidate(
   payload: OnSearchCallback,
-  expected: { bapId: string; bapUri: string; domain: string }
+  expected: { bapId: string; bapUri: string; domains: string[] }
 ): { ok: true; data: ExtractedOnSearch } | { ok: false; reason: string } {
   const ctx = payload.context;
   if (!ctx) return { ok: false, reason: "missing context" };
@@ -264,10 +264,16 @@ function extractAndValidate(
   if (!isNonEmptyString(ctx.bpp_uri)) {
     return { ok: false, reason: "missing bpp_uri" };
   }
-  // Domain / bap identity must echo what WE sent. A RET10 BAP must not silently
-  // accept a LOG10 callback, and a callback that quotes someone else's bap_id
-  // is at best confused routing, at worst an attempt to misroute responses.
-  if (!isNonEmptyString(ctx.domain) || ctx.domain !== expected.domain) {
+  // Domain / bap identity must echo what WE sent. A retail BAP must not silently
+  // accept a LOG10 (logistics) callback, and a callback that quotes someone
+  // else's bap_id is at best confused routing, at worst an attempt to misroute
+  // responses. We accept any domain in the app's SUPPORTED set (config.domains)
+  // — grocery RET10 plus fashion/BPC/electronics when enabled — because a
+  // multi-domain buyer app fires searches across several retail domains and each
+  // BPP answers on the domain it serves. A domain OUTSIDE the supported set
+  // (e.g. LOG10, or a domain we never search) is still rejected. Pin
+  // ONDC_DOMAINS="ONDC:RET10" to restore strict single-domain acceptance.
+  if (!isNonEmptyString(ctx.domain) || !expected.domains.includes(ctx.domain)) {
     return {
       ok: false,
       reason: `unexpected domain "${ctx.domain ?? ""}"`,
@@ -565,7 +571,7 @@ export async function POST(req: Request) {
   const result = extractAndValidate(tentativePayload, {
     bapId: config.bapId,
     bapUri: config.bapUri,
-    domain: config.domain,
+    domains: config.domains,
   });
   if (!result.ok) {
     // Surface the rejected field in logs. The NACK body already carries this
@@ -591,7 +597,7 @@ export async function POST(req: Request) {
       receivedCity: tentativePayload.context?.city,
       expectedBapId: config.bapId,
       expectedBapUri: config.bapUri,
-      expectedDomain: config.domain,
+      expectedDomain: config.domains.join(","),
     });
     return nack(
       400,

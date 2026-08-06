@@ -32,6 +32,7 @@ import {
   type CatalogRecord,
 } from "@/lib/shop/types";
 import { detectCurrentLocation } from "@/lib/shop/geolocate";
+import { departmentLabel } from "@/lib/shop/categories";
 import * as api from "@/lib/shop/api";
 
 // The shop store hydrates `address` from localStorage in a mount effect, one
@@ -53,7 +54,10 @@ function SearchScreen() {
   const router = useRouter();
   const params = useSearchParams();
   const initialQ = params.get("q") ?? "";
-  const { address, addToCart, setAddress, setTransactionId } = useShop();
+  // ONDC domain to discover in (grocery unless a fashion/beauty/electronics
+  // department or category seeded it). Threaded into every search on this screen.
+  const searchDomain = params.get("domain") ?? undefined;
+  const { address, addToCart, setAddress, setTransactionId, setDomain } = useShop();
 
   const [q, setQ] = React.useState(initialQ);
   // True while we're acquiring the buyer's live GPS before a search fires.
@@ -75,6 +79,7 @@ function SearchScreen() {
     try {
       const res = await api.search({
         query: activeQuery,
+        domain: searchDomain,
         deliveryAreaCode: address?.areaCode,
         deliveryGps: address?.gps,
         deliveryCity: address?.city,
@@ -92,7 +97,7 @@ function SearchScreen() {
     } finally {
       setRefreshing(false);
     }
-  }, [txn, activeQuery, address]);
+  }, [txn, activeQuery, address, searchDomain]);
 
   // ACCUMULATED catalog slices for the current search, keyed by (bppId,messageId).
   // Each /api/shop/state poll is load-balanced to one serverless instance and
@@ -107,6 +112,9 @@ function SearchScreen() {
       const trimmed = query.trim();
       if (!trimmed) return;
       setActiveQuery(trimmed);
+      // Record the discovery domain so items added from these results carry it
+      // into the order lifecycle (grocery when unset).
+      setDomain(searchDomain ?? null);
       setSearching(true);
       setError(null);
       setTxn(null);
@@ -154,6 +162,7 @@ function SearchScreen() {
       try {
         const res = await api.search({
           query: trimmed,
+          domain: searchDomain,
           deliveryAreaCode: areaCode,
           deliveryGps: gps,
           deliveryCity: city,
@@ -172,7 +181,7 @@ function SearchScreen() {
         setSearching(false);
       }
     },
-    [address, setAddress, setTransactionId]
+    [address, setAddress, setTransactionId, setDomain, searchDomain]
   );
 
   // Fire the initial search from the ?q= seed once. runSearch kicks off a
@@ -233,7 +242,10 @@ function SearchScreen() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.replace(`/shop/search?q=${encodeURIComponent(q.trim())}`);
+    // Preserve the active department so a typed query stays within Fashion/Beauty/
+    // Electronics rather than silently falling back to grocery.
+    const suffix = searchDomain ? `&domain=${encodeURIComponent(searchDomain)}` : "";
+    router.replace(`/shop/search?q=${encodeURIComponent(q.trim())}${suffix}`);
     runSearch(q);
   };
 
@@ -257,6 +269,15 @@ function SearchScreen() {
           </button>
         </div>
       </form>
+
+      {/* Active department chip — shows which ONDC domain these results come from
+          when it's not the default grocery (Fashion / Beauty / Electronics). */}
+      {departmentLabel(searchDomain) ? (
+        <p className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary">
+          <Store className="h-3.5 w-3.5" />
+          {departmentLabel(searchDomain)}
+        </p>
+      ) : null}
 
       {/* Live-location line: shows we're acquiring GPS, then where we're
           searching from once a delivery location is set. */}

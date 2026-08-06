@@ -61,7 +61,10 @@ export default function IssuePage() {
   const transactionId = decodeURIComponent(txn);
   const bpp = decodeURIComponent(bppId);
   const router = useRouter();
-  const { address } = useShop();
+  const { address, orders } = useShop();
+  const orderDomain = orders.find(
+    (o) => o.transactionId === transactionId && o.bppId === bpp
+  )?.domain;
 
   const { state, refetch } = useShopState(transactionId, {
     intervalMs: 4000,
@@ -123,6 +126,7 @@ export default function IssuePage() {
         transactionId,
         bppId: bpp,
         bppUri,
+        domain: orderDomain,
         orderId,
         category: cat.c,
         subCategory: cat.s,
@@ -185,6 +189,7 @@ export default function IssuePage() {
         transactionId,
         bppId: bpp,
         bppUri,
+        domain: orderDomain,
         issueId: issue.issueId,
         complainantAction: action,
         actionDesc: action === "INFO_PROVIDED" ? additionalInfo.trim() : undefined,

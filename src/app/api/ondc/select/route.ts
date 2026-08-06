@@ -75,6 +75,9 @@ type SelectRequestBody = {
   transactionId?: string;
   bppId?: string;
   bppUri?: string;
+  // ONDC retail domain this order routes on (e.g. fashion "ONDC:RET12").
+  // Optional: defaults to the app primary/grocery domain (config.domain).
+  domain?: string;
   providerId?: string;
   items?: unknown;
   fulfillment?: { id?: string; type?: string; gps?: string; areaCode?: string };
@@ -285,6 +288,7 @@ export async function POST(req: Request) {
   const transactionId = str(body.transactionId);
   const bppId = str(body.bppId);
   const bppUri = str(body.bppUri);
+  const domain = str(body.domain);
   const providerId = str(body.providerId);
   const deliveryGps = str(body.fulfillment?.gps);
   const deliveryAreaCode = str(body.fulfillment?.areaCode);
@@ -383,7 +387,13 @@ export async function POST(req: Request) {
         // transaction_id is reused; bppId/bppUri make buildContext attach
         // bpp_id/bpp_uri (required for every non-search action). message_id is
         // minted fresh per attempt inside buildContext.
-        contextParams: { action: "select", transactionId, bppId, bppUri },
+        contextParams: {
+          action: "select",
+          transactionId,
+          bppId,
+          bppUri,
+          ...(domain ? { domain } : {}),
+        },
         message,
         // Workbench/seller requires the Digest header as a precondition (returns
         // HTTP 428 without it). Same as search/route.ts.

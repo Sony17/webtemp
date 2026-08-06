@@ -23,8 +23,46 @@ import { CategoryTile } from "@/components/shop/widgets";
 import { RecentlyViewed } from "@/components/shop/RecentlyViewed";
 import { Carousel } from "@/components/shop/Carousel";
 import { Reveal } from "@/components/shop/motion";
-import { CATEGORIES } from "@/lib/shop/categories";
+import {
+  CATEGORIES,
+  DEPARTMENTS,
+  FASHION_CATEGORIES,
+  type Department,
+} from "@/lib/shop/categories";
 import { cn } from "@/lib/shop/cn";
+
+// A top-level department card (Grocery / Fashion / Beauty / Electronics) linking
+// to a domain-seeded ONDC search. Non-grocery departments carry their domain so
+// the right sellers answer; grocery omits it (defaults to the primary domain).
+function DepartmentCard({ dept }: { dept: Department }) {
+  const href =
+    dept.domain !== "ONDC:RET10"
+      ? `/shop/search?q=${encodeURIComponent(dept.query)}&domain=${encodeURIComponent(dept.domain)}`
+      : `/shop/search?q=${encodeURIComponent(dept.query)}`;
+  return (
+    <Link
+      href={href}
+      className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft-lg sm:flex-col sm:items-start sm:gap-2 sm:p-4"
+    >
+      <span
+        className={cn(
+          "grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-transform group-hover:scale-105",
+          dept.tint
+        )}
+      >
+        <dept.Icon className="h-5 w-5" strokeWidth={1.75} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold leading-tight">
+          {dept.label}
+        </span>
+        <span className="hidden text-xs text-muted-foreground sm:block">
+          {dept.categories.length} categories
+        </span>
+      </span>
+    </Link>
+  );
+}
 
 const POPULAR = [
   "Milk",
@@ -197,6 +235,21 @@ export default function ShopHome() {
         </div>
       </section>
 
+      {/* Shop by department — the top-level ONDC retail domains this storefront
+          offers (grocery + fashion + beauty + electronics). */}
+      <Reveal as="section">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-tight">
+            Shop by department
+          </h2>
+        </div>
+        <div className="grid grid-cols-4 gap-3">
+          {DEPARTMENTS.map((d) => (
+            <DepartmentCard key={d.id} dept={d} />
+          ))}
+        </div>
+      </Reveal>
+
       {/* Promotional banners */}
       <Reveal as="section">
         <Carousel
@@ -209,11 +262,11 @@ export default function ShopHome() {
         </Carousel>
       </Reveal>
 
-      {/* Categories */}
+      {/* Grocery categories — the primary department */}
       <Reveal as="section">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight">
-            Shop by category
+            Grocery &amp; essentials
           </h2>
           <Link
             href="/shop/search"
@@ -225,6 +278,25 @@ export default function ShopHome() {
         </div>
         <div className="grid grid-cols-4 gap-3 sm:grid-cols-6">
           {CATEGORIES.map((c) => (
+            <CategoryTile key={c.id} category={c} />
+          ))}
+        </div>
+      </Reveal>
+
+      {/* Fashion strip — browse fashion (ONDC:RET12) categories directly */}
+      <Reveal as="section">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-tight">Fashion</h2>
+          <Link
+            href="/shop/search?q=shirt&domain=ONDC%3ARET12"
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          >
+            View all
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-4 gap-3 sm:grid-cols-6">
+          {FASHION_CATEGORIES.map((c) => (
             <CategoryTile key={c.id} category={c} />
           ))}
         </div>

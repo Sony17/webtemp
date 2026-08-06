@@ -9,6 +9,7 @@ import { RotateCcw, Repeat, CheckCircle2, AlertTriangle, ImagePlus, X } from "lu
 import { Button, Card, Input, Label } from "@/components/shop/ui";
 import { EmptyState, Spinner } from "@/components/shop/widgets";
 import { useShopState } from "@/lib/shop/useShopState";
+import { useShop } from "@/lib/shop/store";
 import * as api from "@/lib/shop/api";
 
 const RETURN_REASONS = [
@@ -39,6 +40,10 @@ export default function ReturnPage() {
   const { state } = useShopState(transactionId, { maxMs: 6000, bppId: bpp });
   const order = state?.bpps.find((b) => b.bppId === bpp)?.order;
   const bppUri = state?.bpps.find((b) => b.bppId === bpp)?.bppUri;
+  const { orders } = useShop();
+  const orderDomain = orders.find(
+    (o) => o.transactionId === transactionId && o.bppId === bpp
+  )?.domain;
   const orderId = order?.orderId;
   const fulfillments = order?.order
     ? (Array.isArray(order.order)
@@ -122,6 +127,7 @@ export default function ReturnPage() {
               transactionId,
               bppId: bpp,
               bppUri,
+              domain: orderDomain,
               return: {
                 ...payload,
                 images: photoImages.length > 0 ? photoImages.map((i) => i.url) : undefined,
@@ -131,6 +137,7 @@ export default function ReturnPage() {
               transactionId,
               bppId: bpp,
               bppUri,
+              domain: orderDomain,
               replacement: payload,
             });
       if (res.status === "NACK")

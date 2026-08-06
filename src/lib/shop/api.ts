@@ -47,6 +47,9 @@ async function getJSON<T>(path: string): Promise<T> {
 export function search(body: {
   query?: string;
   category?: string;
+  // ONDC retail domain to discover in (e.g. "ONDC:RET12" for fashion). Omitted →
+  // the app's primary/grocery domain. This is what surfaces fashion sellers.
+  domain?: string;
   deliveryGps?: string;
   deliveryAreaCode?: string;
   // Buyer's reverse-geocoded place — carried only so the dev mock catalog can
@@ -123,6 +126,10 @@ export function select(body: {
   transactionId: string;
   bppId: string;
   bppUri: string;
+  // ONDC retail domain this order belongs to (e.g. fashion "ONDC:RET12"). Omit
+  // for the app's primary/grocery domain. Carried from discovery so directed
+  // actions (select→confirm, track, cancel, …) route on the same domain.
+  domain?: string;
   providerId: string;
   items: SelectItem[];
   fulfillment?: FulfillmentInput;
@@ -147,6 +154,10 @@ export function init(body: {
   transactionId: string;
   bppId: string;
   bppUri: string;
+  // ONDC retail domain this order belongs to (e.g. fashion "ONDC:RET12"). Omit
+  // for the app's primary/grocery domain. Carried from discovery so directed
+  // actions (select→confirm, track, cancel, …) route on the same domain.
+  domain?: string;
   providerId: string;
   items: SelectItem[];
   billing: Billing;
@@ -163,6 +174,10 @@ export function confirm(body: {
   transactionId: string;
   bppId: string;
   bppUri: string;
+  // ONDC retail domain this order belongs to (e.g. fashion "ONDC:RET12"). Omit
+  // for the app's primary/grocery domain. Carried from discovery so directed
+  // actions (select→confirm, track, cancel, …) route on the same domain.
+  domain?: string;
   order?: unknown;
 }): Promise<AckEnvelope> {
   return postJSON<AckEnvelope>("/api/ondc/confirm", body);
@@ -172,6 +187,10 @@ export function status(body: {
   transactionId: string;
   bppId: string;
   bppUri: string;
+  // ONDC retail domain this order belongs to (e.g. fashion "ONDC:RET12"). Omit
+  // for the app's primary/grocery domain. Carried from discovery so directed
+  // actions (select→confirm, track, cancel, …) route on the same domain.
+  domain?: string;
   orderId: string;
 }): Promise<AckEnvelope> {
   return postJSON<AckEnvelope>("/api/ondc/status", body);
@@ -181,6 +200,10 @@ export function track(body: {
   transactionId: string;
   bppId: string;
   bppUri: string;
+  // ONDC retail domain this order belongs to (e.g. fashion "ONDC:RET12"). Omit
+  // for the app's primary/grocery domain. Carried from discovery so directed
+  // actions (select→confirm, track, cancel, …) route on the same domain.
+  domain?: string;
   orderId: string;
 }): Promise<AckEnvelope> {
   return postJSON<AckEnvelope>("/api/ondc/track", body);
@@ -190,6 +213,10 @@ export function cancel(body: {
   transactionId: string;
   bppId: string;
   bppUri: string;
+  // ONDC retail domain this order belongs to (e.g. fashion "ONDC:RET12"). Omit
+  // for the app's primary/grocery domain. Carried from discovery so directed
+  // actions (select→confirm, track, cancel, …) route on the same domain.
+  domain?: string;
   orderId: string;
   cancellationReasonId: string;
   force?: boolean;
@@ -204,6 +231,7 @@ export function update(
         transactionId: string;
         bppId: string;
         bppUri: string;
+        domain?: string;
         return: {
           orderId: string;
           fulfillmentId?: string;
@@ -219,6 +247,7 @@ export function update(
         transactionId: string;
         bppId: string;
         bppUri: string;
+        domain?: string;
         replacement: {
           orderId: string;
           fulfillmentId?: string;
@@ -233,6 +262,7 @@ export function update(
         transactionId: string;
         bppId: string;
         bppUri: string;
+        domain?: string;
         refund: { orderId: string };
       }
 ): Promise<AckEnvelope> {
@@ -243,6 +273,10 @@ export function support(body: {
   transactionId: string;
   bppId: string;
   bppUri: string;
+  // ONDC retail domain this order belongs to (e.g. fashion "ONDC:RET12"). Omit
+  // for the app's primary/grocery domain. Carried from discovery so directed
+  // actions (select→confirm, track, cancel, …) route on the same domain.
+  domain?: string;
   refId: string;
 }): Promise<AckEnvelope> {
   return postJSON<AckEnvelope>("/api/ondc/support", body);
@@ -252,6 +286,10 @@ export function rating(body: {
   transactionId: string;
   bppId: string;
   bppUri: string;
+  // ONDC retail domain this order belongs to (e.g. fashion "ONDC:RET12"). Omit
+  // for the app's primary/grocery domain. Carried from discovery so directed
+  // actions (select→confirm, track, cancel, …) route on the same domain.
+  domain?: string;
   ratings: { id: string; ratingCategory: string; value: number }[];
 }): Promise<AckEnvelope> {
   return postJSON<AckEnvelope>("/api/ondc/rating", body);
@@ -263,6 +301,10 @@ export function openIssue(body: {
   transactionId: string;
   bppId: string;
   bppUri: string;
+  // ONDC retail domain this order belongs to (e.g. fashion "ONDC:RET12"). Omit
+  // for the app's primary/grocery domain. Carried from discovery so directed
+  // actions (select→confirm, track, cancel, …) route on the same domain.
+  domain?: string;
   orderId: string;
   category: string;
   subCategory: string;
@@ -278,6 +320,10 @@ export function issueAction(body: {
   transactionId: string;
   bppId: string;
   bppUri: string;
+  // ONDC retail domain this order belongs to (e.g. fashion "ONDC:RET12"). Omit
+  // for the app's primary/grocery domain. Carried from discovery so directed
+  // actions (select→confirm, track, cancel, …) route on the same domain.
+  domain?: string;
   issueId: string;
   complainantAction:
     | "INFO_PROVIDED"

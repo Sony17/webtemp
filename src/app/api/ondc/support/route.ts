@@ -63,6 +63,9 @@ type SupportRequestBody = {
   transactionId?: string;
   bppId?: string;
   bppUri?: string;
+  // ONDC retail domain this order routes on (e.g. fashion "ONDC:RET12").
+  // Optional: defaults to the app primary/grocery domain (config.domain).
+  domain?: string;
   refId?: string;
 };
 
@@ -110,6 +113,7 @@ export async function POST(req: Request) {
   const transactionId = str(body.transactionId);
   const bppId = str(body.bppId);
   const bppUri = str(body.bppUri);
+  const domain = str(body.domain);
   const refId = str(body.refId);
 
   // transaction_id is the spine of the lifecycle: support MUST continue the same
@@ -165,6 +169,7 @@ export async function POST(req: Request) {
     transactionId,
     bppId,
     bppUri,
+    ...(domain ? { domain } : {}),
   });
 
   // The support message: just the subject id.

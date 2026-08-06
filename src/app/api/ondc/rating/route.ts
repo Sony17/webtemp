@@ -85,6 +85,9 @@ type RatingRequestBody = {
   transactionId?: string;
   bppId?: string;
   bppUri?: string;
+  // ONDC retail domain this order routes on (e.g. fashion "ONDC:RET12").
+  // Optional: defaults to the app primary/grocery domain (config.domain).
+  domain?: string;
   ratings?: unknown;
 };
 
@@ -196,6 +199,7 @@ export async function POST(req: Request) {
   const transactionId = str(body.transactionId);
   const bppId = str(body.bppId);
   const bppUri = str(body.bppUri);
+  const domain = str(body.domain);
 
   // transaction_id is the spine of the lifecycle: rating MUST continue the same
   // order session, so it is required here exactly as in support/cancel. A rating
@@ -245,6 +249,7 @@ export async function POST(req: Request) {
     transactionId,
     bppId,
     bppUri,
+    ...(domain ? { domain } : {}),
   });
 
   // The rating message: the validated ratings array.

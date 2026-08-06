@@ -82,6 +82,9 @@ type UpdateRequestBody = {
   transactionId?: string;
   bppId?: string;
   bppUri?: string;
+  // ONDC retail domain this order routes on (e.g. fashion "ONDC:RET12").
+  // Optional: defaults to the app primary/grocery domain (config.domain).
+  domain?: string;
   // Generic passthrough mode (Phase A, unchanged): caller supplies the raw
   // update_target + order and we forward them opaquely.
   updateTarget?: string;
@@ -414,6 +417,7 @@ export async function POST(req: Request) {
   const transactionId = str(body.transactionId);
   const bppId = str(body.bppId);
   const bppUri = str(body.bppUri);
+  const domain = str(body.domain);
   const updateTarget = str(body.updateTarget);
 
   // transaction_id is the spine of the lifecycle: update MUST continue the same
@@ -513,6 +517,7 @@ export async function POST(req: Request) {
     transactionId,
     bppId,
     bppUri,
+    ...(domain ? { domain } : {}),
   });
 
   // Directed at the chosen BPP's /update — NOT the gateway. The transport stays

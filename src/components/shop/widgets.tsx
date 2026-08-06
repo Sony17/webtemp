@@ -20,11 +20,18 @@ import type { ShopCategory } from "@/lib/shop/categories";
 // (with a lucide icon as the graceful fallback), plus a label — linking to a
 // seeded ONDC search. No emoji (see the no-emoji rule).
 export function CategoryTile({ category }: { category: ShopCategory }) {
-  const { Icon, tint, label, query, image } = category;
+  const { Icon, tint, label, query, image, domain } = category;
   const [failed, setFailed] = React.useState(false);
+  // Carry the ONDC domain only for non-grocery categories so a fashion/beauty/
+  // electronics tile searches the right network domain; grocery URLs stay clean
+  // (the search route defaults to the primary/grocery domain when omitted).
+  const href =
+    domain && domain !== "ONDC:RET10"
+      ? `/shop/search?q=${encodeURIComponent(query)}&domain=${encodeURIComponent(domain)}`
+      : `/shop/search?q=${encodeURIComponent(query)}`;
   return (
     <Link
-      href={`/shop/search?q=${encodeURIComponent(query)}`}
+      href={href}
       className="group flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-2.5 text-center shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft-lg sm:p-3"
     >
       <span

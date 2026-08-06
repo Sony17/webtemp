@@ -21,6 +21,9 @@ export type OrderRef = {
   title: string; // e.g. "Basmati Rice +2 more"
   total: number;
   placedAt: number;
+  // ONDC retail domain the order was placed on (e.g. fashion "ONDC:RET12"). Read
+  // back by the order screens so status/track/cancel route on the same domain.
+  domain?: string;
   // Buyer-side choices captured at checkout (display only).
   fulfillmentLabel?: string;
   instructions?: string;
@@ -54,12 +57,21 @@ type ShopContextValue = {
   // per-provider; we keep the cart single-seller to keep select/init/confirm
   // unambiguous). Null when empty.
   cartBpp: { bppId: string; bppUri: string; providerId: string } | null;
+  // The ONDC domain the current cart's items were discovered in (fashion, …).
+  // Null when the cart is empty or its items carry no domain (grocery default).
+  cartDomain: string | null;
   // Delivery address
   address: Address | null;
   setAddress: (a: Address | null) => void;
   // Active transaction id for the discovery/order flow
   transactionId: string | null;
   setTransactionId: (id: string | null) => void;
+  // The ONDC domain the current discovery session is searching in. Set by the
+  // search screen from the tapped department/category; stamped onto items as they
+  // enter the cart so the order lifecycle routes on the right domain. Null =
+  // primary/grocery.
+  domain: string | null;
+  setDomain: (domain: string | null) => void;
   // Locally-remembered placed orders (newest first)
   orders: OrderRef[];
   addOrder: (ref: OrderRef) => void;
@@ -76,6 +88,7 @@ const LS_CART = "shop.cart.v1";
 const LS_ADDRESS = "shop.address.v1";
 const LS_TXN = "shop.txn.v1";
 const LS_ORDERS = "shop.orders.v1";
+const LS_DOMAIN = "shop.domain.v1";
 
 function load<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -100,7 +113,13 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = React.useState<CartLine[]>([]);
   const [address, setAddressState] = React.useState<Address | null>(null);
   const [transactionId, setTxnState] = React.useState<string | null>(null);
+  const [domain, setDomainState] = React.useState<string | null>(null);
   const [orders, setOrders] = React.useState<OrderRef[]>([]);
+
+  // Latest active domain, kept in a ref so addToCart (a stable, no-dep callback)
+  // can stamp the CURRENT domain onto items without being recreated on each change.
+  const domainRef = React.useRef<string | null>(null);
+  domainRef.current = domain;
 
   // Hydrate once on mount from localStorage (an external system) — done in an
   // effect rather than a useState initializer so the server render stays empty
@@ -112,6 +131,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     setLines(load<CartLine[]>(LS_CART, []));
     setAddressState(load<Address | null>(LS_ADDRESS, null));
     setTxnState(load<string | null>(LS_TXN, null));
+    setDomainState(load<string | null>(LS_DOMAIN, null));
     setOrders(load<OrderRef[]>(LS_ORDERS, []));
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -119,6 +139,12 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => save(LS_CART, lines), [lines]);
 
   const addToCart = React.useCallback((product: Product, quantity = 1) => {
+    // Stamp the active discovery domain onto the item (unless it already carries
+    // one) so the order lifecycle routes on the domain it was found in.
+    const stamped: Product = product.domain
+      ? product
+      : { ...product, ...(domainRef.current ? { domain: domainRef.current } : {}) };
+    product = stamped;
     setLines((prev) => {
       // Single-seller cart: adding from a different BPP replaces the cart.
       const differentSeller =
@@ -173,6 +199,11 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     save(LS_TXN, id);
   }, []);
 
+  const setDomain = React.useCallback((d: string | null) => {
+    setDomainState(d);
+    save(LS_DOMAIN, d);
+  }, []);
+
   const addOrder = React.useCallback((ref: OrderRef) => {
     setOrders((prev) => {
       // De-dupe by (transactionId, bppId); newest first.
@@ -212,6 +243,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
           providerId: lines[0].product.providerId,
         }
       : null;
+  const cartDomain = lines.length > 0 ? lines[0].product.domain ?? null : null;
 
   const value: ShopContextValue = {
     lines,
@@ -222,10 +254,13 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     cartCount,
     cartTotal,
     cartBpp,
+    cartDomain,
     address,
     setAddress,
     transactionId,
     setTransactionId,
+    domain,
+    setDomain,
     orders,
     addOrder,
     updateOrderRef,

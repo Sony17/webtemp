@@ -8,6 +8,7 @@ import { Star, CheckCircle2 } from "lucide-react";
 import { Button, Card } from "@/components/shop/ui";
 import { EmptyState, Spinner } from "@/components/shop/widgets";
 import { useShopState } from "@/lib/shop/useShopState";
+import { useShop } from "@/lib/shop/store";
 import * as api from "@/lib/shop/api";
 
 const CATS = [
@@ -49,6 +50,10 @@ export default function RatePage() {
   const { state } = useShopState(transactionId, { maxMs: 6000, bppId: bpp });
   const bppState = state?.bpps.find((b) => b.bppId === bpp);
   const bppUri = bppState?.bppUri;
+  const { orders } = useShop();
+  const orderDomain = orders.find(
+    (o) => o.transactionId === transactionId && o.bppId === bpp
+  )?.domain;
   const orderId = bppState?.order?.orderId;
 
   const [values, setValues] = React.useState<Record<string, number>>({
@@ -91,6 +96,7 @@ export default function RatePage() {
         transactionId,
         bppId: bpp,
         bppUri,
+        domain: orderDomain,
         ratings: CATS.map((c) => ({
           id: orderId ?? transactionId,
           ratingCategory: c.id,

@@ -81,6 +81,9 @@ type ConfirmRequestBody = {
   transactionId?: string;
   bppId?: string;
   bppUri?: string;
+  // ONDC retail domain this order routes on (e.g. fashion "ONDC:RET12").
+  // Optional: defaults to the app primary/grocery domain (config.domain).
+  domain?: string;
   order?: unknown;
 };
 
@@ -307,6 +310,7 @@ export async function POST(req: Request) {
   const transactionId = str(body.transactionId);
   const bppId = str(body.bppId);
   const bppUri = str(body.bppUri);
+  const domain = str(body.domain);
 
   // transaction_id is the spine of the lifecycle: confirm MUST continue the same
   // order session, so it is required here exactly as in init. A confirm with no
@@ -452,7 +456,13 @@ export async function POST(req: Request) {
       await sendDirectedWithVersionFallback<OndcConfirmMessage>({
         url,
         action: "confirm",
-        contextParams: { action: "confirm", transactionId, bppId, bppUri },
+        contextParams: {
+          action: "confirm",
+          transactionId,
+          bppId,
+          bppUri,
+          ...(domain ? { domain } : {}),
+        },
         message,
       });
     usedContext = context;

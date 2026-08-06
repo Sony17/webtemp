@@ -49,7 +49,16 @@ export type OndcPublicContext = {
   registryEncryptionPublicKey: string;
 
   // Catalog / search context defaults sent on ONDC actions.
-  domain: string; // e.g. "ONDC:RET10"
+  domain: string; // PRIMARY / default domain, e.g. "ONDC:RET10". Sent when a
+  // caller doesn't pin a specific domain — preserves the app's grocery default.
+  // The set of ONDC retail domains this BAP supports for discovery (grocery,
+  // fashion, …). Used to (a) validate the outbound `domain` a search may target
+  // and (b) accept inbound on_search callbacks whose context.domain is in this
+  // set. ALWAYS contains `domain`. Multi-domain is what lets a fashion (RET12)
+  // search surface fashion sellers instead of only grocery (RET10). Override the
+  // whole set via ONDC_DOMAINS (comma-separated); set it to just "ONDC:RET10" to
+  // restore strict single-domain (grocery-only) behaviour.
+  domains: string[];
   countryCode: string; // ISO-3166 alpha-3, e.g. "IND"
   cityCode: string; // e.g. "std:080"
   ttl: string; // ISO-8601 duration, e.g. "PT30S"
@@ -258,6 +267,29 @@ function buildConfig(): OndcConfig {
   const gatewayUrl =
     readOndcScopedEnv("ONDC_GATEWAY_URL") ?? defaults.gatewayUrl;
 
+  // Primary/default domain (grocery unless overridden). Sent on any action that
+  // doesn't pin its own domain, so existing single-domain behaviour is unchanged.
+  const domain = readOndcScopedEnv("ONDC_DOMAIN") ?? "ONDC:RET10";
+
+  // Supported discovery domains. When ONDC_DOMAINS is set (comma-separated) it
+  // is authoritative; otherwise default to a curated ONDC RETAIL bundle so the
+  // buyer app can discover across grocery + the common categories out of the box
+  // (grocery RET10, fashion RET12, BPC RET13, electronics RET14). The primary
+  // `domain` is always included and de-duplicated. Set ONDC_DOMAINS="ONDC:RET10"
+  // to pin the app back to grocery-only (e.g. to keep on_search strictly single-
+  // domain during certification of that single domain).
+  const domainsRaw = readOndcScopedEnv("ONDC_DOMAINS");
+  const DEFAULT_SUPPORTED_DOMAINS = [
+    "ONDC:RET10", // Grocery
+    "ONDC:RET12", // Fashion
+    "ONDC:RET13", // Beauty & Personal Care
+    "ONDC:RET14", // Electronics
+  ];
+  const parsedDomains = (domainsRaw ? domainsRaw.split(",") : DEFAULT_SUPPORTED_DOMAINS)
+    .map((d) => d.trim())
+    .filter(Boolean);
+  const domains = Array.from(new Set([domain, ...parsedDomains]));
+
   return {
     env,
     subscriberId,
@@ -268,7 +300,8 @@ function buildConfig(): OndcConfig {
     registryBaseUrl: normalizeUrl("ONDC_REGISTRY_BASE_URL", registryBaseUrl),
     gatewayUrl: normalizeUrl("ONDC_GATEWAY_URL", gatewayUrl),
     registryEncryptionPublicKey: defaults.registryEncryptionPublicKey,
-    domain: readOndcScopedEnv("ONDC_DOMAIN") ?? "ONDC:RET10",
+    domain,
+    domains,
     countryCode: readOndcScopedEnv("ONDC_COUNTRY_CODE") ?? "IND",
     cityCode: readOndcScopedEnv("ONDC_CITY_CODE") ?? "std:080",
     ttl: readOndcScopedEnv("ONDC_TTL") ?? "PT30S",
@@ -317,6 +350,18 @@ let cached: OndcConfig | null = null;
 export function getOndcConfig(): OndcConfig {
   if (!cached) cached = buildConfig();
   return cached;
+}
+
+// Whether a domain is one this BAP supports for discovery/callbacks. Used by the
+// search route (reject an outbound domain we don't support) and the on_search
+// gate (accept a callback whose context.domain is one we searched). Falls back to
+// the primary domain when config can't be read, so a misconfig stays strict.
+export function isSupportedDomain(domain: string): boolean {
+  try {
+    return getOndcConfig().domains.includes(domain);
+  } catch {
+    return domain === "ONDC:RET10";
+  }
 }
 
 // Returns only the non-secret network context — the safe object to pass around

@@ -60,6 +60,9 @@ type CancelRequestBody = {
   transactionId?: string;
   bppId?: string;
   bppUri?: string;
+  // ONDC retail domain this order routes on (e.g. fashion "ONDC:RET12").
+  // Optional: defaults to the app primary/grocery domain (config.domain).
+  domain?: string;
   orderId?: string;
   cancellationReasonId?: string;
   // Force-cancellation flag. When true, the cancel message carries the ONDC
@@ -132,6 +135,7 @@ export async function POST(req: Request) {
   const transactionId = str(body.transactionId);
   const bppId = str(body.bppId);
   const bppUri = str(body.bppUri);
+  const domain = str(body.domain);
   const orderId = str(body.orderId);
   const cancellationReasonId = str(body.cancellationReasonId);
 
@@ -196,6 +200,7 @@ export async function POST(req: Request) {
     transactionId,
     bppId,
     bppUri,
+    ...(domain ? { domain } : {}),
   });
 
   // The cancel message: the order id, the reason code, and — when applicable —

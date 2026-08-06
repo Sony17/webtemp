@@ -17,7 +17,7 @@
 // Mirrors the conventions of the existing routes (deployments, upload):
 // `NextResponse`, `runtime = "nodejs"`, JSON-body parsing with a 400 guard.
 import { NextResponse } from "next/server";
-import { getOndcConfig, isOndcConfigured } from "@/lib/ondc/config";
+import { getOndcConfig, isOndcConfigured, isSupportedDomain } from "@/lib/ondc/config";
 import { buildContext } from "@/lib/ondc/context";
 import { sendOndcRequest, OndcClientError } from "@/lib/ondc/client";
 import { buildMockCatalog } from "@/lib/ondc/mock-catalog";
@@ -49,6 +49,11 @@ export const runtime = "nodejs";
 type SearchRequestBody = {
   query?: string;
   category?: string;
+  // ONDC retail domain to discover in, e.g. "ONDC:RET12" for fashion. Optional:
+  // defaults to the app's primary domain (config.domain, grocery). Must be one of
+  // the supported domains (config.domains) or the request is rejected — this is
+  // what lets a fashion search reach fashion sellers instead of only grocery.
+  domain?: string;
   deliveryGps?: string;
   deliveryAreaCode?: string;
   // Buyer's reverse-geocoded place (city / locality / state). ONDC's real
@@ -309,6 +314,7 @@ export async function POST(req: Request) {
   const body = (raw ?? {}) as SearchRequestBody;
   const query = str(body.query);
   const category = str(body.category);
+  const domain = str(body.domain);
   const deliveryGps = str(body.deliveryGps);
   const deliveryAreaCode = str(body.deliveryAreaCode);
   const deliveryCity = str(body.deliveryCity);
@@ -340,6 +346,16 @@ export async function POST(req: Request) {
   if (deliveryGps && !GPS_RE.test(deliveryGps)) {
     return NextResponse.json(
       { error: "'deliveryGps' must be 'lat,long' (decimal degrees)." },
+      { status: 400 }
+    );
+  }
+
+  // Reject a domain the app doesn't support up-front (clear 400) rather than
+  // broadcasting an intent no seller can answer. When omitted, buildContext falls
+  // back to config.domain (the grocery default), so existing callers are unaffected.
+  if (domain && !isSupportedDomain(domain)) {
+    return NextResponse.json(
+      { error: `Unsupported domain '${domain}'.` },
       { status: 400 }
     );
   }
@@ -380,6 +396,7 @@ export async function POST(req: Request) {
   const context = buildContext({
     action: "search",
     ...(transactionId ? { transactionId } : {}),
+    ...(domain ? { domain } : {}),
     ...(incremental ? { city: "*" } : {}),
   });
 
@@ -394,6 +411,7 @@ export async function POST(req: Request) {
     const slices = buildMockCatalog({
       query,
       category,
+      domain: domain ?? config.domain,
       deliveryGps,
       deliveryAreaCode,
       deliveryCity,

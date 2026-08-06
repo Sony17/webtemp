@@ -56,6 +56,7 @@ export default function CheckoutPage() {
   const {
     lines,
     cartBpp,
+    cartDomain,
     cartTotal,
     address,
     setAddress,
@@ -196,6 +197,7 @@ export default function CheckoutPage() {
         transactionId,
         bppId: cartBpp.bppId,
         bppUri: cartBpp.bppUri,
+        domain: cartDomain ?? undefined,
         providerId: cartBpp.providerId,
         items: lines.map((l) => ({
           id: l.product.itemId,
@@ -252,6 +254,7 @@ export default function CheckoutPage() {
         transactionId,
         bppId: cartBpp.bppId,
         bppUri: cartBpp.bppUri,
+        domain: cartDomain ?? undefined,
         providerId: cartBpp.providerId,
         items: lines.map((l) => ({
           id: l.product.itemId,
@@ -303,6 +306,7 @@ export default function CheckoutPage() {
         transactionId,
         bppId: cartBpp.bppId,
         bppUri: cartBpp.bppUri,
+        domain: cartDomain ?? undefined,
         order: initedOrder,
       });
       if (confirmRes.status === "NACK") {
@@ -336,6 +340,7 @@ export default function CheckoutPage() {
         transactionId,
         bppId: cartBpp.bppId,
         bppUri: cartBpp.bppUri,
+        domain: cartDomain ?? undefined,
         providerName: lines[0].product.providerName,
         title,
         total: quote?.total ?? cartTotal,

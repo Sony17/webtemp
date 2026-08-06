@@ -16,6 +16,11 @@ export type Product = {
   providerName: string;
   itemId: string;
   locationId?: string;
+  // ONDC retail domain this item was discovered in (e.g. fashion "ONDC:RET12").
+  // Stamped from the active search domain when added to cart, so the order
+  // lifecycle (select→confirm, track, cancel) routes on the same domain. Absent →
+  // the app's primary/grocery domain.
+  domain?: string;
 
   name: string;
   description?: string;

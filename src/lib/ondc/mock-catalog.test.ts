@@ -7,7 +7,7 @@
 // browse-sellers distance sort depends on.
 import { describe, expect, it } from "vitest";
 import { buildMockCatalog } from "@/lib/ondc/mock-catalog";
-import { parseProviders, type CatalogRecord } from "@/lib/shop/types";
+import { parseCatalogs, parseProviders, type CatalogRecord } from "@/lib/shop/types";
 
 // Turn the mock slices into the same CatalogRecord[] the store yields, so we can
 // read them back through the very parser the seller screens use.
@@ -76,5 +76,47 @@ describe("buildMockCatalog — buyer-located sellers", () => {
       expect(s.city).toBeUndefined();
     }
     expect(JSON.stringify(sellers)).not.toMatch(/bengaluru|karnataka/i);
+  });
+});
+
+describe("buildMockCatalog — domain-aware storefronts (fashion discovery)", () => {
+  it("a fashion (RET12) search yields fashion sellers, not grocery", () => {
+    const sellers = parseProviders(
+      asRecords(buildMockCatalog({ query: "shirt", domain: "ONDC:RET12" }))
+    );
+    const names = sellers.map((s) => s.name);
+    // Fashion profile sellers — and none of the grocery seller names leak in.
+    expect(names).toEqual(
+      expect.arrayContaining(["Urban Threads", "StyleHub", "The Wardrobe Co."])
+    );
+    expect(JSON.stringify(names)).not.toMatch(/green basket|daily mart|freshcart/i);
+  });
+
+  it("stamps the searched fashion category on items and keeps the query term", () => {
+    const products = parseCatalogs(
+      asRecords(buildMockCatalog({ query: "shirt", domain: "ONDC:RET12" }))
+    );
+    expect(products.length).toBeGreaterThan(0);
+    for (const p of products) {
+      expect(p.name.toLowerCase()).toContain("shirt");
+      expect(p.categoryId).toBe("Fashion");
+    }
+  });
+
+  it("defaults to the grocery profile when no domain is given (unchanged behaviour)", () => {
+    const sellers = parseProviders(asRecords(buildMockCatalog({ query: "rice" })));
+    const names = sellers.map((s) => s.name);
+    expect(names).toEqual(
+      expect.arrayContaining(["Green Basket Store", "Daily Mart", "FreshCart Express"])
+    );
+  });
+
+  it("gives distinct sellers/message ids for every supported domain", () => {
+    for (const domain of ["ONDC:RET10", "ONDC:RET12", "ONDC:RET13", "ONDC:RET14"]) {
+      const slices = buildMockCatalog({ query: "item", domain });
+      const ids = slices.map((s) => s.messageId);
+      expect(ids.length).toBeGreaterThan(1);
+      expect(new Set(ids).size).toBe(ids.length); // one slice per seller, all unique
+    }
   });
 });
