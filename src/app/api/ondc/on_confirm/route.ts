@@ -265,6 +265,26 @@ export async function POST(req: Request) {
     return nack(500, coreError("BAP not configured"), trace);
   }
 
+  // AUTH GATE — BEFORE the fast-ACK. Presence + parseability of the
+  // Authorization header are cheap synchronous checks; an unsigned or garbage
+  // header must receive a 401 NACK on the wire, never an ACK. Only the
+  // EXPENSIVE part of verification (registry key resolution + ed25519 check)
+  // is deferred past the ACK via the post-ack re-entry below.
+  const authHeader = req.headers.get("authorization");
+  const isNoAuth = authHeader?.trim() === "no-auth";
+
+  let parsed;
+
+  if (!isNoAuth) {
+    if (!authHeader) {
+      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "missing signature"), trace);
+    }
+    parsed = parseAuthorizationHeader(authHeader);
+    if (!parsed) {
+      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"), trace);
+    }
+  }
+
   const rawBody = await req.text();
   annotateTrace(trace, { rawBody });
 
@@ -275,11 +295,18 @@ export async function POST(req: Request) {
     tentativePayload = null;
   }
 
+  // Fast-ACK only a payload that is structurally a complete on_confirm
+  // callback — right action, non-empty ids, sender identity, and an order
+  // message. Anything less falls through to the synchronous pipeline and
+  // earns its 401/400 NACK on the wire instead of a hollow ACK.
   if (
     !fastAckBypass &&
     tentativePayload?.context?.action === "on_confirm" &&
     isNonEmptyString(tentativePayload.context.transaction_id) &&
-    isNonEmptyString(tentativePayload.context.message_id)
+    isNonEmptyString(tentativePayload.context.message_id) &&
+    isNonEmptyString(tentativePayload.context.bpp_id) &&
+    isNonEmptyString(tentativePayload.context.bpp_uri) &&
+    tentativePayload.message?.order != null
   ) {
     after(async () => {
       try {
@@ -296,49 +323,36 @@ export async function POST(req: Request) {
     return ack(trace, tentativePayload.context);
   }
 
-  const authHeader = req.headers.get("authorization");
-  const isNoAuth = authHeader?.trim() === "no-auth";
-
-  let parsed;
-
   if (!isNoAuth) {
-    if (!authHeader) {
-      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "missing signature"), trace);
-    }
-    parsed = parseAuthorizationHeader(authHeader);
-    if (!parsed) {
-      return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "invalid signature"), trace);
-    }
-
     // Workbench signed-callback bypass: the workbench's signing key is not in
     // our registry environment, so resolution below would always fail and NACK
     // 20001 — stalling its MOCK callbacks. Flag-gated subscriber allowlist,
     // never active in prod (see isWorkbenchVerificationBypass in registry.ts).
-    if (isWorkbenchVerificationBypass(parsed.subscriberId)) {
+    if (isWorkbenchVerificationBypass(parsed!.subscriberId)) {
       console.warn("ondc.on_confirm workbench signature-verification bypass", {
-        subscriberId: parsed.subscriberId,
+        subscriberId: parsed!.subscriberId,
       });
     } else {
       const publicKey = await resolveBppSigningPublicKey(
-        parsed.subscriberId,
-        parsed.uniqueKeyId
+        parsed!.subscriberId,
+        parsed!.uniqueKeyId
       );
       if (!publicKey) {
         console.warn("ondc.on_confirm key resolution failed", {
-          subscriberId: parsed.subscriberId,
-          uniqueKeyId: parsed.uniqueKeyId,
+          subscriberId: parsed!.subscriberId,
+          uniqueKeyId: parsed!.uniqueKeyId,
         });
         return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);
       }
 
       const verdict = verifyOndcSignature({
         rawBody,
-        parsed,
+        parsed: parsed!,
         publicKey: normalizeEd25519PublicKey(publicKey),
       });
       if (!verdict.valid) {
         console.warn("ondc.on_confirm signature rejected", {
-          subscriberId: parsed.subscriberId,
+          subscriberId: parsed!.subscriberId,
           reason: verdict.reason,
         });
         return nack(401, contextError(ONDC_ERROR.INVALID_SIGNATURE, "unauthorized"), trace);

@@ -145,6 +145,14 @@ export function buildCallbackScenarios() {
     }
 
     // (C-i) Well-formed-looking but unresolvable Authorization (random sig).
+    //
+    // DEFERRED-VERIFY ROUTES (on_search, on_confirm): these two fast-ACK a
+    // structurally complete callback BEFORE the expensive registry/ed25519
+    // verification (Workbench grades their synchronous response), then verify
+    // in an after() pass that gates persistence. A parseable-but-forged
+    // signature therefore receives a sync 200 ACK while the payload is
+    // silently dropped. Presence/parse failures still 401 synchronously.
+    const deferredVerify = action === "on_search" || action === "on_confirm";
     scenarios.push(
       scenario({
         name: `${action}: well-formed header w/ random signature → 401 NACK or 503`,
@@ -164,7 +172,9 @@ export function buildCallbackScenarios() {
             },
             body: JSON.stringify(fullCallbackBody(action)),
           }),
-        expect: { status: [401, 500, 503] },
+        expect: {
+          status: deferredVerify ? [200, 401, 500, 503] : [401, 500, 503],
+        },
       })
     );
 
@@ -195,7 +205,11 @@ export function buildCallbackScenarios() {
             body: rawBody,
           });
         },
-        expect: { status: [401, 500, 503] },
+        // See the deferred-verify note above: on_search/on_confirm sync-ACK a
+        // structurally complete body and verify (then drop) after the response.
+        expect: {
+          status: deferredVerify ? [200, 401, 500, 503] : [401, 500, 503],
+        },
       })
     );
 

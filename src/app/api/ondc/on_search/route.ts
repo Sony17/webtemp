@@ -460,7 +460,23 @@ export async function POST(req: Request) {
   // run the existing signature/identity/persistence pipeline after the response.
   // Top-level error callbacks are excluded because the contract expects a
   // business NACK echo for those.
-  if (!fastAckBypass && tentativePayload && !extractInboundError(tentativePayload)) {
+  // Fast-ACK only a payload that is structurally an on_search callback: right
+  // action + non-empty transaction/message ids (mirrors on_confirm's guard).
+  // Anything else — missing context, wrong action, absent ids — falls through
+  // to the synchronous verify/validate pipeline and earns its 401/400 NACK on
+  // the wire instead of a hollow ACK.
+  const tentativeCtx = tentativePayload?.context;
+  const nonEmpty = (v: unknown): v is string =>
+    typeof v === "string" && v.trim().length > 0;
+  const looksLikeOnSearch =
+    tentativeCtx?.action === "on_search" &&
+    nonEmpty(tentativeCtx.transaction_id) &&
+    nonEmpty(tentativeCtx.message_id) &&
+    nonEmpty(tentativeCtx.bpp_id) &&
+    nonEmpty(tentativeCtx.bpp_uri) &&
+    tentativePayload?.message?.catalog != null;
+
+  if (!fastAckBypass && tentativePayload && looksLikeOnSearch && !extractInboundError(tentativePayload)) {
     after(async () => {
       try {
         await POST(cloneForPostAckProcessing(req, rawBody));
