@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/ondc/discovery-sweep",
+      "schedule": "30 3 * * *"
+    }
+  ]
+}

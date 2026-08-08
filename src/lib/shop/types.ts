@@ -715,7 +715,10 @@ const CITY_ALIASES: Record<string, string> = {
 
 export function normalizeCity(city: string | undefined): string | undefined {
   if (!city) return undefined;
-  const cleaned = city.trim().replace(/\s+/g, " ");
+  let cleaned = city.trim().replace(/\s+/g, " ");
+  // Some sellers append the pincode to the city ("Chennai 600040") — strip a
+  // trailing 6-digit Indian pincode; it already lives in areaCode.
+  cleaned = cleaned.replace(/[\s,-]+\d{6}$/, "").trim();
   if (!cleaned) return undefined;
   const alias = CITY_ALIASES[cleaned.toLowerCase()];
   if (alias) return alias;
