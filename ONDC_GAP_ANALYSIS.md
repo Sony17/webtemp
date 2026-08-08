@@ -1,6 +1,31 @@
 # ONDC Gap Analysis
 
-Last Updated: 2026-06-06
+Last Updated: 2026-08-08
+
+> **STATUS CORRECTION (2026-08-08).** Much of the body below dates from
+> 2026-06-06 and no longer describes the system. The authoritative deltas:
+>
+> * **PRODUCTION registry, not preprod.** `openidea.co.in` is `SUBSCRIBED` on
+>   `prod.registry.ondc.org` for **ONDC:RET10 only** (ukId
+>   `169d4cc3-…`, valid 2026-07-30 → 2027-07-30). RET11–14 return "no matching
+>   participant" — non-grocery departments are gated behind
+>   `NEXT_PUBLIC_ONDC_LIVE_DOMAINS` ("Soon" badges) until registered.
+> * **IGM is IMPLEMENTED** (issue / on_issue / issue_status routes + admin
+>   issues tab) — not "Not Started".
+> * **Network observability is IMPLEMENTED** (NO push-txn-logs delivery via
+>   `after()`, `ONDC_NO_*` env) — not "Not Started".
+> * **Payments**: a manual UPI ledger exists (`src/lib/payments/`,
+>   PENDING → PAID via /verify / /reconcile, admin-gated). A real gateway
+>   (Razorpay) is still pending. Confirm sends honest **COD terms**
+>   (ON-FULFILLMENT / collected_by BPP / NOT-PAID) as of 2026-08-08 — the
+>   earlier default falsely asserted prepaid `PAID`.
+> * **Admin data APIs are server-side gated** by `ADMIN_TOKEN`
+>   (`src/lib/admin/auth.ts`) as of 2026-08-08 — previously public.
+> * **Logistics (Tocxi)** module is code-complete but dark: awaiting API key +
+>   webhook registration (see docs/TOCXI_LOGISTICS_ROADMAP.md).
+> * **Discovery**: full-catalog "search by city" is available via
+>   `POST /api/ondc/search { fullCatalog: true }` — keyword-only discovery was
+>   why one BPP dominated the seller directory.
 
 ## Overview
 

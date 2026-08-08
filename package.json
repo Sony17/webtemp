@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "dotenv -e .env.preprod -- next dev",
+    "dev:local": "next dev",
     "dev:preprod": "dotenv -e .env.preprod -- next dev",
     "dev:prod": "dotenv -e .env.prod -- next dev",
     "build": "prisma generate && node scripts/migrate-if-configured.mjs && next build",
