@@ -11,15 +11,19 @@
 // the buyer app's seller pages use. Complete across instances on Postgres; on
 // the JSON backend it reflects only the serving instance's snapshot.
 //
-// Ungated server-side, matching the app's existing admin posture — the
-// /shop/admin page guards client-side via the admin login.
+// Gated server-side via requireAdmin (ADMIN_TOKEN bearer or the login
+// session cookie) — see src/lib/admin/auth.ts.
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin/auth";
 import * as store from "@/lib/ondc/store";
 import { parseProviders } from "@/lib/shop/types";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   const catalogs = await store.listCatalogs();
   const sellers = parseProviders(catalogs).sort((a, b) =>
     a.name.localeCompare(b.name)

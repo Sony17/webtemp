@@ -19,6 +19,7 @@
 // Mirrors the conventions of the other routes: `NextResponse`,
 // `runtime = "nodejs"`, JSON-body parsing with a 400 guard.
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin/auth";
 import {
   updatePaymentStatus,
   PaymentStoreError,
@@ -46,6 +47,9 @@ function str(value: unknown): string | undefined {
 }
 
 export async function POST(req: Request) {
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   let raw: unknown;
   try {
     raw = await req.json();

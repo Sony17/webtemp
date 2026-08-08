@@ -20,6 +20,7 @@
 // Conventions: NextResponse, runtime = "nodejs", 400 on bad body, 503 when Tocxi
 // is unconfigured, 502 when the upstream booking fails.
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin/auth";
 import { isTocxiConfigured } from "@/lib/logistics/config";
 import { createShipment as bookWithTocxi, TocxiError } from "@/lib/logistics/client";
 import {
@@ -94,6 +95,9 @@ function parseAddress(
 }
 
 export async function POST(req: Request) {
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   if (!isTocxiConfigured()) {
     return NextResponse.json(
       { error: "Logistics (Tocxi) is not configured." },
@@ -213,6 +217,9 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   const params = new URL(req.url).searchParams;
   const rawStatus = params.get("status")?.trim();
   const status: ShipmentStatus | undefined =

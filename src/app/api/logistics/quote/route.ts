@@ -18,6 +18,7 @@
 // body with a 400 guard, a clean 503 when Tocxi isn't configured (like the ONDC
 // routes), and a 502 when the upstream call fails.
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin/auth";
 import { isTocxiConfigured } from "@/lib/logistics/config";
 import { quote, TocxiError } from "@/lib/logistics/client";
 import type { ParcelSize, QuoteRequest } from "@/lib/logistics/types";
@@ -37,6 +38,9 @@ function isParcelSize(v: unknown): v is ParcelSize {
 }
 
 export async function POST(req: Request) {
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   if (!isTocxiConfigured()) {
     return NextResponse.json(
       { error: "Logistics (Tocxi) is not configured." },

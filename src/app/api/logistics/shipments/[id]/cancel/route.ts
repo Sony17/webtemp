@@ -13,6 +13,7 @@
 // unknown, 409 when Tocxi refuses (already picked up), 502 on other upstream
 // faults.
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin/auth";
 import { isTocxiConfigured } from "@/lib/logistics/config";
 import { cancelShipment as cancelWithTocxi, TocxiError } from "@/lib/logistics/client";
 import {
@@ -32,6 +33,9 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   if (!isTocxiConfigured()) {
     return NextResponse.json(
       { error: "Logistics (Tocxi) is not configured." },

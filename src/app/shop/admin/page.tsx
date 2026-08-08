@@ -205,6 +205,18 @@ export default function OndcAdminPage() {
         fetch("/api/payments/list", { cache: "no-store" }),
         fetch("/api/logistics/shipments?limit=200", { cache: "no-store" }),
       ]);
+      // Session cookie expired or absent: the data APIs are gated server-side
+      // (requireAdmin), so a 401 here means re-login — the localStorage flag
+      // alone grants nothing.
+      if (sRes.status === 401) {
+        try {
+          localStorage.removeItem("oi_admin");
+        } catch {
+          // ignore storage errors
+        }
+        router.replace("/admin/login?next=/shop/admin");
+        return;
+      }
       const s = (await sRes.json()) as Summary & { error?: string };
       const p = (await pRes.json()) as { payments?: Payment[]; error?: string };
       const l = (await lRes.json()) as { shipments?: Shipment[]; error?: string };
@@ -219,7 +231,7 @@ export default function OndcAdminPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (authed) void refresh();
@@ -344,6 +356,9 @@ export default function OndcAdminPage() {
     } catch {
       /* ignore */
     }
+    // Clear the server-side session cookie too (best-effort; the redirect
+    // must not wait on it).
+    void fetch("/api/admin/login", { method: "DELETE" }).catch(() => {});
     router.replace("/admin/login");
   };
 

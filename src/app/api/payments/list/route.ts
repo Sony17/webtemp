@@ -11,11 +11,15 @@
 // itself is guarded client-side by the admin login). Demo-grade — see the admin
 // login (admin/admin). Harden with real auth before production.
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin/auth";
 import { listPayments } from "@/lib/payments/store";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   const raw = new URL(req.url).searchParams.get("status")?.trim();
   const status: "PENDING" | "PAID" | undefined =
     raw === "PENDING" || raw === "PAID" ? raw : undefined;

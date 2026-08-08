@@ -14,6 +14,7 @@
 // Ungated server-side, matching the app's admin posture — /shop/admin guards
 // client-side via the admin login.
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin/auth";
 import * as store from "@/lib/ondc/store";
 import {
   findSeller,
@@ -25,9 +26,12 @@ import {
 export const runtime = "nodejs";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ bppId: string; providerId: string }> }
 ) {
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   const { bppId: rawBpp, providerId: rawProvider } = await params;
   const bppId = decodeURIComponent(rawBpp);
   const providerId = decodeURIComponent(rawProvider);

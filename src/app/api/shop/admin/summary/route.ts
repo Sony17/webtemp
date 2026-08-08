@@ -9,6 +9,7 @@
 // complete across instances. Ungated server-side, matching the app's existing
 // admin posture — the /shop/admin page guards client-side via the admin login.
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin/auth";
 import * as store from "@/lib/ondc/store";
 import { listPayments } from "@/lib/payments/store";
 import type { OrderRecord, IssueRecord } from "@/lib/ondc/store";
@@ -36,7 +37,10 @@ function orderStateStr(o: OrderRecord): string {
 
 const CLOSED_ISSUE = new Set(["CLOSED", "RESOLVED"]);
 
-export async function GET() {
+export async function GET(req: Request) {
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   const [orders, issues, transactions, payments] = await Promise.all([
     store.listOrders(),
     store.listIssues(),

@@ -16,6 +16,7 @@
 // Ungated server-side, matching the app's admin posture — /shop/admin guards
 // client-side via the admin login.
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin/auth";
 import { readAuditEvents } from "@/lib/ondc/audit";
 import * as store from "@/lib/ondc/store";
 import { parseProviders } from "@/lib/shop/types";
@@ -46,7 +47,10 @@ function errMessage(responseBody: unknown): string | undefined {
   return typeof e?.message === "string" ? e.message : undefined;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   // Ring is capped (RING_CAPACITY); pull the max so a busy day of callbacks
   // doesn't crowd out older NACKs before we aggregate.
   const events = await readAuditEvents({ limit: 2000 });

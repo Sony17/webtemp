@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin/auth";
 import { sendEmail, isEmailConfigured, emailFrom } from "@/lib/email/send";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   if (!isEmailConfigured()) {
     return NextResponse.json(
       { ok: false, error: "RESEND_API_KEY is not set on this server." },

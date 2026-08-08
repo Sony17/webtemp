@@ -5,9 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import Brand from "@/components/Brand";
 
-const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "admin";
-
 // Only allow `next` redirects to known internal admin paths, so a malicious
 // link can't bounce the user to an external URL after login.
 const ALLOWED_NEXT = new Set(["/admin", "/sai-admin", "/shop/admin"]);
@@ -15,30 +12,42 @@ const ALLOWED_NEXT = new Set(["/admin", "/sai-admin", "/shop/admin"]);
 export default function AdminLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
 
-    if (username.trim() === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      try {
-        localStorage.setItem("oi_admin", "1");
-      } catch {
-        // ignore storage errors
+    // Server-side login: POST the admin token; the server sets an httpOnly
+    // session cookie that the gated data APIs (requireAdmin) accept. The
+    // localStorage flag remains ONLY as a client-side UX hint for the
+    // console's route guard — it grants nothing server-side.
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        try {
+          localStorage.setItem("oi_admin", "1");
+        } catch {
+          // ignore storage errors
+        }
+        const nextParam = searchParams?.get("next");
+        const target = nextParam && ALLOWED_NEXT.has(nextParam) ? nextParam : "/admin";
+        router.push(target);
+        return;
       }
-      const nextParam = searchParams?.get("next");
-      const target = nextParam && ALLOWED_NEXT.has(nextParam) ? nextParam : "/admin";
-      router.push(target);
-      return;
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      setError(body?.error ?? "Invalid admin credentials.");
+    } catch {
+      setError("Login failed — network error.");
     }
-
     setSubmitting(false);
-    setError("Invalid admin credentials.");
   }
 
   return (
@@ -54,24 +63,8 @@ export default function AdminLoginPage() {
           className="space-y-4 rounded-2xl border border-zinc-700 bg-zinc-900/80 p-8 shadow-2xl backdrop-blur"
         >
           <div>
-            <label htmlFor="admin-username" className="block text-sm font-medium text-zinc-200">
-              Username
-            </label>
-            <input
-              id="admin-username"
-              type="text"
-              required
-              autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin"
-              className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-            />
-          </div>
-
-          <div>
             <label htmlFor="admin-password" className="block text-sm font-medium text-zinc-200">
-              Password
+              Admin token
             </label>
             <input
               id="admin-password"
@@ -100,8 +93,8 @@ export default function AdminLoginPage() {
           </button>
 
           <p className="rounded-md bg-zinc-800/60 px-3 py-2 text-center text-xs text-zinc-400">
-            Default credentials — <span className="font-mono text-zinc-200">admin</span> /{" "}
-            <span className="font-mono text-zinc-200">admin</span>
+            The deployment&apos;s <span className="font-mono text-zinc-200">ADMIN_TOKEN</span>.
+            In local development without one set, any value signs in.
           </p>
         </form>
 
