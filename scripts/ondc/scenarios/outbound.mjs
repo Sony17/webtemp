@@ -208,7 +208,15 @@ export function buildOutboundScenarios() {
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify(omit(baseBody, field)),
               }),
-            expect: { status: [400, 503] },
+            // confirm's `order` is optional-with-fallback: when omitted the
+            // route loads the persisted on_init order and answers 409 when
+            // none exists for the transaction (confirm/route.ts).
+            expect: {
+              status:
+                action === "confirm" && field === "order"
+                  ? [400, 409, 503]
+                  : [400, 503],
+            },
           })
         );
       }
@@ -358,7 +366,11 @@ export function buildOutboundScenarios() {
     }
 
     if (action === "confirm") {
-      // order without quote or without payments must be rejected.
+      // order without quote or provider must be rejected locally. `payments`
+      // is different: the route no longer validates it locally — COD terms
+      // (ON-FULFILLMENT / NOT-PAID) are defaulted in ensureConfirmPayment and
+      // the request proceeds to the BPP, so against this suite's unreachable
+      // test BPP the transport fault (502/504) is the expected outcome.
       for (const omitKey of ["quote", "payments", "provider"]) {
         scenarios.push(
           scenario({
@@ -377,7 +389,10 @@ export function buildOutboundScenarios() {
                 body: JSON.stringify({ ...body, order }),
               });
             },
-            expect: { status: [400, 503] },
+            expect: {
+              status:
+                omitKey === "payments" ? [400, 502, 503, 504] : [400, 503],
+            },
           })
         );
       }

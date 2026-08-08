@@ -140,10 +140,21 @@ function ensureConfirmPayment(orderObj: Record<string, unknown>) {
   const payment = obj(orderObj.payment) ?? firstPayment ?? {};
 
   payment.tl_method = str(payment.tl_method) ?? "http/get";
-  payment.type = str(payment.type) ?? "ON-ORDER";
-  payment.collected_by = str(payment.collected_by) ?? "BAP";
+  // DEFAULT PAYMENT TERMS — must be TRUE on the wire. This BAP has no payment
+  // gateway yet: money is settled out-of-band AFTER the order (manual UPI /
+  // cash on delivery). Asserting `ON-ORDER / collected_by BAP / PAID` here
+  // (the old defaults) told every production seller that a prepaid payment had
+  // already been collected — a false settlement assertion that makes the BAP
+  // liable for the amount under ONDC's settlement framework. The honest
+  // default is COD: collected by the SELLER side ON-FULFILLMENT, NOT-PAID at
+  // confirm time. (This also matches the Tocxi logistics pilot, which is
+  // COD-only.) Seller-provided terms from on_init still win — `??` only fills
+  // gaps. Flip these defaults back to prepaid ONLY once a real gateway marks
+  // the payment PAID *before* confirm fires.
+  payment.type = str(payment.type) ?? "ON-FULFILLMENT";
+  payment.collected_by = str(payment.collected_by) ?? "BPP";
   payment.uri = str(payment.uri) ?? "https://openidea.co.in/payment";
-  payment.status = str(payment.status) ?? "PAID";
+  payment.status = str(payment.status) ?? "NOT-PAID";
   payment["@ondc/org/buyer_app_finder_fee_type"] =
     str(payment["@ondc/org/buyer_app_finder_fee_type"]) ?? "percent";
   payment["@ondc/org/buyer_app_finder_fee_amount"] =
@@ -158,29 +169,22 @@ function ensureConfirmPayment(orderObj: Record<string, unknown>) {
   const params = obj(payment.params) ?? {};
   params.amount = amount;
   params.currency = currency;
-  params.transaction_id = str(params.transaction_id) ?? "3937";
+  // No fabricated payment-gateway transaction_id (was hardcoded "3937"): a
+  // NOT-PAID COD confirm has no payment transaction yet. Keep a seller- or
+  // gateway-provided id if present; otherwise omit.
+  if (str(params.transaction_id) === undefined) {
+    delete params.transaction_id;
+  }
   payment.params = params;
 
-  const settlementDetails = Array.isArray(
-    payment["@ondc/org/settlement_details"]
-  )
-    ? payment["@ondc/org/settlement_details"]
-    : [];
-  if (settlementDetails.length === 0) {
-    payment["@ondc/org/settlement_details"] = [
-      {
-        settlement_counterparty: "seller-app",
-        settlement_phase: "sale-amount",
-        settlement_type: "upi",
-        beneficiary_name: "Seller",
-        settlement_bank_account_no: "1234567890",
-        settlement_ifsc_code: "SBIN0000001",
-        bank_name: "SBI",
-        branch_name: "MG Road",
-        upi_address: "gft@oksbi",
-      },
-    ];
-  }
+  // Settlement details: pass through whatever the seller sent in on_init,
+  // UNTOUCHED. We used to fabricate a placeholder bank block (account
+  // "1234567890", IFSC "SBIN0000001", UPI "gft@oksbi") when the seller sent
+  // none — fake financial details on the wire to a production counterparty.
+  // With COD terms (collected_by BPP) the BAP is not required to supply
+  // settlement details at confirm; absent is honest, fabricated is not. If a
+  // seller NACKs demanding them, surface that seller and wire REAL details
+  // (env-configured) — never placeholders.
 
   orderObj.payment = payment;
 }
