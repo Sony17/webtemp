@@ -27,6 +27,9 @@ import {
   filterByQuery,
   filterAndSortProducts,
   priceCeiling,
+  parseProviders,
+  sortSellersByDistance,
+  sellerServes,
   type Product,
   type ShopFilters,
   type CatalogRecord,
@@ -259,10 +262,33 @@ function SearchScreen() {
     [products, activeQuery]
   );
   const ceiling = React.useMemo(() => priceCeiling(matched), [matched]);
-  const shown = React.useMemo(
-    () => filterAndSortProducts(matched, filters),
-    [matched, filters]
-  );
+  // Delivery-reach index: (bppId|providerId) → can this seller reach the buyer?
+  // Sellers declare radii in their catalog (a 5 km Pune store must not rank
+  // like a pan-India shipper for a Noida buyer).
+  const serveIndex = React.useMemo(() => {
+    const m = new Map<string, boolean | undefined>();
+    for (const s of sortSellersByDistance(
+      parseProviders([...accum.values()]),
+      address?.gps
+    )) {
+      m.set(`${s.bppId}|${s.providerId}`, sellerServes(s));
+    }
+    return m;
+  }, [accum, address?.gps]);
+  const shown = React.useMemo(() => {
+    const ranked = filterAndSortProducts(matched, filters);
+    // Stable partition: products whose seller definitely can't deliver to the
+    // buyer sink to the end. Unknown reach is NOT a verdict — never penalized.
+    const reachable: Product[] = [];
+    const outOfRange: Product[] = [];
+    for (const p of ranked) {
+      (serveIndex.get(`${p.bppId}|${p.providerId}`) === false
+        ? outOfRange
+        : reachable
+      ).push(p);
+    }
+    return [...reachable, ...outOfRange];
+  }, [matched, filters, serveIndex]);
   const sellerCount = new Set(
     [...accum.values()].map((c) => c.bppId)
   ).size;

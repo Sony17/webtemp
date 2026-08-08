@@ -23,6 +23,8 @@ import {
   parseProviders,
   sortSellersByDistance,
   formatDistance,
+  sellerServes,
+  rankByServiceability,
 } from "@/lib/shop/types";
 
 export default function SellersPage() {
@@ -46,13 +48,16 @@ export default function SellersPage() {
     return m;
   }, [state]);
 
-  const sellers = React.useMemo(
-    () =>
-      state
-        ? sortSellersByDistance(parseProviders(state.catalogs), address?.gps)
-        : [],
-    [state, address?.gps]
-  );
+  const sellers = React.useMemo(() => {
+    if (!state) return [];
+    // Hide empty storefronts (providers that answered with zero items — a
+    // clickable store with nothing in it is worse than no store), then order
+    // nearest-first with definitely-out-of-range sellers pushed to the end.
+    const stocked = parseProviders(state.catalogs).filter(
+      (s) => s.itemCount > 0
+    );
+    return rankByServiceability(sortSellersByDistance(stocked, address?.gps));
+  }, [state, address?.gps]);
 
   // No sellers in the live catalog: either a deep link with no active session /
   // an aged-out discovery window, or on_search hasn't landed yet.
@@ -100,13 +105,16 @@ export default function SellersPage() {
           const place = [s.locality, s.city].filter(Boolean).join(", ");
           const count = itemCounts.get(`${s.bppId}|${s.providerId}`) ?? 0;
           const dist = formatDistance(s.distanceKm);
+          const serves = sellerServes(s);
           return (
             <StaggerItem key={`${s.bppId}|${s.providerId}`}>
               <Link
                 href={`/shop/seller/${encodeURIComponent(
                   s.bppId
                 )}/${encodeURIComponent(s.providerId)}`}
-                className="flex h-full items-start gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-soft transition-colors hover:border-primary/40 hover:bg-accent/30"
+                className={`flex h-full items-start gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-soft transition-colors hover:border-primary/40 hover:bg-accent/30${
+                  serves === false ? " opacity-60" : ""
+                }`}
               >
                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">
                   {s.image ? (
@@ -142,6 +150,20 @@ export default function SellersPage() {
                       </span>
                     ) : null}
                   </div>
+                  {/* Delivery-reach badge: honest about who can actually order. */}
+                  {serves === false ? (
+                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                      Out of delivery range
+                    </span>
+                  ) : s.panIndia ? (
+                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                      Ships across India
+                    </span>
+                  ) : s.serviceRadiusKm != null ? (
+                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      Delivers within {Math.round(s.serviceRadiusKm)} km
+                    </span>
+                  ) : null}
                   {count > 0 ? (
                     <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
                       <Tags className="h-3.5 w-3.5" />

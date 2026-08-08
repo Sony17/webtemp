@@ -680,6 +680,15 @@ export type Seller = {
   city?: string;
   areaCode?: string;
   gps?: string; // "lat,long" of the seller's first location — drives distance sort
+  // Delivery reach declared in the seller's catalog. A Pune store with a 5 km
+  // radius must not be presented to a Noida buyer as orderable, while a
+  // pickle maker declaring country-wide shipping serves everyone — the UI
+  // needs this to badge sellers and de-rank out-of-range ones.
+  panIndia?: boolean; // serviceability tag type 12 (unit "country"), or an effectively-national radius
+  serviceRadiusKm?: number; // largest declared radius (serviceability tag / location circle)
+  // Total items across this provider's catalog slices. Zero-item providers
+  // (empty storefronts on the wire) are hidden from buyer-facing lists.
+  itemCount: number;
 };
 
 // City names arrive verbatim from each BPP's catalog, so the same city shows
@@ -732,6 +741,53 @@ export function normalizeCity(city: string | undefined): string | undefined {
   return cleaned;
 }
 
+// A radius this large is national coverage in practice (sellers declare e.g.
+// "4999 km" to mean ships-anywhere), so badge it as pan-India.
+const PAN_INDIA_RADIUS_KM = 3000;
+
+// Parse the seller's declared delivery reach from its catalog entry:
+//   * `serviceability` tag group (RET10): type "12" + unit "country" = ships
+//     nationwide; unit "km" + numeric val = delivery radius.
+//   * locations[].circle.radius — the hyperlocal radius many BPPs send instead.
+// Takes the LARGEST radius seen (a seller is as reachable as its widest claim).
+function parseReach(
+  p: Record<string, unknown>,
+  loc: Record<string, unknown>
+): { panIndia?: boolean; serviceRadiusKm?: number } {
+  let panIndia: boolean | undefined;
+  let radius: number | undefined;
+  const consider = (v: number | undefined) => {
+    if (v != null && Number.isFinite(v) && v > 0) {
+      radius = Math.max(radius ?? 0, v);
+    }
+  };
+
+  for (const tRaw of arr(p.tags)) {
+    const t = obj(tRaw);
+    if (str(t.code) !== "serviceability") continue;
+    const entries: Record<string, string> = {};
+    for (const eRaw of arr(t.list)) {
+      const e = obj(eRaw);
+      const code = str(e.code);
+      const value = str(e.value);
+      if (code && value != null) entries[code] = value;
+    }
+    if (entries.type === "12" || entries.unit === "country") {
+      panIndia = true;
+    } else if (entries.unit === "km") {
+      consider(num(entries.val));
+    }
+  }
+
+  const circleRadius = obj(obj(loc.circle)?.radius);
+  if (circleRadius && (str(circleRadius.unit) ?? "km") === "km") {
+    consider(num(circleRadius.value));
+  }
+
+  if (radius != null && radius >= PAN_INDIA_RADIUS_KM) panIndia = true;
+  return { panIndia, serviceRadiusKm: radius };
+}
+
 // Extract each seller (provider) once from the accumulated catalog slices,
 // merging fields across slices (an incremental on_search can split a provider
 // across messages). Keyed by (bppId, providerId).
@@ -765,6 +821,8 @@ export function parseProviders(catalogs: CatalogRecord[]): Seller[] {
         city: normalizeCity(str(addr.city) ?? str(addr.state_district)),
         areaCode: str(addr.area_code) ?? str(loc.area_code),
         gps: str(loc.gps),
+        ...parseReach(p, loc),
+        itemCount: arr(p.items).length,
       };
 
       const prev = byKey.get(key);
@@ -780,6 +838,13 @@ export function parseProviders(catalogs: CatalogRecord[]): Seller[] {
               city: prev.city ?? next.city,
               areaCode: prev.areaCode ?? next.areaCode,
               gps: prev.gps ?? next.gps,
+              panIndia: prev.panIndia || next.panIndia || undefined,
+              serviceRadiusKm:
+                prev.serviceRadiusKm != null || next.serviceRadiusKm != null
+                  ? Math.max(prev.serviceRadiusKm ?? 0, next.serviceRadiusKm ?? 0)
+                  : undefined,
+              // Items can be split across incremental slices — accumulate.
+              itemCount: prev.itemCount + next.itemCount,
             }
           : next
       );
@@ -888,4 +953,29 @@ export function formatDistance(km?: number): string | undefined {
   if (km == null || !Number.isFinite(km)) return undefined;
   if (km < 1) return `${Math.round(km * 1000)} m`;
   return `${km.toFixed(km < 10 ? 1 : 0)} km`;
+}
+
+// Can this seller deliver to the buyer?
+//   true      — pan-India, or the buyer is inside the declared radius
+//   false     — declared radius known and the buyer is definitely outside it
+//   undefined — not enough data (no radius declared, or no buyer location);
+//               callers must treat unknown as "don't penalize", never hide.
+export function sellerServes(s: SellerWithDistance): boolean | undefined {
+  if (s.panIndia) return true;
+  if (s.serviceRadiusKm == null || s.distanceKm == null) return undefined;
+  return s.distanceKm <= s.serviceRadiusKm;
+}
+
+// Stable re-rank pushing definitely-out-of-range sellers to the end. Serving
+// and unknown sellers keep their existing (distance) order — unknown is not a
+// verdict, so it must not cost a seller their position.
+export function rankByServiceability<T extends SellerWithDistance>(
+  sellers: T[]
+): T[] {
+  const inRange: T[] = [];
+  const outOfRange: T[] = [];
+  for (const s of sellers) {
+    (sellerServes(s) === false ? outOfRange : inRange).push(s);
+  }
+  return [...inRange, ...outOfRange];
 }

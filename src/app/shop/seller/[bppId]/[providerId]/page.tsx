@@ -124,6 +124,16 @@ export default function SellerPage() {
               <Tags className="h-3.5 w-3.5" />
               {items.length} item{items.length === 1 ? "" : "s"}
             </span>
+            {/* Delivery reach declared in the seller's catalog. */}
+            {seller?.panIndia ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-600 dark:text-emerald-400">
+                Ships across India
+              </span>
+            ) : seller?.serviceRadiusKm != null ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 font-medium">
+                Delivers within {Math.round(seller.serviceRadiusKm)} km
+              </span>
+            ) : null}
           </div>
         </div>
       </div>

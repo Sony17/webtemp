@@ -62,6 +62,9 @@ type Seller = {
   city?: string;
   areaCode?: string;
   gps?: string; // "lat,long" of the seller's first location — drives distance sort
+  panIndia?: boolean; // ships country-wide per catalog serviceability
+  serviceRadiusKm?: number; // declared delivery radius
+  itemCount: number; // items across catalog slices (0 = empty storefront)
 };
 // One seller's order-rejection roll-up, as returned by GET
 // /api/shop/admin/seller-nacks — how often it NACKed select/init/confirm and the
