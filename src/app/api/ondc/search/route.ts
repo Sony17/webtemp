@@ -75,6 +75,12 @@ type SearchRequestBody = {
   //   "targetUrl": "https://workbench.ondc.tech/api-service/ONDC:RET10/1.2.5/seller/search"
   // Must be a parseable absolute https URL pointing at a `/search` endpoint.
   targetUrl?: string;
+  // When true, permit an UNQUALIFIED search — no query/category — emitting an
+  // intent with only fulfillment + payment (ONDC "search by city"). BPPs answer
+  // with their ENTIRE catalog; this is the discovery bootstrap used to build a
+  // full storefront rather than keyword slices. Explicit flag: an empty search
+  // without it is still rejected as a misuse.
+  fullCatalog?: boolean;
   // When true, emit an INCREMENTAL refresh search: adds the RET10 1.2.5
   // `catalog_inc` tag group carrying start_time/end_time, so BPPs return only
   // catalog deltas since the last refresh. Used by Workbench's "Discovery Flow
@@ -328,6 +334,7 @@ export async function POST(req: Request) {
   const deliveryState = str(body.deliveryState);
   const transactionId = str(body.transactionId);
   const targetUrl = str(body.targetUrl);
+  const fullCatalog = body.fullCatalog === true;
   const incremental = body.incremental === true;
   const incrementalStart = str(body.incrementalStart);
   const incrementalEnd = str(body.incrementalEnd);
@@ -339,10 +346,16 @@ export async function POST(req: Request) {
         : "start";
 
   // Require at least one discovery criterion — a broadcast with an empty intent
-  // is a misuse (and would flood the network for nothing). An INCREMENTAL (delta)
-  // refresh is mode/time based and carries no discovery criterion, so the
-  // query/category requirement applies only to a normal search.
-  if (!incremental && !query && !category) {
+  // is a misuse (and would flood the network for nothing). Two deliberate
+  // exceptions carry no criterion by design:
+  //   * INCREMENTAL (delta) refresh — mode/time based.
+  //   * FULL-CATALOG search (`fullCatalog: true`) — the ONDC "search by city"
+  //     bootstrap: an intent with only fulfillment + payment, to which BPPs
+  //     respond with their ENTIRE catalog. This is how a buyer app discovers
+  //     sellers beyond keyword matches (keyword-only discovery is why one BPP
+  //     can dominate the seller directory). Explicit opt-in flag so a bare
+  //     empty search can never broadcast by accident.
+  if (!incremental && !fullCatalog && !query && !category) {
     return NextResponse.json(
       { error: "At least one of 'query' or 'category' is required." },
       { status: 400 }
