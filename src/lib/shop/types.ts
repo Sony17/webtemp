@@ -682,6 +682,53 @@ export type Seller = {
   gps?: string; // "lat,long" of the seller's first location — drives distance sort
 };
 
+// City names arrive verbatim from each BPP's catalog, so the same city shows
+// up as "Delhi" / "New Delhi" / "DELHI", or "Bangalore North" / "Bengaluru".
+// Any UI filter or grouping keyed on the raw string silently splits one city
+// into several buckets. Canonicalize on read: trim + collapse whitespace, fold
+// known aliases, and title-case ALL-CAPS values. Deliberately conservative —
+// unknown cities pass through with only whitespace/case cleanup.
+const CITY_ALIASES: Record<string, string> = {
+  delhi: "Delhi",
+  "new delhi": "Delhi",
+  "delhi ncr": "Delhi",
+  "central delhi": "Delhi",
+  "south delhi": "Delhi",
+  "north delhi": "Delhi",
+  "east delhi": "Delhi",
+  "west delhi": "Delhi",
+  bangalore: "Bengaluru",
+  bengaluru: "Bengaluru",
+  "bangalore north": "Bengaluru",
+  "bangalore south": "Bengaluru",
+  "bangalore urban": "Bengaluru",
+  "bengaluru urban": "Bengaluru",
+  gurgaon: "Gurugram",
+  gurugram: "Gurugram",
+  bombay: "Mumbai",
+  mumbai: "Mumbai",
+  madras: "Chennai",
+  chennai: "Chennai",
+  calcutta: "Kolkata",
+  kolkata: "Kolkata",
+};
+
+export function normalizeCity(city: string | undefined): string | undefined {
+  if (!city) return undefined;
+  const cleaned = city.trim().replace(/\s+/g, " ");
+  if (!cleaned) return undefined;
+  const alias = CITY_ALIASES[cleaned.toLowerCase()];
+  if (alias) return alias;
+  // "DELHI" → "Delhi": title-case only when the value is shouting; otherwise
+  // preserve the seller's own casing ("Navi Mumbai" stays as sent).
+  if (cleaned === cleaned.toUpperCase() && /[A-Z]/.test(cleaned)) {
+    return cleaned
+      .toLowerCase()
+      .replace(/\b\p{L}/gu, (c) => c.toUpperCase());
+  }
+  return cleaned;
+}
+
 // Extract each seller (provider) once from the accumulated catalog slices,
 // merging fields across slices (an incremental on_search can split a provider
 // across messages). Keyed by (bppId, providerId).
@@ -712,7 +759,7 @@ export function parseProviders(catalogs: CatalogRecord[]): Seller[] {
         shortDesc: str(d.short_desc) ?? str(d.long_desc),
         rating: num(p.rating),
         locality: str(addr.locality) ?? str(addr.street),
-        city: str(addr.city) ?? str(addr.state_district),
+        city: normalizeCity(str(addr.city) ?? str(addr.state_district)),
         areaCode: str(addr.area_code) ?? str(loc.area_code),
         gps: str(loc.gps),
       };
